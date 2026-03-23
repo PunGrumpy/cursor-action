@@ -9,8 +9,11 @@
     "cursor-agent",
     "github-action"
   ],
+  "bugs": {
+    "url": "https://github.com/PunGrumpy/cursor-action/issues"
+  },
   "license": "MIT",
-  "author": "PunGrumpy",
+  "author": "Noppakorn Kaewsalabnil <hello@pungrumpy.com>",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/PunGrumpy/cursor-action.git"
