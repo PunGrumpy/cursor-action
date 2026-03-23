@@ -1,6 +1,6 @@
 {
   "name": "cursor-action",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "description": "GitHub Action to install Cursor CLI and run cursor-agent in CI",
   "keywords": [
