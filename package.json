@@ -1,11 +1,33 @@
 {
   "name": "cursor-action",
   "version": "0.0.0",
-  "module": "src/index.ts",
-  "type": "module",
   "private": true,
+  "description": "GitHub Action to install Cursor CLI and run cursor-agent in CI",
+  "keywords": [
+    "ai",
+    "cli",
+    "cursor",
+    "cursor-agent",
+    "github-action"
+  ],
+  "license": "MIT",
+  "author": "PunGrumpy",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PunGrumpy/cursor-action.git"
+  },
+  "type": "module",
+  "main": "dist/index.js",
+  "module": "src/index.ts",
+  "scripts": {
+    "lint": "ultracite check",
+    "format": "ultracite fix"
+  },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "oxfmt": "^0.41.0",
+    "oxlint": "^1.56.0",
+    "ultracite": "7.3.2"
   },
   "peerDependencies": {
     "typescript": "^5"
