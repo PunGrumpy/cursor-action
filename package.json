@@ -21,7 +21,10 @@
   "module": "src/index.ts",
   "scripts": {
     "lint": "ultracite check",
-    "format": "ultracite fix"
+    "format": "ultracite fix",
+    "changeset": "changeset",
+    "changeset:version": "changeset version",
+    "changeset:publish": "turbo run build && changeset publish"
   },
   "devDependencies": {
     "@changesets/changelog-github": "^0.6.0",
