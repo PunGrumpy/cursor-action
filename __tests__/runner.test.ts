@@ -50,7 +50,7 @@ const getExecCall = (): {
 const baseInputs: ActionInputs = {
   apiKey: "test-key",
   cursorVersion: "latest",
-  model: "claude-sonnet-4-5",
+  model: "auto",
   permissions: "read-only",
   prompt: "Analyze this code",
   timeout: 300,
@@ -87,7 +87,7 @@ describe("runAgent", () => {
 
     const { args } = getExecCall();
     expect(args).toContain("--model");
-    expect(args).toContain("claude-sonnet-4-5");
+    expect(args).toContain("auto");
   });
 
   it("includes read-only permission flag", async () => {

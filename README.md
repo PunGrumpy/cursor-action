@@ -30,7 +30,7 @@
 | `api-key`           | ✅       | —                   | Your Cursor API key. Store as a secret.                                                              |
 | `prompt`            | ✅       | —                   | The prompt to pass to `cursor-agent`.                                                                |
 | `cursor-version`    | ❌       | `latest`            | Cursor CLI build to install. Use `latest` or an exact Cursor lab build id like `2026.03.20-44cb435`. |
-| `model`             | ❌       | `claude-sonnet-4-5` | Model for the agent to use.                                                                          |
+| `model`             | ❌       | `auto`              | Model for the agent to use.                                                                          |
 | `working-directory` | ❌       | `.`                 | Directory the agent operates in.                                                                     |
 | `permissions`       | ❌       | `read-only`         | Agent permissions: `read-only`, `read-write`, or `full`.                                             |
 | `timeout`           | ❌       | `300`               | Timeout in seconds before the agent is killed.                                                       |

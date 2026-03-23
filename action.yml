@@ -23,7 +23,7 @@ inputs:
   model:
     description: "Model to use for the agent"
     required: false
-    default: "claude-sonnet-4-5"
+    default: "auto"
 
   working-directory:
     description: "Working directory for the agent to operate in"

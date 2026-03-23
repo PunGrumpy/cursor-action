@@ -15,7 +15,7 @@ export const getInputs = (): ActionInputs => {
     getInput("cursor-version", { required: false }) || "latest";
   const apiKey = getInput("api-key", { required: true });
   const prompt = getInput("prompt", { required: true });
-  const model = getInput("model", { required: false }) || "claude-sonnet-4-5";
+  const model = getInput("model", { required: false }) || "auto";
   const workingDirectory =
     getInput("working-directory", { required: false }) || ".";
   const permissionsRaw =
