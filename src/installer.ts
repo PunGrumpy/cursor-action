@@ -1,10 +1,12 @@
+import { execSync } from "node:child_process";
+import { promises as fs } from "node:fs";
 import { homedir } from "node:os";
 import path from "node:path";
 
 import { restoreCache, saveCache } from "@actions/cache";
 import { addPath, debug, info, warning } from "@actions/core";
 import { HttpClient } from "@actions/http-client";
-import { mkdirP, mv } from "@actions/io";
+import { mkdirP } from "@actions/io";
 import {
   cacheDir,
   downloadTool,
@@ -131,18 +133,24 @@ export const buildDownloadUrl = (
   return `${CURSOR_DOWNLOAD_BASE}/${version}/${platformSegment}/${arch}/agent-cli-package.${ext}`;
 };
 
+/** Bumped when install layout changes (e.g. copy full package vs single binary). */
+const CURSOR_CLI_CACHE_LAYOUT = "bundle-v1";
+
 const buildCacheKey = (
   version: string,
   platform: Platform,
   arch: Arch
-): string => `cursor-cli-${platform}-${arch}-${version}`;
+): string =>
+  `cursor-cli-${platform}-${arch}-${version}-${CURSOR_CLI_CACHE_LAYOUT}`;
+
+/** Tool-cache version must match find() — suffix invalidates old single-file caches. */
+const toolCacheVersion = (labVersion: string): string =>
+  `${labVersion}-${CURSOR_CLI_CACHE_LAYOUT}`;
 
 const getBinaryName = (): string =>
   process.platform === "win32" ? "cursor-agent.exe" : "cursor-agent";
 
 const findBinary = async (dir: string, binaryName: string): Promise<string> => {
-  const { promises: fs } = await import("node:fs");
-
   const search = async (currentDir: string): Promise<string | null> => {
     const entries = await fs.readdir(currentDir, { withFileTypes: true });
     for (const entry of entries) {
@@ -170,6 +178,47 @@ const findBinary = async (dir: string, binaryName: string): Promise<string> => {
 };
 
 /**
+ * Copies the extracted agent package (cursor-agent launcher + bundled node, etc.) into installDir.
+ */
+const installAgentPackage = async (
+  extractedPath: string,
+  installDir: string,
+  binaryName: string
+): Promise<void> => {
+  const binarySource = await findBinary(extractedPath, binaryName);
+  const packageRoot = path.dirname(binarySource);
+
+  await mkdirP(installDir);
+  const entries = await fs.readdir(packageRoot, { withFileTypes: true });
+  for (const entry of entries) {
+    const from = path.join(packageRoot, entry.name);
+    const to = path.join(installDir, entry.name);
+    await fs.cp(from, to, { recursive: true });
+  }
+
+  const mainBin = path.join(installDir, binaryName);
+  try {
+    await fs.access(mainBin);
+    if (process.platform !== "win32") {
+      execSync(`chmod +x "${mainBin}"`);
+    }
+  } catch {
+    // ignore
+  }
+
+  const nodeName = process.platform === "win32" ? "node.exe" : "node";
+  const nodePath = path.join(installDir, nodeName);
+  try {
+    const st = await fs.stat(nodePath);
+    if (st.isFile() && process.platform !== "win32") {
+      execSync(`chmod +x "${nodePath}"`);
+    }
+  } catch {
+    // bundled node may be absent on some platforms
+  }
+};
+
+/**
  * Installer entry point
  * @returns Returns { binPath, cacheHit } where binPath is the directory added to PATH
  */
@@ -186,8 +235,10 @@ export const installCursorCLI = async (
 
   info(`Installing Cursor CLI v${resolvedVersion} (${platform}/${arch})`);
 
+  const tcVersion = toolCacheVersion(resolvedVersion);
+
   // Check @actions/tool-cache first (within-job cache)
-  const cachedPath = find("cursor-agent", resolvedVersion, arch);
+  const cachedPath = find("cursor-agent", tcVersion, arch);
   if (cachedPath) {
     info(`Found Cursor CLI in tool cache: ${cachedPath}`);
     addPath(cachedPath);
@@ -224,17 +275,8 @@ export const installCursorCLI = async (
     );
   }
 
-  // Move binary to install dir
-  await mkdirP(installDir);
   const binaryName = getBinaryName();
-
-  const binarySource = await findBinary(extractedPath, binaryName);
-  await mv(binarySource, path.join(installDir, binaryName));
-
-  if (platform !== "win32") {
-    const { execSync } = await import("node:child_process");
-    execSync(`chmod +x "${path.join(installDir, binaryName)}"`);
-  }
+  await installAgentPackage(extractedPath, installDir, binaryName);
 
   // Cache the install dir for future jobs
   try {
@@ -246,7 +288,7 @@ export const installCursorCLI = async (
   }
 
   // Also register in tool-cache for within-job reuse
-  await cacheDir(installDir, "cursor-agent", resolvedVersion, arch);
+  await cacheDir(installDir, "cursor-agent", tcVersion, arch);
 
   addPath(installDir);
   info(`Cursor CLI v${resolvedVersion} installed to ${installDir}`);
