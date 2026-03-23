@@ -1,18 +1,20 @@
 # Cursor Action
 
-> **GitHub Action** — Install the [Cursor](https://cursor.com) CLI and run `cursor-agent` in your CI pipelines.
+Install the [Cursor](https://cursor.com) CLI in GitHub Actions and run `cursor-agent` in CI.
 
 [![CI](https://github.com/PunGrumpy/cursor-action/actions/workflows/ci.yml/badge.svg)](https://github.com/PunGrumpy/cursor-action/actions/workflows/ci.yml)
 [![Release](https://github.com/PunGrumpy/cursor-action/actions/workflows/release.yml/badge.svg)](https://github.com/PunGrumpy/cursor-action/actions/workflows/release.yml)
 
----
+## Quickstart
 
-## Usage
+1. Add a repository secret named `CURSOR_API_KEY`.
+2. Use the action in a workflow job.
+3. Read `steps.<id>.outputs.summary` for the model response.
 
 ```yaml
 - name: Run Cursor Agent
-  uses: PunGrumpy/cursor-action@v1
   id: cursor
+  uses: PunGrumpy/cursor-action@main
   with:
     api-key: ${{ secrets.CURSOR_API_KEY }}
     prompt: "Review this PR for security issues and summarize your findings."
@@ -21,33 +23,32 @@
   run: echo "${{ steps.cursor.outputs.summary }}"
 ```
 
----
-
 ## Inputs
 
-| Input               | Required | Default     | Description                                                                                          |
-| ------------------- | -------- | ----------- | ---------------------------------------------------------------------------------------------------- |
-| `api-key`           | ✅       | —           | Your Cursor API key. Store as a secret.                                                              |
-| `prompt`            | ✅       | —           | The prompt to pass to `cursor-agent`.                                                                |
-| `cursor-version`    | ❌       | `latest`    | Cursor CLI build to install. Use `latest` or an exact Cursor lab build id like `2026.03.20-44cb435`. |
-| `model`             | ❌       | `auto`      | Model for the agent to use.                                                                          |
-| `working-directory` | ❌       | `.`         | Directory the agent operates in.                                                                     |
-| `permissions`       | ❌       | `read-only` | Agent permissions: `read-only`, `read-write`, or `full`.                                             |
-| `timeout`           | ❌       | `300`       | Timeout in seconds before the agent is killed.                                                       |
+> Pre-release note: this repository has not published a stable release tag yet.  
+> Use `uses: PunGrumpy/cursor-action@main` (or a pinned commit SHA) until the first `v1` release is published.
+
+| Input               | Required | Default     | Description                                                                         |
+| ------------------- | -------- | ----------- | ----------------------------------------------------------------------------------- |
+| `api-key`           | ✅       | —           | Cursor API key (store in GitHub Secrets).                                           |
+| `prompt`            | ✅       | —           | Prompt passed to `cursor-agent`.                                                    |
+| `cursor-version`    | ❌       | `latest`    | Cursor lab build to install (`latest` or exact build id like `2026.03.20-44cb435`). |
+| `model`             | ❌       | `auto`      | Model name for `cursor-agent`.                                                      |
+| `working-directory` | ❌       | `.`         | Working directory used when running the agent.                                      |
+| `permissions`       | ❌       | `read-only` | Agent permissions: `read-only`, `read-write`, or `full`.                            |
+| `timeout`           | ❌       | `300`       | Timeout in seconds for each agent invocation attempt.                               |
 
 ## Outputs
 
-| Output      | Description                                                 |
-| ----------- | ----------------------------------------------------------- |
-| `summary`   | Text response from the agent.                               |
-| `exit-code` | Raw exit code from the `cursor-agent` process.              |
-| `cache-hit` | `"true"` if the Cursor CLI install was restored from cache. |
-
----
+| Output      | Description                                        |
+| ----------- | -------------------------------------------------- |
+| `summary`   | Agent text output (used for step-to-step handoff). |
+| `exit-code` | Exit code returned by `cursor-agent`.              |
+| `cache-hit` | `"true"` when CLI install came from cache.         |
 
 ## Examples
 
-### PR code review
+### PR review comment
 
 ```yaml
 name: Cursor Code Review
@@ -59,18 +60,18 @@ jobs:
   review:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - name: Run Cursor Agent
-        uses: PunGrumpy/cursor-action@v1
         id: review
+        uses: PunGrumpy/cursor-action@main
         with:
           api-key: ${{ secrets.CURSOR_API_KEY }}
+          permissions: read-only
           prompt: |
             Review the staged changes in this repository.
-            Focus on: correctness, security, and performance.
+            Focus on correctness, security, and performance.
             Be concise.
-          permissions: read-only
 
       - name: Comment on PR
         uses: actions/github-script@v7
@@ -84,68 +85,71 @@ jobs:
             })
 ```
 
-### Pin a specific CLI version
+### Pin a specific Cursor CLI build
 
 ```yaml
-- uses: PunGrumpy/cursor-action@v1
+- uses: PunGrumpy/cursor-action@main
   with:
     api-key: ${{ secrets.CURSOR_API_KEY }}
     prompt: "Generate a changelog entry for the latest commit."
     cursor-version: "2026.03.20-44cb435"
 ```
 
-### Read-write permissions (agent can modify files)
+### Allow file edits
 
 ```yaml
-- uses: PunGrumpy/cursor-action@v1
+- uses: PunGrumpy/cursor-action@main
   with:
     api-key: ${{ secrets.CURSOR_API_KEY }}
-    prompt: "Fix any TypeScript type errors in src/"
+    prompt: "Fix TypeScript type errors in src/."
     permissions: read-write
     working-directory: ./src
 ```
 
----
+## How this action behaves
 
-## Version Resolution
+### Version resolution
 
-`cursor-version: latest` resolves to the current published Cursor lab build before download. The action first checks Cursor's lab `latest-version` endpoint and, if that endpoint is unavailable or returns an access error, falls back to parsing the official [`https://cursor.com/install`](https://cursor.com/install) installer script.
+- `cursor-version: latest` resolves to a concrete Cursor lab build before download.
+- Resolution order:
+  1. `https://downloads.cursor.com/lab/latest-version`
+  2. Fallback to parsing `https://cursor.com/install`
+- For reproducible installs, pin an exact lab build id.
 
-If you want reproducible installs, pin `cursor-version` to an exact lab build id such as `2026.03.20-44cb435`. Values like `1.2.3` are not published Cursor lab artifact versions and will fail to download.
+### Invocation strategy
 
----
+- Primary invocation: `cursor-agent chat ...`
+- If chat fails with a likely CLI mismatch (for example `unknown command`) or empty output, the action retries with headless print mode (`-p --output-format text`).
+- A preflight print probe is also run to improve auth/entitlement diagnostics in job summary output.
 
-## Caching
+### Caching
 
-The action caches the extracted Cursor CLI package across jobs using `@actions/cache`. The cache key includes the platform, architecture, and resolved version, so:
+- The extracted CLI package is cached by platform, architecture, and resolved version.
+- Using `latest` still hits cache after it resolves to a concrete build.
+- Pinning a build id gives stable cache keys across runs.
 
-- `latest` resolves to a concrete version before caching — it won't re-download on every run once cached.
-- Pinning a version (e.g. `2026.03.20-44cb435`) gives you a stable, reproducible cache hit every time.
-- The full installed package is cached, not just the `cursor-agent` launcher.
+## Local development
 
----
+### Prerequisites
 
-## Troubleshooting (CI / smoke tests)
+- Node.js 24 (matches CI and release workflows)
+- Bun
 
-### `cursor-agent` exits with code 1 and little or no output
+### Validate changes locally
 
-- **API key & billing**: Ensure `CURSOR_API_KEY` is set and valid. Agent / headless features may require an eligible Cursor plan; some errors only show up once the CLI talks to Cursor’s API.
-- **Model**: The default `model: auto` should work for most accounts. If you pin `model`, confirm that model is available for your subscription.
-- **CI model override**: In this repo's CI workflow, `smoke-test.env.CURSOR_SMOKE_TEST_MODEL` controls the model used by the smoke test. Set it to a known-good model for your account if `auto` fails.
-- **CLI contract changes**: This action first runs `cursor-agent chat …` (with `--allow-*` flags from `permissions`). If that fails with no output or an “unknown command”-style error, it automatically retries using headless **print mode** (`-p`, `--output-format text`) as documented in the [Cursor headless CLI](https://cursor.com/docs/cli/headless) docs.
-- **Debugging**: On failure, check the **job summary** — it includes `cursor-agent --version`, which invocation mode was used (`chat` vs `print`), an auth/entitlement preflight result, merged stderr, and a **Diagnostics** section when both attempts fail.
+```bash
+bun install
+bun run typecheck
+bun run test
+bun run build
+```
 
-### Reproduce locally
+If you changed source files, commit updated `dist/` as well (`CI` fails when `dist/` is out of date).
+
+### Run action entrypoint locally
 
 ```bash
 export CURSOR_API_KEY='your-key'
-cursor-agent --version
-cursor-agent -p --no-interactive --output-format text --model auto "Say 'smoke test passed' and nothing else."
-```
-
-To run the action entrypoint locally from this repo:
-
-```bash
 export GITHUB_STEP_SUMMARY="$(mktemp)"
 export GITHUB_OUTPUT="$(mktemp)"
 export RUNNER_TOOL_CACHE="$(mktemp -d)"
@@ -160,15 +164,31 @@ env "INPUT_API-KEY=$CURSOR_API_KEY" \
     node dist/index.js
 ```
 
----
+## CI and release notes
+
+- `CI` workflow runs `typecheck`, `test`, and `build` on pushes and pull requests.
+- On pushes to `main`, CI also runs a smoke test job using this action (`uses: ./`).
+- `Release` workflow runs on pushes to `main`, executes tests/build, then uses Changesets to open/update a release PR or publish.
+- After the first stable release, major tags (`v1`, `v2`, ...) are managed by the release flow so `@v1` tracks the latest `v1.x.x`.
+
+## Troubleshooting
+
+### `cursor-agent` exits non-zero
+
+- Confirm `CURSOR_API_KEY` is present and valid.
+- If you set `model`, verify your account can access it (try `auto` first).
+- Check the job summary for:
+  - `cursor-agent --version`
+  - invocation mode used (`chat` or fallback `print`)
+  - preflight/auth diagnostics and merged stderr
+
+### Smoke test model issues in this repo
+
+This repository's smoke test uses `CURSOR_SMOKE_TEST_MODEL` (default: `auto`) in `.github/workflows/ci.yml`. If smoke tests fail due to model access, set it to a known-good model for your account.
 
 ## Versioning
 
-This project uses [changesets](https://github.com/changesets/changesets) for versioning. See [`.changeset/README.md`](.changeset/README.md) for how to add a changeset when contributing.
-
-Major version tags (`v1`, `v2`, …) are kept up-to-date automatically by the release workflow, so `uses: PunGrumpy/cursor-action@v1` always resolves to the latest `v1.x.x` release.
-
----
+This project uses [Changesets](https://github.com/changesets/changesets). See [`.changeset/README.md`](.changeset/README.md) for contribution workflow details.
 
 ## License
 
