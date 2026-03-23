@@ -21,6 +21,10 @@
   "type": "module",
   "main": "dist/index.js",
   "module": "src/index.ts",
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "scripts": {
     "build": "ncc build src/index.ts --license licenses.txt",
     "test": "bun test",
