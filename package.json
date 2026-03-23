@@ -28,7 +28,7 @@
     "format": "ultracite fix",
     "changeset": "changeset",
     "changeset:version": "changeset version",
-    "changeset:publish": "turbo run build && changeset publish"
+    "changeset:publish": "bun run build && changeset publish"
   },
   "dependencies": {
     "@actions/cache": "^6.0.0",
