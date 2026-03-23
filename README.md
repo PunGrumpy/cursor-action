@@ -25,23 +25,23 @@
 
 ## Inputs
 
-| Input               | Required | Default             | Description                                                           |
-| ------------------- | -------- | ------------------- | --------------------------------------------------------------------- |
-| `api-key`           | ✅       | —                   | Your Cursor API key. Store as a secret.                               |
-| `prompt`            | ✅       | —                   | The prompt to pass to `cursor-agent`.                                 |
-| `cursor-version`    | ❌       | `latest`            | Cursor CLI version to install. Use `latest` or a semver like `1.2.3`. |
-| `model`             | ❌       | `claude-sonnet-4-5` | Model for the agent to use.                                           |
-| `working-directory` | ❌       | `.`                 | Directory the agent operates in.                                      |
-| `permissions`       | ❌       | `read-only`         | Agent permissions: `read-only`, `read-write`, or `full`.              |
-| `timeout`           | ❌       | `300`               | Timeout in seconds before the agent is killed.                        |
+| Input               | Required | Default             | Description                                                                                          |
+| ------------------- | -------- | ------------------- | ---------------------------------------------------------------------------------------------------- |
+| `api-key`           | ✅       | —                   | Your Cursor API key. Store as a secret.                                                              |
+| `prompt`            | ✅       | —                   | The prompt to pass to `cursor-agent`.                                                                |
+| `cursor-version`    | ❌       | `latest`            | Cursor CLI build to install. Use `latest` or an exact Cursor lab build id like `2026.03.20-44cb435`. |
+| `model`             | ❌       | `claude-sonnet-4-5` | Model for the agent to use.                                                                          |
+| `working-directory` | ❌       | `.`                 | Directory the agent operates in.                                                                     |
+| `permissions`       | ❌       | `read-only`         | Agent permissions: `read-only`, `read-write`, or `full`.                                             |
+| `timeout`           | ❌       | `300`               | Timeout in seconds before the agent is killed.                                                       |
 
 ## Outputs
 
-| Output      | Description                                         |
-| ----------- | --------------------------------------------------- |
-| `summary`   | Text response from the agent.                       |
-| `exit-code` | Raw exit code from the `cursor-agent` process.      |
-| `cache-hit` | `"true"` if the CLI binary was restored from cache. |
+| Output      | Description                                                 |
+| ----------- | ----------------------------------------------------------- |
+| `summary`   | Text response from the agent.                               |
+| `exit-code` | Raw exit code from the `cursor-agent` process.              |
+| `cache-hit` | `"true"` if the Cursor CLI install was restored from cache. |
 
 ---
 
@@ -91,7 +91,7 @@ jobs:
   with:
     api-key: ${{ secrets.CURSOR_API_KEY }}
     prompt: "Generate a changelog entry for the latest commit."
-    cursor-version: "1.2.3"
+    cursor-version: "2026.03.20-44cb435"
 ```
 
 ### Read-write permissions (agent can modify files)
@@ -107,12 +107,21 @@ jobs:
 
 ---
 
+## Version Resolution
+
+`cursor-version: latest` resolves to the current published Cursor lab build before download. The action first checks Cursor's lab `latest-version` endpoint and, if that endpoint is unavailable or returns an access error, falls back to parsing the official [`https://cursor.com/install`](https://cursor.com/install) installer script.
+
+If you want reproducible installs, pin `cursor-version` to an exact lab build id such as `2026.03.20-44cb435`. Values like `1.2.3` are not published Cursor lab artifact versions and will fail to download.
+
+---
+
 ## Caching
 
-The action caches the Cursor CLI binary across jobs using `@actions/cache`. The cache key includes the platform, architecture, and resolved version, so:
+The action caches the extracted Cursor CLI package across jobs using `@actions/cache`. The cache key includes the platform, architecture, and resolved version, so:
 
 - `latest` resolves to a concrete version before caching — it won't re-download on every run once cached.
-- Pinning a version (e.g. `1.2.3`) gives you a stable, reproducible cache hit every time.
+- Pinning a version (e.g. `2026.03.20-44cb435`) gives you a stable, reproducible cache hit every time.
+- The full installed package is cached, not just the `cursor-agent` launcher.
 
 ---
 
