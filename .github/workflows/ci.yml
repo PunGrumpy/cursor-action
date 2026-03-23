@@ -6,13 +6,13 @@ on:
       - main
   pull_request:
 
-permissions:
-  contents: read
-
 jobs:
   build:
     name: Build & Test
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      actions: write
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -45,6 +45,13 @@ jobs:
             git diff dist/
             exit 1
           fi
+      - name: Upload dist for smoke test
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          if-no-files-found: error
 
   smoke-test:
     name: Smoke Test
@@ -52,9 +59,17 @@ jobs:
     needs:
       - build
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    permissions:
+      contents: read
+      actions: read
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+      - name: Download dist from build
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist
       - name: Run cursor-action (smoke test)
         id: cursor
         uses: ./
