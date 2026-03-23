@@ -95,7 +95,9 @@ const fetchCliVersionLine = async (
   }
 };
 
-const buildExecEnv = (inputs: ActionInputs): NonNullable<ExecOptions["env"]> => {
+const buildExecEnv = (
+  inputs: ActionInputs
+): NonNullable<ExecOptions["env"]> => {
   const baseEnv = Object.fromEntries(
     Object.entries(process.env).filter(
       (entry): entry is [string, string] => entry[1] !== undefined
@@ -206,8 +208,7 @@ const warnOnFailure = (
         ? ` cursor-agent --version: ${extras.cliVersion}.`
         : "";
       warning(
-        `cursor-agent exited with code ${exitCode} with no stdout or stderr${mode}${ver} ` +
-          failureHints(inputs).split("\n")[0]
+        `cursor-agent exited with code ${exitCode} with no stdout or stderr${mode}${ver} ${failureHints(inputs).split("\n")[0]}`
       );
     }
   }
@@ -259,8 +260,7 @@ export const runAgent = async (inputs: ActionInputs): Promise<AgentResult> => {
     };
   }
 
-  let cliVersion: string | undefined;
-  cliVersion = await fetchCliVersionLine(env, cwd);
+  const cliVersion = await fetchCliVersionLine(env, cwd);
   debug(`cursor-agent --version: ${cliVersion}`);
 
   if (!shouldTryPrintFallback(chatResult)) {
