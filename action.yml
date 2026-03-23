@@ -1,0 +1,55 @@
+name: "Cursor Action"
+description: "Install Cursor CLI and run cursor-agent in CI pipelines"
+author: "PunGrumpy"
+
+branding:
+  icon: "terminal"
+  color: "blue"
+
+inputs:
+  cursor-version:
+    description: "Version of the Cursor CLI to install (e.g. '0.1.0' or 'latest')"
+    required: false
+    default: "latest"
+
+  api-key:
+    description: "Cursor API key for authentication"
+    required: true
+
+  prompt:
+    description: "Prompt to pass to cursor-agent"
+    required: true
+
+  model:
+    description: "Model to use for the agent"
+    required: false
+    default: "claude-sonnet-4-5"
+
+  working-directory:
+    description: "Working directory for the agent to operate in"
+    required: false
+    default: "."
+
+  permissions:
+    description: "Agent permissions: 'read-only', 'read-write', or 'full'"
+    required: false
+    default: "read-only"
+
+  timeout:
+    description: "Timeout in seconds for the agent run"
+    required: false
+    default: "300"
+
+outputs:
+  summary:
+    description: "Text summary returned by the cursor-agent"
+
+  exit-code:
+    description: "Exit code from the cursor-agent process"
+
+  cache-hit:
+    description: "Whether the Cursor CLI binary was restored from cache"
+
+runs:
+  using: "node24"
+  main: "dist/index.js"
