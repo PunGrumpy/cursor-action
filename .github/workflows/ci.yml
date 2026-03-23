@@ -8,6 +8,7 @@ permissions:
 
 jobs:
   build:
+    name: Build & Test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -39,3 +40,30 @@ jobs:
             git diff dist/
             exit 1
           fi
+
+  smoke-test:
+    name: Smoke Test
+    runs-on: ubuntu-latest
+    needs:
+      - build
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Run cursor-action (smoke test)
+        id: cursor
+        uses: ./
+        with:
+          api-key: ${{ secrets.CURSOR_API_KEY }}
+          prompt: "Say 'smoke test passed' and nothing else."
+          cursor-version: "latest"
+          permissions: "read-only"
+          timeout: "60"
+      - name: Assert output is non-empty
+        run: |
+          SUMMARY="${{ steps.cursor.outputs.summary }}"
+          if [ -z "$SUMMARY" ]; then
+            echo "::error::cursor-action returned an empty summary"
+            exit 1
+          fi
+          echo "Smoke test passed. Summary: $SUMMARY"
