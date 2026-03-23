@@ -20,6 +20,7 @@
   "main": "dist/index.js",
   "module": "src/index.ts",
   "scripts": {
+    "build": "ncc build src/index.ts --license licenses.txt",
     "lint": "ultracite check",
     "format": "ultracite fix",
     "changeset": "changeset",
@@ -38,6 +39,7 @@
     "@changesets/changelog-github": "^0.6.0",
     "@changesets/cli": "^2.30.0",
     "@types/bun": "latest",
+    "@vercel/ncc": "^0.38.4",
     "oxfmt": "^0.41.0",
     "oxlint": "^1.56.0",
     "ultracite": "7.3.2"
