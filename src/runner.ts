@@ -304,15 +304,16 @@ export const runAgent = async (inputs: ActionInputs): Promise<AgentResult> => {
     clearTimeout(chatTimeout);
   }
 
+  const cliVersion = await fetchCliVersionLine(env, cwd);
+  debug(`cursor-agent --version: ${cliVersion}`);
+
   if (chatResult.exitCode === 0) {
     return {
       ...chatResult,
+      cliVersion,
       invocationMode: "chat",
     };
   }
-
-  const cliVersion = await fetchCliVersionLine(env, cwd);
-  debug(`cursor-agent --version: ${cliVersion}`);
 
   if (!shouldTryPrintFallback(chatResult)) {
     warnOnFailure(
