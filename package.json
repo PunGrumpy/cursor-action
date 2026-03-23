@@ -26,6 +26,14 @@
     "changeset:version": "changeset version",
     "changeset:publish": "turbo run build && changeset publish"
   },
+  "dependencies": {
+    "@actions/cache": "^6.0.0",
+    "@actions/core": "^3.0.0",
+    "@actions/exec": "^3.0.0",
+    "@actions/http-client": "^4.0.0",
+    "@actions/io": "^3.0.2",
+    "@actions/tool-cache": "^4.0.0"
+  },
   "devDependencies": {
     "@changesets/changelog-github": "^0.6.0",
     "@changesets/cli": "^2.30.0",
