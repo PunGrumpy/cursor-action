@@ -1,4 +1,4 @@
-# cursor-action
+# @pungrumpy/cursor-action
 
 ## 0.1.0
 

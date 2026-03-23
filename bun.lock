@@ -3,7 +3,7 @@
   "configVersion": 1,
   "workspaces": {
     "": {
-      "name": "cursor-action",
+      "name": "@pungrumpy/cursor-action",
       "dependencies": {
         "@actions/cache": "^6.0.0",
         "@actions/core": "^3.0.0",
