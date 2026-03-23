@@ -12,12 +12,13 @@ type ExecFn = (
 ) => Promise<number>;
 
 const mockExec = mock<ExecFn>();
+const mockWarning = mock<typeof actionsCore.warning>();
 
 mock.module("@actions/core", () => ({
   ...actionsCore,
   debug: mock<typeof actionsCore.debug>(),
   info: mock<typeof actionsCore.info>(),
-  warning: mock<typeof actionsCore.warning>(),
+  warning: mockWarning,
 }));
 
 mock.module("@actions/exec", () => ({
@@ -121,6 +122,22 @@ describe("runAgent", () => {
     mockExec.mockResolvedValue(42);
     const result = await runAgent(baseInputs);
     expect(result.exitCode).toBe(42);
+  });
+
+  it("surfaces stderr in a warning when cursor-agent fails", async () => {
+    mockExec.mockImplementation((_cmd, _args, options) => {
+      options?.listeners?.stderr?.(Buffer.from("Invalid API key\n"));
+      return Promise.resolve(1);
+    });
+
+    await runAgent(baseInputs);
+
+    expect(mockWarning).toHaveBeenCalledWith(
+      expect.stringContaining("cursor-agent stderr:")
+    );
+    expect(mockWarning).toHaveBeenCalledWith(
+      expect.stringContaining("Invalid API key")
+    );
   });
 
   it("sets CURSOR_DISABLE_UPDATE for pinned versions", async () => {

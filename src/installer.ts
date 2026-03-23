@@ -193,7 +193,7 @@ const installAgentPackage = async (
   for (const entry of entries) {
     const from = path.join(packageRoot, entry.name);
     const to = path.join(installDir, entry.name);
-    await fs.cp(from, to, { recursive: true });
+    await fs.cp(from, to, { force: true, recursive: true });
   }
 
   const mainBin = path.join(installDir, binaryName);

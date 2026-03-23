@@ -59,7 +59,6 @@ export const runAgent = async (inputs: ActionInputs): Promise<AgentResult> => {
     listeners: {
       stderr: (data: Buffer) => {
         stderr += data.toString();
-        // Mirror stderr to Actions warning stream so it's visible
         debug(`cursor-agent stderr: ${data.toString().trim()}`);
       },
       stdout: (data: Buffer) => {
@@ -95,9 +94,32 @@ export const runAgent = async (inputs: ActionInputs): Promise<AgentResult> => {
   }
 
   if (exitCode !== 0) {
-    warning(
-      `cursor-agent exited with code ${exitCode}. Check the logs above for details.`
-    );
+    const errTail = stderr.trim();
+    if (errTail) {
+      const maxLen = 12_000;
+      const clipped =
+        errTail.length > maxLen
+          ? `${errTail.slice(0, maxLen)}\n… (stderr truncated)`
+          : errTail;
+      warning(`cursor-agent stderr:\n${clipped}`);
+    } else {
+      const outTail = stdout.trim();
+      if (outTail) {
+        const maxLen = 4000;
+        const clipped =
+          outTail.length > maxLen
+            ? `${outTail.slice(0, maxLen)}\n… (stdout truncated)`
+            : outTail;
+        warning(
+          `cursor-agent exited with code ${exitCode} and empty stderr; stdout:\n${clipped}`
+        );
+      } else {
+        warning(
+          `cursor-agent exited with code ${exitCode} with no stdout or stderr. ` +
+            `Confirm CURSOR_API_KEY is set, the key is valid, and the model name is supported by your account.`
+        );
+      }
+    }
   }
 
   return { exitCode, stderr, stdout };

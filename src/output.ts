@@ -61,8 +61,18 @@ const writeJobSummary = async (
       ["Exit Code", String(result.exitCode)],
     ])
     .addHeading("Agent Response", 3)
-    .addRaw(text ? `\n\`\`\`\n${text}\n\`\`\`\n` : "_No output was produced._")
-    .write();
+    .addRaw(text ? `\n\`\`\`\n${text}\n\`\`\`\n` : "_No output was produced._");
+
+  const errText = result.stderr.trim();
+  if (errText) {
+    await summary
+      .addHeading("cursor-agent stderr", 3)
+      .addRaw(
+        `\n\`\`\`\n${errText.slice(0, 20_000)}${errText.length > 20_000 ? "\n… (truncated)" : ""}\n\`\`\`\n`
+      );
+  }
+
+  await summary.write();
 };
 
 /**
