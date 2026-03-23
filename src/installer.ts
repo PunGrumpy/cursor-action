@@ -13,10 +13,15 @@ import {
   find,
 } from "@actions/tool-cache";
 
+import {
+  extractLabVersionFromInstallScript,
+  parseLabVersionString,
+} from "./cursor-version";
 import type { Arch, Platform } from "./types";
 
 const CURSOR_DOWNLOAD_BASE = "https://downloads.cursor.com/lab";
 const CURSOR_VERSION_URL = "https://downloads.cursor.com/lab/latest-version";
+const CURSOR_INSTALL_SCRIPT_URL = "https://cursor.com/install";
 
 const getPlatform = (): Platform => {
   const p = process.platform;
@@ -44,9 +49,38 @@ const getArch = (): Arch => {
   throw new Error(`Unsupported architecture: ${a}`);
 };
 
+const tryResolveLatestFromVersionUrl = async (
+  client: HttpClient
+): Promise<string | null> => {
+  const response = await client.get(CURSOR_VERSION_URL);
+  const statusCode = response.message.statusCode ?? 0;
+  const body = await response.readBody();
+  if (statusCode !== 200) {
+    debug(
+      `Cursor lab latest-version returned HTTP ${statusCode}; trying install script fallback.`
+    );
+    return null;
+  }
+  return parseLabVersionString(body);
+};
+
+const tryResolveLatestFromInstallScript = async (
+  client: HttpClient
+): Promise<string | null> => {
+  const response = await client.get(CURSOR_INSTALL_SCRIPT_URL);
+  const statusCode = response.message.statusCode ?? 0;
+  const body = await response.readBody();
+  if (statusCode !== 200) {
+    throw new Error(
+      `Cursor install script returned HTTP ${statusCode} (expected 200).`
+    );
+  }
+  return extractLabVersionFromInstallScript(body);
+};
+
 /**
- * Resolves "latest" to a concrete semver version string by querying
- * Cursor's version endpoint.
+ * Resolves "latest" to a concrete lab build id via the version endpoint, with
+ * fallback to the official install script (the lab endpoint often returns 403).
  */
 export const resolveVersion = async (version: string): Promise<string> => {
   if (version !== "latest") {
@@ -55,14 +89,27 @@ export const resolveVersion = async (version: string): Promise<string> => {
   }
 
   debug("Resolving latest Cursor CLI version...");
-  const client = new HttpClient("cursor-action");
+  // Match `curl https://cursor.com/install` so cursor.com returns the shell script (not HTML).
+  const client = new HttpClient("curl/8.5.0 (compatible; cursor-action)");
 
   try {
-    const response = await client.get(CURSOR_VERSION_URL);
-    const body = await response.readBody();
-    const resolved = body.trim().replace(/^v/, "");
-    debug(`Resolved latest version: ${resolved}`);
-    return resolved;
+    const fromEndpoint = await tryResolveLatestFromVersionUrl(client);
+    if (fromEndpoint) {
+      debug(`Resolved latest version (lab endpoint): ${fromEndpoint}`);
+      return fromEndpoint;
+    }
+
+    const fromScript = await tryResolveLatestFromInstallScript(client);
+    if (fromScript) {
+      debug(`Resolved latest version (install script): ${fromScript}`);
+      return fromScript;
+    }
+
+    throw new Error(
+      "Could not resolve latest Cursor CLI version: lab endpoint did not return a valid version " +
+        "and the official install script did not contain a download URL. " +
+        "Pin `cursor-version` to a known lab build id, or try again later."
+    );
   } catch (error) {
     throw new Error(`Failed to resolve latest Cursor CLI version: ${error}`, {
       cause: error,

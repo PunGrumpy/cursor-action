@@ -22,12 +22,42 @@ describe("resolveVersion", () => {
 
   it("resolves latest from Cursor endpoint and normalizes v prefix", () => {
     mockHttpGet.mockResolvedValue({
+      message: { statusCode: 200 },
       readBody: mock(() => Promise.resolve("v2026.03.20-44cb435\n")),
     });
 
     expect(resolveVersion("latest")).resolves.toBe("2026.03.20-44cb435");
+    expect(mockHttpGet).toHaveBeenCalledTimes(1);
     expect(mockHttpGet).toHaveBeenCalledWith(
       "https://downloads.cursor.com/lab/latest-version"
+    );
+  });
+
+  it("falls back to install script when latest-version is non-200", () => {
+    const accessDeniedXml = `<?xml version="1.0" encoding="UTF-8"?><Error><Code>AccessDenied</Code></Error>`;
+    const bashSnippet = `DOWNLOAD_URL="https://downloads.cursor.com/lab/2026.03.20-44cb435/\${OS}/\${ARCH}/agent-cli-package.tar.gz"`;
+
+    mockHttpGet
+      .mockResolvedValueOnce({
+        message: { statusCode: 403 },
+        readBody: mock(() => Promise.resolve(accessDeniedXml)),
+      })
+      .mockResolvedValueOnce({
+        message: { statusCode: 200 },
+        readBody: mock(() =>
+          Promise.resolve(`#!/usr/bin/env bash\n${bashSnippet}\n`)
+        ),
+      });
+
+    expect(resolveVersion("latest")).resolves.toBe("2026.03.20-44cb435");
+    expect(mockHttpGet).toHaveBeenCalledTimes(2);
+    expect(mockHttpGet).toHaveBeenNthCalledWith(
+      1,
+      "https://downloads.cursor.com/lab/latest-version"
+    );
+    expect(mockHttpGet).toHaveBeenNthCalledWith(
+      2,
+      "https://cursor.com/install"
     );
   });
 

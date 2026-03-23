@@ -1,11 +1,9 @@
 import { getInput, warning } from "@actions/core";
 
+import { CURSOR_LAB_VERSION_RE } from "./cursor-version";
 import type { ActionInputs, Permission } from "./types";
 
 const VALID_PERMISSIONS: Permission[] = ["read-only", "read-write", "full"];
-
-/** Cursor CLI artifacts use paths like `2026.03.20-44cb435`, not npm-style semver only. */
-const PINNED_CURSOR_VERSION_RE = /^\d+\.\d+\.\d+(?:-[A-Za-z0-9]+)?$/;
 
 /**
  * Reads, validates, and returns all action inputs.
@@ -50,7 +48,7 @@ export const getInputs = (): ActionInputs => {
   const normalizedCursorVersion = cursorVersion.replace(/^v/, "");
   if (
     cursorVersion !== "latest" &&
-    !PINNED_CURSOR_VERSION_RE.test(normalizedCursorVersion)
+    !CURSOR_LAB_VERSION_RE.test(normalizedCursorVersion)
   ) {
     throw new Error(
       `Invalid 'cursor-version' value: '${cursorVersion}'. ` +
