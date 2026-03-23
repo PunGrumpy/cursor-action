@@ -97,8 +97,9 @@ describe("runAgent", () => {
   it("calls cursor-agent with correct base args", async () => {
     mockExec.mockResolvedValue(0);
 
-    await runAgent(baseInputs);
+    const result = await runAgent(baseInputs);
 
+    expect(result.cliVersion).toBe("cursor-agent 9.9.9-test");
     expect(mockExec).toHaveBeenCalledWith(
       "cursor-agent",
       expect.arrayContaining(["chat", "Analyze this code", "--no-interactive"]),
