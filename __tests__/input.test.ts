@@ -55,6 +55,18 @@ describe("getInputs", () => {
     expect(inputs.cursorVersion).toBe("v1.2.3");
   });
 
+  it("accepts a pinned Cursor lab build id", () => {
+    setupInputs({ "cursor-version": "2026.03.20-44cb435" });
+    const inputs = getInputs();
+    expect(inputs.cursorVersion).toBe("2026.03.20-44cb435");
+  });
+
+  it("accepts a pinned lab build id with v prefix", () => {
+    setupInputs({ "cursor-version": "v2026.03.20-44cb435" });
+    const inputs = getInputs();
+    expect(inputs.cursorVersion).toBe("v2026.03.20-44cb435");
+  });
+
   it("throws on invalid permission value", () => {
     setupInputs({ permissions: "superuser" });
     expect(() => getInputs()).toThrow(/Invalid 'permissions'/);

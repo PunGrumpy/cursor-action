@@ -48,9 +48,9 @@ const getArch = (): Arch => {
  * Resolves "latest" to a concrete semver version string by querying
  * Cursor's version endpoint.
  */
-const resolveVersion = async (version: string): Promise<string> => {
-  if (version === "latest") {
-    // Strip leading 'v' if present for consistency
+export const resolveVersion = async (version: string): Promise<string> => {
+  if (version !== "latest") {
+    // Keep pinned versions local; no network call needed.
     return version.replace(/^v/, "");
   }
 
@@ -74,13 +74,14 @@ const resolveVersion = async (version: string): Promise<string> => {
  * Builds the download URL for the Cursor CLI tarball.
  * Pattern: https://downloads.cursor.com/lab/{version}/{platform}/{arch}/agent-cli-package.tar.gz
  */
-const buildDownloadUrl = (
+export const buildDownloadUrl = (
   version: string,
   platform: Platform,
   arch: Arch
 ): string => {
   const ext = platform === "win32" ? "zip" : "tar.gz";
-  return `${CURSOR_DOWNLOAD_BASE}/${version}/${platform}/${arch}/agent-cli-package.${ext}`;
+  const platformSegment = platform === "win32" ? "windows" : platform;
+  return `${CURSOR_DOWNLOAD_BASE}/${version}/${platformSegment}/${arch}/agent-cli-package.${ext}`;
 };
 
 const buildCacheKey = (

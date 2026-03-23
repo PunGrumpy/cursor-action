@@ -4,6 +4,9 @@ import type { ActionInputs, Permission } from "./types";
 
 const VALID_PERMISSIONS: Permission[] = ["read-only", "read-write", "full"];
 
+/** Cursor CLI artifacts use paths like `2026.03.20-44cb435`, not npm-style semver only. */
+const PINNED_CURSOR_VERSION_RE = /^\d+\.\d+\.\d+(?:-[A-Za-z0-9]+)?$/;
+
 /**
  * Reads, validates, and returns all action inputs.
  * @returns The validated action inputs.
@@ -43,14 +46,17 @@ export const getInputs = (): ActionInputs => {
     );
   }
 
-  // Validate version format (semver or "latest")
+  // Validate version: "latest" or a published lab build id (see official install script / latest-version)
+  const normalizedCursorVersion = cursorVersion.replace(/^v/, "");
   if (
     cursorVersion !== "latest" &&
-    !/^\d+\.\d+\.\d+$/.test(cursorVersion.replace(/^v/, ""))
+    !PINNED_CURSOR_VERSION_RE.test(normalizedCursorVersion)
   ) {
     throw new Error(
       `Invalid 'cursor-version' value: '${cursorVersion}'. ` +
-        `Use 'latest' or a semver string like '1.2.3'.`
+        `Use 'latest', or pin an exact build id that exists on Cursor's CDN ` +
+        `(e.g. the value from https://downloads.cursor.com/lab/latest-version, ` +
+        `like '2026.03.20-44cb435'). Arbitrary values like '1.2.3' are not published and will fail to download.`
     );
   }
 
