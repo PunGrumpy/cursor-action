@@ -34,6 +34,7 @@ const buildChatArgs = (inputs: ActionInputs): string[] => {
 const buildPrintArgs = (inputs: ActionInputs): string[] => {
   const args: string[] = [
     "-p",
+    "--trust",
     "--no-interactive",
     "--output-format",
     "text",
@@ -51,6 +52,7 @@ const buildPrintArgs = (inputs: ActionInputs): string[] => {
 
 const buildPreflightArgs = (inputs: ActionInputs): string[] => [
   "-p",
+  "--trust",
   "--no-interactive",
   "--output-format",
   "text",

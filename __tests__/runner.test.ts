@@ -114,7 +114,12 @@ describe("runAgent", () => {
     );
     expect(mockGetExecOutput).toHaveBeenCalledWith(
       "cursor-agent",
-      expect.arrayContaining(["-p", "--no-interactive", "--output-format"]),
+      expect.arrayContaining([
+        "-p",
+        "--trust",
+        "--no-interactive",
+        "--output-format",
+      ]),
       expect.objectContaining({ silent: true })
     );
   });
@@ -209,6 +214,7 @@ describe("runAgent", () => {
     const [, second] = getExecCalls();
     const [firstPrintArg] = second?.args ?? [];
     expect(firstPrintArg).toBe("-p");
+    expect(second?.args).toContain("--trust");
     expect(second?.args).toContain("--output-format");
     expect(second?.args).toContain("text");
     expect(result.exitCode).toBe(0);
