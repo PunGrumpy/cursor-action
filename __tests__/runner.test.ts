@@ -1,9 +1,15 @@
 import { beforeEach, describe, expect, it, mock } from "bun:test";
 
 import * as actionsCore from "@actions/core";
-import type { ExecOptions, exec as ExecFn } from "@actions/exec";
+import type { ExecOptions } from "@actions/exec";
 
 import type { ActionInputs } from "../src/types";
+
+type ExecFn = (
+  commandLine: string,
+  args?: string[],
+  options?: ExecOptions
+) => Promise<number>;
 
 const mockExec = mock<ExecFn>();
 
@@ -32,7 +38,11 @@ const getExecCall = (): {
   if (call === undefined) {
     throw new Error("expected exec to have been called");
   }
-  const [commandLine, args, options] = call;
+  const [commandLine, args, options] = call as [
+    string,
+    string[] | undefined,
+    ExecOptions | undefined,
+  ];
   return { args, commandLine, options };
 };
 
