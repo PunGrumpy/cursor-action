@@ -11,7 +11,14 @@ type ExecFn = (
   options?: ExecOptions
 ) => Promise<number>;
 
+type GetExecOutputFn = (
+  commandLine: string,
+  args?: string[],
+  options?: ExecOptions
+) => Promise<{ exitCode: number; stderr: string; stdout: string }>;
+
 const mockExec = mock<ExecFn>();
+const mockGetExecOutput = mock<GetExecOutputFn>();
 const mockWarning = mock<typeof actionsCore.warning>();
 
 mock.module("@actions/core", () => ({
@@ -23,9 +30,25 @@ mock.module("@actions/core", () => ({
 
 mock.module("@actions/exec", () => ({
   exec: mockExec,
+  getExecOutput: mockGetExecOutput,
 }));
 
 const { runAgent } = await import("../src/runner");
+
+/** All `exec` invocations from the last test run. */
+const getExecCalls = (): {
+  args?: string[];
+  commandLine: string;
+  options?: ExecOptions;
+}[] =>
+  mockExec.mock.calls.map((call) => {
+    const [commandLine, args, options] = call as [
+      string,
+      string[] | undefined,
+      ExecOptions | undefined,
+    ];
+    return { args, commandLine, options };
+  });
 
 /** First `exec` invocation from the last test run (asserts the call exists). */
 const getExecCall = (): {
@@ -33,18 +56,13 @@ const getExecCall = (): {
   commandLine: string;
   options?: ExecOptions;
 } => {
-  expect(mockExec).toHaveBeenCalled();
-  const [call] = mockExec.mock.calls;
-  expect(call).toBeDefined();
-  if (call === undefined) {
+  const calls = getExecCalls();
+  expect(calls.length).toBeGreaterThan(0);
+  const [first] = calls;
+  if (first === undefined) {
     throw new Error("expected exec to have been called");
   }
-  const [commandLine, args, options] = call as [
-    string,
-    string[] | undefined,
-    ExecOptions | undefined,
-  ];
-  return { args, commandLine, options };
+  return first;
 };
 
 const baseInputs: ActionInputs = {
@@ -60,6 +78,11 @@ const baseInputs: ActionInputs = {
 describe("runAgent", () => {
   beforeEach(() => {
     mock.clearAllMocks();
+    mockGetExecOutput.mockResolvedValue({
+      exitCode: 0,
+      stderr: "",
+      stdout: "cursor-agent 9.9.9-test\n",
+    });
   });
 
   it("calls cursor-agent with correct base args", async () => {
@@ -79,6 +102,7 @@ describe("runAgent", () => {
         ignoreReturnCode: true,
       })
     );
+    expect(mockGetExecOutput).not.toHaveBeenCalled();
   });
 
   it("includes --model flag", async () => {
@@ -122,6 +146,7 @@ describe("runAgent", () => {
     mockExec.mockResolvedValue(42);
     const result = await runAgent(baseInputs);
     expect(result.exitCode).toBe(42);
+    expect(mockExec).toHaveBeenCalledTimes(2);
   });
 
   it("surfaces stderr in a warning when cursor-agent fails", async () => {
@@ -132,6 +157,7 @@ describe("runAgent", () => {
 
     await runAgent(baseInputs);
 
+    expect(mockExec).toHaveBeenCalledTimes(1);
     expect(mockWarning).toHaveBeenCalledWith(
       expect.stringContaining("cursor-agent stderr:")
     );
@@ -140,9 +166,99 @@ describe("runAgent", () => {
     );
   });
 
+  it("does not fall back to print when chat fails with substantive stderr", async () => {
+    mockExec.mockImplementation((_cmd, _args, options) => {
+      options?.listeners?.stderr?.(Buffer.from("billing error for model\n"));
+      return Promise.resolve(1);
+    });
+
+    const result = await runAgent(baseInputs);
+
+    expect(mockExec).toHaveBeenCalledTimes(1);
+    expect(result.invocationMode).toBe("chat");
+    expect(result.diagnostics).toContain("Primary (chat)");
+    expect(result.diagnostics).not.toContain("Fallback (print)");
+  });
+
+  it("falls back to headless print when chat exits with no output", async () => {
+    mockExec.mockResolvedValueOnce(1).mockResolvedValueOnce(0);
+
+    const result = await runAgent(baseInputs);
+
+    expect(mockExec).toHaveBeenCalledTimes(2);
+    expect(mockGetExecOutput).toHaveBeenCalledWith(
+      "cursor-agent",
+      ["--version"],
+      expect.objectContaining({ silent: true })
+    );
+    const [, second] = getExecCalls();
+    const [firstPrintArg] = second?.args ?? [];
+    expect(firstPrintArg).toBe("-p");
+    expect(second?.args).toContain("--output-format");
+    expect(second?.args).toContain("text");
+    expect(result.exitCode).toBe(0);
+    expect(result.invocationMode).toBe("print");
+  });
+
+  it("falls back to print when stderr suggests unknown command", async () => {
+    mockExec
+      .mockImplementationOnce((_cmd, _args, options) => {
+        options?.listeners?.stderr?.(
+          Buffer.from("Error: unknown command chat\n")
+        );
+        return Promise.resolve(1);
+      })
+      .mockResolvedValueOnce(0);
+
+    await runAgent(baseInputs);
+
+    expect(mockExec).toHaveBeenCalledTimes(2);
+    const [, secondUnknown] = getExecCalls();
+    const [firstPrintArgUnknown] = secondUnknown?.args ?? [];
+    expect(firstPrintArgUnknown).toBe("-p");
+  });
+
+  it("adds --force on print fallback for read-write permissions", async () => {
+    mockExec.mockResolvedValueOnce(1).mockResolvedValueOnce(0);
+
+    await runAgent({ ...baseInputs, permissions: "read-write" });
+
+    const [, secondRw] = getExecCalls();
+    const printArgs = secondRw?.args;
+    expect(printArgs).toContain("--force");
+  });
+
+  it("does not add --force on print fallback for read-only", async () => {
+    mockExec.mockResolvedValueOnce(1).mockResolvedValueOnce(0);
+
+    await runAgent({ ...baseInputs, permissions: "read-only" });
+
+    const [, secondRo] = getExecCalls();
+    const printArgs = secondRo?.args;
+    expect(printArgs).not.toContain("--force");
+  });
+
+  it("merges stderr and sets diagnostics when both invocations fail", async () => {
+    mockExec
+      .mockResolvedValueOnce(1)
+      .mockImplementationOnce((_cmd, _args, options) => {
+        options?.listeners?.stderr?.(Buffer.from("print mode failed\n"));
+        return Promise.resolve(2);
+      });
+
+    const result = await runAgent(baseInputs);
+
+    expect(result.exitCode).toBe(2);
+    expect(result.invocationMode).toBe("print");
+    expect(result.stderr).toContain("primary (chat)");
+    expect(result.stderr).toContain("fallback (print -p)");
+    expect(result.diagnostics).toContain("Hints:");
+    expect(result.diagnostics).toContain("CURSOR_API_KEY");
+  });
+
   it("sets CURSOR_DISABLE_UPDATE for pinned versions", async () => {
     mockExec.mockResolvedValue(0);
-    await runAgent({ ...baseInputs, cursorVersion: "1.2.3" });
+    await runAgent({ ...baseInputs, cursorVersion: "2026.03.20-44cb435" });
 
     const { options } = getExecCall();
     expect(options?.env?.CURSOR_DISABLE_UPDATE).toBe("1");

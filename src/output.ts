@@ -26,6 +26,9 @@ const parseSummary = (stdout: string): string => {
       if (typeof parsed.output === "string") {
         return parsed.output.trim();
       }
+      if (typeof parsed.text === "string") {
+        return parsed.text.trim();
+      }
     }
   } catch {
     // Not JSON — fall through to raw text handling
@@ -50,6 +53,17 @@ const writeJobSummary = async (
       ? "✅ Success"
       : `❌ Failed (exit ${result.exitCode})`;
 
+  const tableRows: [string, string][] = [
+    ["Status", status],
+    ["Exit Code", String(result.exitCode)],
+  ];
+  if (result.invocationMode) {
+    tableRows.push(["Invocation mode", result.invocationMode]);
+  }
+  if (result.cliVersion) {
+    tableRows.push(["cursor-agent --version", result.cliVersion]);
+  }
+
   await summary
     .addHeading("Cursor Agent Run", 2)
     .addTable([
@@ -57,8 +71,7 @@ const writeJobSummary = async (
         { data: "Field", header: true },
         { data: "Value", header: true },
       ],
-      ["Status", status],
-      ["Exit Code", String(result.exitCode)],
+      ...tableRows.map(([field, value]) => [field, value]),
     ])
     .addHeading("Agent Response", 3)
     .addRaw(text ? `\n\`\`\`\n${text}\n\`\`\`\n` : "_No output was produced._");
@@ -69,6 +82,15 @@ const writeJobSummary = async (
       .addHeading("cursor-agent stderr", 3)
       .addRaw(
         `\n\`\`\`\n${errText.slice(0, 20_000)}${errText.length > 20_000 ? "\n… (truncated)" : ""}\n\`\`\`\n`
+      );
+  }
+
+  const diag = result.diagnostics?.trim();
+  if (diag) {
+    await summary
+      .addHeading("Diagnostics", 3)
+      .addRaw(
+        `\n\`\`\`\n${diag.slice(0, 20_000)}${diag.length > 20_000 ? "\n… (truncated)" : ""}\n\`\`\`\n`
       );
   }
 

@@ -22,10 +22,18 @@ export interface CursorRelease {
   checksum?: string;
 }
 
+export type AgentInvocationMode = "chat" | "print";
+
 export interface AgentResult {
   stdout: string;
   stderr: string;
   exitCode: number;
+  /** Which argv shape produced this result (print is headless `-p` fallback). */
+  invocationMode?: AgentInvocationMode;
+  /** Output of `cursor-agent --version` when collected for diagnostics. */
+  cliVersion?: string;
+  /** Extra context for job summary / debugging when runs fail. */
+  diagnostics?: string;
 }
 
 export type Platform = "linux" | "darwin" | "win32";

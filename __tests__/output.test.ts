@@ -91,6 +91,16 @@ describe("setOutputs", () => {
     expect(outputs.summary).toBe("Output field text");
   });
 
+  it("extracts summary from JSON text field", async () => {
+    const result = {
+      exitCode: 0,
+      stderr: "",
+      stdout: JSON.stringify({ text: "Text field value" }),
+    };
+    const outputs = await setOutputs(result, false);
+    expect(outputs.summary).toBe("Text field value");
+  });
+
   it("handles empty stdout gracefully", async () => {
     const result = { exitCode: 0, stderr: "", stdout: "" };
     const outputs = await setOutputs(result, false);

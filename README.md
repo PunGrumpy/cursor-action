@@ -25,15 +25,15 @@
 
 ## Inputs
 
-| Input               | Required | Default             | Description                                                                                          |
-| ------------------- | -------- | ------------------- | ---------------------------------------------------------------------------------------------------- |
-| `api-key`           | ✅       | —                   | Your Cursor API key. Store as a secret.                                                              |
-| `prompt`            | ✅       | —                   | The prompt to pass to `cursor-agent`.                                                                |
-| `cursor-version`    | ❌       | `latest`            | Cursor CLI build to install. Use `latest` or an exact Cursor lab build id like `2026.03.20-44cb435`. |
-| `model`             | ❌       | `auto`              | Model for the agent to use.                                                                          |
-| `working-directory` | ❌       | `.`                 | Directory the agent operates in.                                                                     |
-| `permissions`       | ❌       | `read-only`         | Agent permissions: `read-only`, `read-write`, or `full`.                                             |
-| `timeout`           | ❌       | `300`               | Timeout in seconds before the agent is killed.                                                       |
+| Input               | Required | Default     | Description                                                                                          |
+| ------------------- | -------- | ----------- | ---------------------------------------------------------------------------------------------------- |
+| `api-key`           | ✅       | —           | Your Cursor API key. Store as a secret.                                                              |
+| `prompt`            | ✅       | —           | The prompt to pass to `cursor-agent`.                                                                |
+| `cursor-version`    | ❌       | `latest`    | Cursor CLI build to install. Use `latest` or an exact Cursor lab build id like `2026.03.20-44cb435`. |
+| `model`             | ❌       | `auto`      | Model for the agent to use.                                                                          |
+| `working-directory` | ❌       | `.`         | Directory the agent operates in.                                                                     |
+| `permissions`       | ❌       | `read-only` | Agent permissions: `read-only`, `read-write`, or `full`.                                             |
+| `timeout`           | ❌       | `300`       | Timeout in seconds before the agent is killed.                                                       |
 
 ## Outputs
 
@@ -122,6 +122,17 @@ The action caches the extracted Cursor CLI package across jobs using `@actions/c
 - `latest` resolves to a concrete version before caching — it won't re-download on every run once cached.
 - Pinning a version (e.g. `2026.03.20-44cb435`) gives you a stable, reproducible cache hit every time.
 - The full installed package is cached, not just the `cursor-agent` launcher.
+
+---
+
+## Troubleshooting (CI / smoke tests)
+
+### `cursor-agent` exits with code 1 and little or no output
+
+- **API key & billing**: Ensure `CURSOR_API_KEY` is set and valid. Agent / headless features may require an eligible Cursor plan; some errors only show up once the CLI talks to Cursor’s API.
+- **Model**: The default `model: auto` should work for most accounts. If you pin `model`, confirm that model is available for your subscription.
+- **CLI contract changes**: This action first runs `cursor-agent chat …` (with `--allow-*` flags from `permissions`). If that fails with no output or an “unknown command”-style error, it automatically retries using headless **print mode** (`-p`, `--output-format text`) as documented in the [Cursor headless CLI](https://cursor.com/docs/cli/headless) docs.
+- **Debugging**: On failure, check the **job summary** — it includes `cursor-agent --version`, which invocation mode was used (`chat` vs `print`), merged stderr, and a **Diagnostics** section when both attempts fail.
 
 ---
 
