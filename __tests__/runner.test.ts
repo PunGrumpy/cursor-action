@@ -78,10 +78,19 @@ const baseInputs: ActionInputs = {
 describe("runAgent", () => {
   beforeEach(() => {
     mock.clearAllMocks();
-    mockGetExecOutput.mockResolvedValue({
-      exitCode: 0,
-      stderr: "",
-      stdout: "cursor-agent 9.9.9-test\n",
+    mockGetExecOutput.mockImplementation((_cmd, args) => {
+      if (args?.includes("--version")) {
+        return Promise.resolve({
+          exitCode: 0,
+          stderr: "",
+          stdout: "cursor-agent 9.9.9-test\n",
+        });
+      }
+      return Promise.resolve({
+        exitCode: 0,
+        stderr: "",
+        stdout: "OK\n",
+      });
     });
   });
 
@@ -102,7 +111,11 @@ describe("runAgent", () => {
         ignoreReturnCode: true,
       })
     );
-    expect(mockGetExecOutput).not.toHaveBeenCalled();
+    expect(mockGetExecOutput).toHaveBeenCalledWith(
+      "cursor-agent",
+      expect.arrayContaining(["-p", "--no-interactive", "--output-format"]),
+      expect.objectContaining({ silent: true })
+    );
   });
 
   it("includes --model flag", async () => {
@@ -176,6 +189,7 @@ describe("runAgent", () => {
 
     expect(mockExec).toHaveBeenCalledTimes(1);
     expect(result.invocationMode).toBe("chat");
+    expect(result.diagnostics).toContain("Auth/Entitlement preflight");
     expect(result.diagnostics).toContain("Primary (chat)");
     expect(result.diagnostics).not.toContain("Fallback (print)");
   });

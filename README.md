@@ -131,8 +131,34 @@ The action caches the extracted Cursor CLI package across jobs using `@actions/c
 
 - **API key & billing**: Ensure `CURSOR_API_KEY` is set and valid. Agent / headless features may require an eligible Cursor plan; some errors only show up once the CLI talks to Cursor’s API.
 - **Model**: The default `model: auto` should work for most accounts. If you pin `model`, confirm that model is available for your subscription.
+- **CI model override**: In this repo's CI workflow, `smoke-test.env.CURSOR_SMOKE_TEST_MODEL` controls the model used by the smoke test. Set it to a known-good model for your account if `auto` fails.
 - **CLI contract changes**: This action first runs `cursor-agent chat …` (with `--allow-*` flags from `permissions`). If that fails with no output or an “unknown command”-style error, it automatically retries using headless **print mode** (`-p`, `--output-format text`) as documented in the [Cursor headless CLI](https://cursor.com/docs/cli/headless) docs.
-- **Debugging**: On failure, check the **job summary** — it includes `cursor-agent --version`, which invocation mode was used (`chat` vs `print`), merged stderr, and a **Diagnostics** section when both attempts fail.
+- **Debugging**: On failure, check the **job summary** — it includes `cursor-agent --version`, which invocation mode was used (`chat` vs `print`), an auth/entitlement preflight result, merged stderr, and a **Diagnostics** section when both attempts fail.
+
+### Reproduce locally
+
+```bash
+export CURSOR_API_KEY='your-key'
+cursor-agent --version
+cursor-agent -p --no-interactive --output-format text --model auto "Say 'smoke test passed' and nothing else."
+```
+
+To run the action entrypoint locally from this repo:
+
+```bash
+export GITHUB_STEP_SUMMARY="$(mktemp)"
+export GITHUB_OUTPUT="$(mktemp)"
+export RUNNER_TOOL_CACHE="$(mktemp -d)"
+export RUNNER_TEMP="$(mktemp -d)"
+
+env "INPUT_API-KEY=$CURSOR_API_KEY" \
+    "INPUT_PROMPT=Say 'smoke test passed' and nothing else." \
+    "INPUT_CURSOR-VERSION=latest" \
+    "INPUT_MODEL=auto" \
+    "INPUT_PERMISSIONS=read-only" \
+    "INPUT_TIMEOUT=60" \
+    node dist/index.js
+```
 
 ---
 

@@ -59,6 +59,8 @@ jobs:
     needs:
       - build
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    env:
+      CURSOR_SMOKE_TEST_MODEL: auto
     permissions:
       contents: read
       actions: read
@@ -70,6 +72,8 @@ jobs:
         with:
           name: dist
           path: dist
+      - name: Prepare smoke workspace
+        run: mkdir -p /tmp/cursor-smoke
       - name: Run cursor-action (smoke test)
         id: cursor
         uses: ./
@@ -77,6 +81,8 @@ jobs:
           api-key: ${{ secrets.CURSOR_API_KEY }}
           prompt: "Say 'smoke test passed' and nothing else."
           cursor-version: "latest"
+          model: ${{ env.CURSOR_SMOKE_TEST_MODEL }}
+          working-directory: "/tmp/cursor-smoke"
           permissions: "read-only"
           timeout: "60"
       - name: Assert output is non-empty

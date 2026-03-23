@@ -49,6 +49,16 @@ const buildPrintArgs = (inputs: ActionInputs): string[] => {
   return args;
 };
 
+const buildPreflightArgs = (inputs: ActionInputs): string[] => [
+  "-p",
+  "--no-interactive",
+  "--output-format",
+  "text",
+  "--model",
+  inputs.model,
+  "Reply with OK and nothing else.",
+];
+
 const isEmptyIo = (stdout: string, stderr: string): boolean =>
   !stdout.trim() && !stderr.trim();
 
@@ -137,6 +147,34 @@ const runAgentOnce = async (
   return { exitCode, stderr, stdout };
 };
 
+const runPreflightProbe = async (
+  inputs: ActionInputs,
+  options: ExecOptions
+): Promise<{ exitCode: number; stderr: string; stdout: string }> => {
+  try {
+    const out = await getExecOutput(
+      "cursor-agent",
+      buildPreflightArgs(inputs),
+      {
+        ...options,
+        ignoreReturnCode: true,
+        silent: true,
+      }
+    );
+    return {
+      exitCode: out.exitCode,
+      stderr: out.stderr,
+      stdout: out.stdout,
+    };
+  } catch {
+    return {
+      exitCode: 1,
+      stderr: "",
+      stdout: "",
+    };
+  }
+};
+
 const failureHints = (inputs: ActionInputs): string =>
   [
     "Confirm CURSOR_API_KEY is set and valid for Cursor Agent / headless use.",
@@ -148,6 +186,7 @@ const failureHints = (inputs: ActionInputs): string =>
 const buildDiagnostics = (
   cliVersion: string | undefined,
   inputs: ActionInputs,
+  preflight: { exitCode: number; stderr: string; stdout: string },
   chat: { exitCode: number; stderr: string; stdout: string },
   print?: { exitCode: number; stderr: string; stdout: string }
 ): string => {
@@ -155,6 +194,11 @@ const buildDiagnostics = (
     `Invocation: primary=chat, fallback=headless print (-p)`,
     cliVersion ? `cursor-agent --version: ${cliVersion}` : "",
     `Model: ${inputs.model} | Permissions: ${inputs.permissions}`,
+    "",
+    `Auth/Entitlement preflight (print -p) exit ${preflight.exitCode}:`,
+    preflight.stderr.trim() || preflight.stdout.trim()
+      ? `stderr: ${preflight.stderr.trim() || "(empty)"}\nstdout: ${preflight.stdout.trim() || "(empty)"}`
+      : "(no stdout/stderr)",
     "",
     `Primary (chat) exit ${chat.exitCode}:`,
     chat.stderr.trim() || chat.stdout.trim()
@@ -231,6 +275,13 @@ export const runAgent = async (inputs: ActionInputs): Promise<AgentResult> => {
 
   info(`Running cursor-agent in: ${cwd}`);
   info(`Model: ${inputs.model} | Permissions: ${inputs.permissions}`);
+  const preflight = await runPreflightProbe(inputs, baseOptions);
+  if (preflight.exitCode !== 0) {
+    warning(
+      "Auth/entitlement preflight (`cursor-agent -p`) failed before main prompt run. " +
+        "Continuing with normal invocation for additional diagnostics."
+    );
+  }
 
   const chatController = new AbortController();
   const chatTimeout = setTimeout(() => {
@@ -277,7 +328,7 @@ export const runAgent = async (inputs: ActionInputs): Promise<AgentResult> => {
     return {
       ...chatResult,
       cliVersion,
-      diagnostics: buildDiagnostics(cliVersion, inputs, chatResult),
+      diagnostics: buildDiagnostics(cliVersion, inputs, preflight, chatResult),
       invocationMode: "chat",
     };
   }
@@ -336,7 +387,13 @@ export const runAgent = async (inputs: ActionInputs): Promise<AgentResult> => {
 
   return {
     cliVersion,
-    diagnostics: buildDiagnostics(cliVersion, inputs, chatResult, printResult),
+    diagnostics: buildDiagnostics(
+      cliVersion,
+      inputs,
+      preflight,
+      chatResult,
+      printResult
+    ),
     exitCode: printResult.exitCode,
     invocationMode: "print",
     stderr: mergedStderr,
