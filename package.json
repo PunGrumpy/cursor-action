@@ -21,6 +21,8 @@
   "module": "src/index.ts",
   "scripts": {
     "build": "ncc build src/index.ts --license licenses.txt",
+    "test": "bun test",
+    "test:coverage": "bun test --coverage",
     "lint": "ultracite check",
     "format": "ultracite fix",
     "changeset": "changeset",
