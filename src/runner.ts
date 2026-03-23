@@ -35,7 +35,6 @@ const buildPrintArgs = (inputs: ActionInputs): string[] => {
   const args: string[] = [
     "-p",
     "--trust",
-    "--no-interactive",
     "--output-format",
     "text",
     "--model",
@@ -53,7 +52,6 @@ const buildPrintArgs = (inputs: ActionInputs): string[] => {
 const buildPreflightArgs = (inputs: ActionInputs): string[] => [
   "-p",
   "--trust",
-  "--no-interactive",
   "--output-format",
   "text",
   "--model",

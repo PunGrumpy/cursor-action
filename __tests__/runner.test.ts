@@ -114,12 +114,7 @@ describe("runAgent", () => {
     );
     expect(mockGetExecOutput).toHaveBeenCalledWith(
       "cursor-agent",
-      expect.arrayContaining([
-        "-p",
-        "--trust",
-        "--no-interactive",
-        "--output-format",
-      ]),
+      expect.arrayContaining(["-p", "--trust", "--output-format"]),
       expect.objectContaining({ silent: true })
     );
   });
