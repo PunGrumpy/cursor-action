@@ -10,10 +10,12 @@ export const runAgent = async (inputs: ActionInputs): Promise<AgentResult> => {
 
   info(`Running Cursor Agent in: ${cwd}`);
   info(`Model: ${inputs.model}`);
-  warning(
-    "The action `permissions` input is not applied by the Cursor SDK on Agent.create; " +
-      "effective tool access is auth-scoped (API key / account), not this field."
-  );
+  if (inputs.permissions !== "read-only") {
+    warning(
+      "The `permissions` input is not passed to Cursor SDK Agent.create; " +
+        "tool access follows your API key / account, not this field."
+    );
+  }
 
   let stdout = "";
   let stderr = "";

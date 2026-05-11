@@ -94,13 +94,18 @@ describe("runAgent", () => {
     });
 
     expect(mockAgentSend).toHaveBeenCalledWith("Analyze this code");
-    expect(mockWarning).toHaveBeenCalledWith(
-      expect.stringContaining("permissions")
-    );
     expect(mockRunCancel).not.toHaveBeenCalled();
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toBe("Hello from stream chunk 1. And chunk 2.");
     expect(result.stderr).toBe("");
+  });
+
+  it("warns when permissions is not read-only that the SDK does not use this input", async () => {
+    await runAgent({ ...baseInputs, permissions: "read-write" });
+
+    expect(mockWarning).toHaveBeenCalledWith(
+      expect.stringContaining("permissions")
+    );
   });
 
   it("returns exitCode 1 and surfaces stderr when SDK throws an error", async () => {

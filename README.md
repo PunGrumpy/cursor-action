@@ -35,7 +35,7 @@ Install the [Cursor](https://cursor.com) CLI in GitHub Actions and run `cursor-a
 | `cursor-version`    | ❌       | `latest`    | Cursor lab build to install (`latest` or exact build id like `2026.03.20-44cb435`). |
 | `model`             | ❌       | `default`   | Model id for the Cursor SDK (e.g. `default`, `composer-2`). Not `auto`.             |
 | `working-directory` | ❌       | `.`         | Working directory used when running the agent.                                      |
-| `permissions`       | ❌       | `read-only` | Agent permissions: `read-only`, `read-write`, or `full`.                            |
+| `permissions`       | ❌       | `read-only` | Not wired to the SDK (compatibility only). Tool access follows your API key.        |
 | `timeout`           | ❌       | `300`       | Timeout in seconds for each agent invocation attempt.                               |
 
 ## Outputs

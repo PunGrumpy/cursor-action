@@ -31,7 +31,7 @@ inputs:
     default: "."
 
   permissions:
-    description: "Agent permissions: 'read-only', 'read-write', or 'full'"
+    description: "Reserved for workflow compatibility. Not sent to the SDK; tool access is API-key scoped."
     required: false
     default: "read-only"
 
