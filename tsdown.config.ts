@@ -3,7 +3,7 @@ import { defineConfig } from "tsdown";
 export default defineConfig({
   clean: true,
   deps: {
-    alwaysBundle: ["@actions/core", "@cursor/sdk"],
+    alwaysBundle: ["@actions/core"],
     onlyBundle: false,
   },
   entry: ["src/index.ts"],
