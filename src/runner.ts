@@ -53,7 +53,8 @@ export const runAgent = async (inputs: ActionInputs): Promise<AgentResult> => {
         }
       }
 
-      const finalResult = await run.result;
+      await run.wait();
+      const finalResult = run.result;
       if (finalResult && typeof finalResult === "string") {
         stdout = finalResult;
       }

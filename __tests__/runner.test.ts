@@ -61,6 +61,13 @@ const streamAfter1200ms = async function* streamAfter1200msGen() {
   yield { text: "ok" };
 };
 
+const finishedWait = (result: string) => () =>
+  Promise.resolve({
+    id: "run-test",
+    result,
+    status: "finished" as const,
+  });
+
 describe("runAgent", () => {
   beforeEach(() => {
     mock.clearAllMocks();
@@ -71,9 +78,9 @@ describe("runAgent", () => {
 
     mockAgentSend.mockResolvedValue({
       cancel: mockRunCancel,
-      result: Promise.resolve("Hello from stream chunk 1. And chunk 2."),
       stream: mockStreamSuccess,
       supports: (op: string) => op === "cancel",
+      wait: finishedWait("Hello from stream chunk 1. And chunk 2."),
     });
   });
 
@@ -112,9 +119,9 @@ describe("runAgent", () => {
     mockRunCancel.mockClear();
     mockAgentSend.mockResolvedValue({
       cancel: mockRunCancel,
-      result: Promise.resolve(""),
       stream: streamAfter1100ms,
       supports: (op: string) => op === "cancel",
+      wait: finishedWait(""),
     });
 
     await runAgent({ ...baseInputs, timeout: 1 });
@@ -126,9 +133,9 @@ describe("runAgent", () => {
     mockRunCancel.mockClear();
     mockAgentSend.mockResolvedValue({
       cancel: mockRunCancel,
-      result: Promise.resolve("done"),
       stream: streamAfter1200ms,
       supports: () => false,
+      wait: finishedWait("done"),
     });
 
     const result = await runAgent({ ...baseInputs, timeout: 1 });
@@ -140,11 +147,9 @@ describe("runAgent", () => {
   it("returns exitCode 1 when stream throws an error", async () => {
     mockAgentSend.mockResolvedValue({
       cancel: mockRunCancel,
-      get result() {
-        return Promise.reject(new Error("Stream aborted"));
-      },
       stream: mockStreamError,
       supports: (op: string) => op === "cancel",
+      wait: finishedWait(""),
     });
 
     const result = await runAgent(baseInputs);
