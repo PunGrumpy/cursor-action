@@ -61,7 +61,7 @@ runs:
       run: |
         set -euo pipefail
         cd "$GITHUB_ACTION_PATH"
-        npm install --omit=dev --no-audit --no-fund
+        npm ci --omit=dev --no-audit --no-fund
     - name: Run Cursor Agent
       id: agent
       run: node $GITHUB_ACTION_PATH/dist/index.mjs
