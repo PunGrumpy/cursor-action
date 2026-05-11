@@ -52,6 +52,10 @@ outputs:
 runs:
   using: "composite"
   steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v6
+      with:
+        node-version: "24"
     - name: Install action dependencies
       shell: bash
       run: |
