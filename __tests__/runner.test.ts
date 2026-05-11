@@ -14,6 +14,7 @@ mock.module("@actions/core", () => ({
 
 const mockAgentCreate = mock();
 const mockAgentSend = mock();
+const mockRunCancel = mock(() => Promise.resolve());
 
 mock.module("@cursor/sdk", () => ({
   Agent: {
@@ -42,6 +43,24 @@ const mockStreamError = async function* mockStreamError() {
   throw new Error("Stream aborted");
 };
 
+/**
+ * Yields only after 1.1s so a 1s action timeout can fire first.
+ * @yields {{ text: string }}
+ */
+const streamAfter1100ms = async function* streamAfter1100msGen() {
+  await Bun.sleep(1100);
+  yield { text: "too late" };
+};
+
+/**
+ * Completes only after 1.2s when cancel is unsupported (timeout still scheduled).
+ * @yields {{ text: string }}
+ */
+const streamAfter1200ms = async function* streamAfter1200msGen() {
+  await Bun.sleep(1200);
+  yield { text: "ok" };
+};
+
 describe("runAgent", () => {
   beforeEach(() => {
     mock.clearAllMocks();
@@ -51,8 +70,10 @@ describe("runAgent", () => {
     });
 
     mockAgentSend.mockResolvedValue({
+      cancel: mockRunCancel,
       result: Promise.resolve("Hello from stream chunk 1. And chunk 2."),
       stream: mockStreamSuccess,
+      supports: (op: string) => op === "cancel",
     });
   });
 
@@ -63,11 +84,13 @@ describe("runAgent", () => {
       apiKey: "test-key",
       local: { cwd: expect.any(String) },
       model: { id: "auto" },
-      permissions: "read-only",
-      timeout: 300,
     });
 
     expect(mockAgentSend).toHaveBeenCalledWith("Analyze this code");
+    expect(mockWarning).toHaveBeenCalledWith(
+      expect.stringContaining("permissions")
+    );
+    expect(mockRunCancel).not.toHaveBeenCalled();
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toBe("Hello from stream chunk 1. And chunk 2.");
     expect(result.stderr).toBe("");
@@ -85,12 +108,43 @@ describe("runAgent", () => {
     );
   });
 
+  it("calls run.cancel when timeout elapses before the stream yields", async () => {
+    mockRunCancel.mockClear();
+    mockAgentSend.mockResolvedValue({
+      cancel: mockRunCancel,
+      result: Promise.resolve(""),
+      stream: streamAfter1100ms,
+      supports: (op: string) => op === "cancel",
+    });
+
+    await runAgent({ ...baseInputs, timeout: 1 });
+
+    expect(mockRunCancel).toHaveBeenCalled();
+  }, 5000);
+
+  it("does not call run.cancel when cancel is unsupported", async () => {
+    mockRunCancel.mockClear();
+    mockAgentSend.mockResolvedValue({
+      cancel: mockRunCancel,
+      result: Promise.resolve("done"),
+      stream: streamAfter1200ms,
+      supports: () => false,
+    });
+
+    const result = await runAgent({ ...baseInputs, timeout: 1 });
+
+    expect(mockRunCancel).not.toHaveBeenCalled();
+    expect(result.exitCode).toBe(0);
+  }, 5000);
+
   it("returns exitCode 1 when stream throws an error", async () => {
     mockAgentSend.mockResolvedValue({
+      cancel: mockRunCancel,
       get result() {
         return Promise.reject(new Error("Stream aborted"));
       },
       stream: mockStreamError,
+      supports: (op: string) => op === "cancel",
     });
 
     const result = await runAgent(baseInputs);

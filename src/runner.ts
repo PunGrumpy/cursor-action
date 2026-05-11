@@ -2,7 +2,6 @@ import { resolve } from "node:path";
 
 import { info, warning } from "@actions/core";
 import { Agent } from "@cursor/sdk";
-import type { AgentOptions } from "@cursor/sdk";
 
 import type { ActionInputs, AgentResult } from "./types";
 
@@ -10,7 +9,11 @@ export const runAgent = async (inputs: ActionInputs): Promise<AgentResult> => {
   const cwd = resolve(inputs.workingDirectory);
 
   info(`Running Cursor Agent in: ${cwd}`);
-  info(`Model: ${inputs.model} | Permissions: ${inputs.permissions}`);
+  info(`Model: ${inputs.model}`);
+  warning(
+    "The action `permissions` input is not applied by the Cursor SDK on Agent.create; " +
+      "effective tool access is auth-scoped (API key / account), not this field."
+  );
 
   let stdout = "";
   let stderr = "";
@@ -21,21 +24,43 @@ export const runAgent = async (inputs: ActionInputs): Promise<AgentResult> => {
       apiKey: inputs.apiKey,
       local: { cwd },
       model: { id: inputs.model },
-      permissions: inputs.permissions,
-      timeout: inputs.timeout,
-    } as AgentOptions);
+    });
 
     const run = await agent.send(inputs.prompt);
 
-    for await (const event of run.stream()) {
-      if ("text" in event && typeof event.text === "string") {
-        stdout += event.text;
-      }
+    const timeoutMs = inputs.timeout * 1000;
+    let cancelTimer: ReturnType<typeof setTimeout> | undefined;
+    if (timeoutMs > 0 && Number.isFinite(timeoutMs)) {
+      cancelTimer = setTimeout(() => {
+        // Fire-and-forget: timeout handler must not block the timer callback.
+        // eslint-disable-next-line no-void -- intentional detached async work
+        void (async () => {
+          if (run.supports("cancel")) {
+            try {
+              await run.cancel();
+            } catch {
+              // Best-effort cancel on timeout; errors are surfaced via stream/result.
+            }
+          }
+        })();
+      }, timeoutMs);
     }
 
-    const finalResult = await run.result;
-    if (finalResult && typeof finalResult === "string") {
-      stdout = finalResult;
+    try {
+      for await (const event of run.stream()) {
+        if ("text" in event && typeof event.text === "string") {
+          stdout += event.text;
+        }
+      }
+
+      const finalResult = await run.result;
+      if (finalResult && typeof finalResult === "string") {
+        stdout = finalResult;
+      }
+    } finally {
+      if (cancelTimer !== undefined) {
+        clearTimeout(cancelTimer);
+      }
     }
   } catch (error) {
     exitCode = 1;
