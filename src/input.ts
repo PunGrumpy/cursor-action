@@ -10,7 +10,7 @@ export const getInputs = (): ActionInputs => {
     cursorVersionRaw.trim().length > 0 ? cursorVersionRaw.trim() : undefined;
   const apiKey = getInput("api-key", { required: true });
   const prompt = getInput("prompt", { required: true });
-  const model = getInput("model", { required: false }) || "auto";
+  const model = getInput("model", { required: false }) || "default";
   const workingDirectory =
     getInput("working-directory", { required: false }) || ".";
   const permissionsRaw =

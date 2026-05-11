@@ -17,7 +17,7 @@ const setupInputs = (overrides: Record<string, string> = {}): void => {
   const defaults: Record<string, string> = {
     "api-key": "test-api-key",
     "cursor-version": "latest",
-    model: "auto",
+    model: "default",
     permissions: "read-only",
     prompt: "Review this code",
     timeout: "300",
@@ -38,7 +38,7 @@ describe("getInputs", () => {
     expect(inputs.cursorVersion).toBe("latest");
     expect(inputs.apiKey).toBe("test-api-key");
     expect(inputs.prompt).toBe("Review this code");
-    expect(inputs.model).toBe("auto");
+    expect(inputs.model).toBe("default");
     expect(inputs.permissions).toBe("read-only");
     expect(inputs.timeout).toBe(300);
   });

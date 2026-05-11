@@ -60,7 +60,7 @@ jobs:
       - build
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
     env:
-      CURSOR_SMOKE_TEST_MODEL: auto
+      CURSOR_SMOKE_TEST_MODEL: default
     permissions:
       contents: read
       actions: read

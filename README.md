@@ -33,7 +33,7 @@ Install the [Cursor](https://cursor.com) CLI in GitHub Actions and run `cursor-a
 | `api-key`           | ✅       | —           | Cursor API key (store in GitHub Secrets).                                           |
 | `prompt`            | ✅       | —           | Prompt passed to `cursor-agent`.                                                    |
 | `cursor-version`    | ❌       | `latest`    | Cursor lab build to install (`latest` or exact build id like `2026.03.20-44cb435`). |
-| `model`             | ❌       | `auto`      | Model name for `cursor-agent`.                                                      |
+| `model`             | ❌       | `default`   | Model id for the Cursor SDK (e.g. `default`, `composer-2`). Not `auto`.             |
 | `working-directory` | ❌       | `.`         | Working directory used when running the agent.                                      |
 | `permissions`       | ❌       | `read-only` | Agent permissions: `read-only`, `read-write`, or `full`.                            |
 | `timeout`           | ❌       | `300`       | Timeout in seconds for each agent invocation attempt.                               |
@@ -158,7 +158,7 @@ export RUNNER_TEMP="$(mktemp -d)"
 env "INPUT_API-KEY=$CURSOR_API_KEY" \
     "INPUT_PROMPT=Say 'smoke test passed' and nothing else." \
     "INPUT_CURSOR-VERSION=latest" \
-    "INPUT_MODEL=auto" \
+    "INPUT_MODEL=default" \
     "INPUT_PERMISSIONS=read-only" \
     "INPUT_TIMEOUT=60" \
     node dist/index.mjs
@@ -176,7 +176,7 @@ env "INPUT_API-KEY=$CURSOR_API_KEY" \
 ### `cursor-agent` exits non-zero
 
 - Confirm `CURSOR_API_KEY` is present and valid.
-- If you set `model`, verify your account can access it (try `auto` first).
+- If you set `model`, verify your account can access it (start with `default` or another id from the SDK error list).
 - Check the job summary for:
   - `cursor-agent --version`
   - invocation mode used (`chat` or fallback `print`)
@@ -184,7 +184,7 @@ env "INPUT_API-KEY=$CURSOR_API_KEY" \
 
 ### Smoke test model issues in this repo
 
-This repository's smoke test uses `CURSOR_SMOKE_TEST_MODEL` (default: `auto`) in `.github/workflows/ci.yml`. If smoke tests fail due to model access, set it to a known-good model for your account.
+This repository's smoke test uses `CURSOR_SMOKE_TEST_MODEL` (default: `default`) in `.github/workflows/ci.yml`. If smoke tests fail due to model access, set it to another id your key can use.
 
 ## Versioning
 
