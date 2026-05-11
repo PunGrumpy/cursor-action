@@ -63,6 +63,8 @@ describe("runAgent", () => {
       apiKey: "test-key",
       local: { cwd: expect.any(String) },
       model: { id: "auto" },
+      permissions: "read-only",
+      timeout: 300,
     });
 
     expect(mockAgentSend).toHaveBeenCalledWith("Analyze this code");

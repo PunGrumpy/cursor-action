@@ -2,6 +2,7 @@ import { resolve } from "node:path";
 
 import { info, warning } from "@actions/core";
 import { Agent } from "@cursor/sdk";
+import type { AgentOptions } from "@cursor/sdk";
 
 import type { ActionInputs, AgentResult } from "./types";
 
@@ -20,7 +21,9 @@ export const runAgent = async (inputs: ActionInputs): Promise<AgentResult> => {
       apiKey: inputs.apiKey,
       local: { cwd },
       model: { id: inputs.model },
-    });
+      permissions: inputs.permissions,
+      timeout: inputs.timeout,
+    } as AgentOptions);
 
     const run = await agent.send(inputs.prompt);
 
