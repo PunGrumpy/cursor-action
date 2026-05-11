@@ -52,6 +52,12 @@ outputs:
 runs:
   using: "composite"
   steps:
+    - name: Install action dependencies
+      shell: bash
+      run: |
+        set -euo pipefail
+        cd "$GITHUB_ACTION_PATH"
+        npm install --omit=dev --no-audit --no-fund
     - name: Run Cursor Agent
       id: agent
       run: node $GITHUB_ACTION_PATH/dist/index.mjs
