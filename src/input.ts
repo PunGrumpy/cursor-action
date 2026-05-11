@@ -51,7 +51,7 @@ export const getInputs = (): ActionInputs => {
 
   return {
     apiKey,
-    ...(cursorVersion !== undefined ? { cursorVersion } : {}),
+    ...(cursorVersion === undefined ? {} : { cursorVersion }),
     model,
     permissions: permissionsRaw as Permission,
     prompt,
