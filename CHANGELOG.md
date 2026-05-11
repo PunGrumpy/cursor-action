@@ -1,5 +1,11 @@
 # @pungrumpy/cursor-action
 
+## 1.0.0
+
+### Major Changes
+
+- e1d3c03: Migrate to the official `@cursor/sdk` and update action execution type to composite.
+
 ## 0.1.0
 
 ### Minor Changes
