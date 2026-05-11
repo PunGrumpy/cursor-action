@@ -52,13 +52,9 @@ outputs:
 runs:
   using: "composite"
   steps:
-    - name: Install Action Dependencies
-      run: npm ci --omit=dev --prefix $GITHUB_ACTION_PATH
-      shell: bash
-
     - name: Run Cursor Agent
       id: agent
-      run: node $GITHUB_ACTION_PATH/dist/index.js
+      run: node $GITHUB_ACTION_PATH/dist/index.mjs
       shell: bash
       env:
         INPUT_CURSOR_VERSION: ${{ inputs.cursor-version }}

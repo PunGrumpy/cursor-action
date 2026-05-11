@@ -19,7 +19,7 @@
     "url": "git+https://github.com/PunGrumpy/cursor-action.git"
   },
   "type": "module",
-  "main": "dist/index.js",
+  "main": "dist/index.mjs",
   "module": "src/index.ts",
   "publishConfig": {
     "access": "public",
