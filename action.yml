@@ -67,10 +67,10 @@ runs:
       run: node $GITHUB_ACTION_PATH/dist/index.mjs
       shell: bash
       env:
-        INPUT_CURSOR_VERSION: ${{ inputs['cursor-version'] }}
-        INPUT_API_KEY: ${{ inputs['api-key'] }}
+        'INPUT_CURSOR-VERSION': ${{ inputs['cursor-version'] }}
+        'INPUT_API-KEY': ${{ inputs['api-key'] }}
         INPUT_PROMPT: ${{ inputs.prompt }}
         INPUT_MODEL: ${{ inputs.model }}
-        INPUT_WORKING_DIRECTORY: ${{ inputs['working-directory'] }}
+        'INPUT_WORKING-DIRECTORY': ${{ inputs['working-directory'] }}
         INPUT_PERMISSIONS: ${{ inputs.permissions }}
         INPUT_TIMEOUT: ${{ inputs.timeout }}
