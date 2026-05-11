@@ -10,6 +10,7 @@
     "incremental": false,
     "isolatedModules": true,
     "lib": ["es2022", "DOM", "DOM.Iterable"],
+    "types": ["bun"],
     "module": "ESNext",
     "moduleDetection": "force",
     "moduleResolution": "Bundler",

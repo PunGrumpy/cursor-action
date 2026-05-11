@@ -43,28 +43,31 @@ describe("getInputs", () => {
     expect(inputs.timeout).toBe(300);
   });
 
-  it("accepts a pinned semver version", () => {
+  it("warns if cursor-version is provided and not latest", () => {
     setupInputs({ "cursor-version": "1.2.3" });
     const inputs = getInputs();
     expect(inputs.cursorVersion).toBe("1.2.3");
+    expect(mockWarning).toHaveBeenCalledWith(
+      expect.stringContaining("deprecated")
+    );
   });
 
-  it("accepts a pinned semver version with v prefix", () => {
-    setupInputs({ "cursor-version": "v1.2.3" });
+  it("treats empty cursor-version as omitted (undefined), matching optional typing", () => {
+    setupInputs({ "cursor-version": "" });
     const inputs = getInputs();
-    expect(inputs.cursorVersion).toBe("v1.2.3");
+    expect(inputs.cursorVersion).toBeUndefined();
+    expect(mockWarning).not.toHaveBeenCalledWith(
+      expect.stringContaining("deprecated")
+    );
   });
 
-  it("accepts a pinned Cursor lab build id", () => {
-    setupInputs({ "cursor-version": "2026.03.20-44cb435" });
+  it("trims cursor-version whitespace", () => {
+    setupInputs({ "cursor-version": "  1.0.0  " });
     const inputs = getInputs();
-    expect(inputs.cursorVersion).toBe("2026.03.20-44cb435");
-  });
-
-  it("accepts a pinned lab build id with v prefix", () => {
-    setupInputs({ "cursor-version": "v2026.03.20-44cb435" });
-    const inputs = getInputs();
-    expect(inputs.cursorVersion).toBe("v2026.03.20-44cb435");
+    expect(inputs.cursorVersion).toBe("1.0.0");
+    expect(mockWarning).toHaveBeenCalledWith(
+      expect.stringContaining("deprecated")
+    );
   });
 
   it("throws on invalid permission value", () => {
@@ -85,11 +88,6 @@ describe("getInputs", () => {
   it("throws on empty prompt", () => {
     setupInputs({ prompt: "   " });
     expect(() => getInputs()).toThrow(/cannot be empty/);
-  });
-
-  it("throws on invalid version format", () => {
-    setupInputs({ "cursor-version": "not-a-version" });
-    expect(() => getInputs()).toThrow(/Invalid 'cursor-version'/);
   });
 
   it("warns on very long timeout", () => {
