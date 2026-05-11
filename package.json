@@ -19,14 +19,15 @@
     "url": "git+https://github.com/PunGrumpy/cursor-action.git"
   },
   "type": "module",
-  "main": "dist/index.js",
+  "main": "dist/index.mjs",
   "module": "src/index.ts",
   "publishConfig": {
     "access": "public",
     "registry": "https://registry.npmjs.org/"
   },
   "scripts": {
-    "build": "ncc build src/index.ts --license licenses.txt",
+    "build": "tsdown",
+    "dev": "tsdown --watch",
     "test": "bun test",
     "test:coverage": "bun test --coverage",
     "typecheck": "tsc --noEmit",
@@ -37,19 +38,15 @@
     "changeset:publish": "bun run build && changeset publish"
   },
   "dependencies": {
-    "@actions/cache": "^6.0.0",
     "@actions/core": "^3.0.0",
-    "@actions/exec": "^3.0.0",
-    "@actions/http-client": "^4.0.0",
-    "@actions/io": "^3.0.2",
-    "@actions/tool-cache": "^4.0.0"
+    "@cursor/sdk": "^1.0.12"
   },
   "devDependencies": {
     "@changesets/cli": "^2.30.0",
     "@types/bun": "latest",
-    "@vercel/ncc": "^0.38.4",
     "oxfmt": "^0.41.0",
     "oxlint": "^1.56.0",
+    "tsdown": "^0.22.0",
     "ultracite": "7.3.2"
   },
   "peerDependencies": {

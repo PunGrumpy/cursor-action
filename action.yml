@@ -1,5 +1,5 @@
 name: "Cursor Action"
-description: "Install Cursor CLI and run cursor-agent in CI pipelines"
+description: "Run cursor-agent in CI pipelines using the official @cursor/sdk"
 author: "PunGrumpy"
 
 branding:
@@ -8,7 +8,7 @@ branding:
 
 inputs:
   cursor-version:
-    description: "Cursor CLI build to install: 'latest' or exact lab id (e.g. from https://downloads.cursor.com/lab/latest-version, like '2026.03.20-44cb435')"
+    description: "(Deprecated) The SDK automatically manages the agent version."
     required: false
     default: "latest"
 
@@ -43,13 +43,24 @@ inputs:
 outputs:
   summary:
     description: "Text summary returned by the cursor-agent"
+    value: ${{ steps.agent.outputs.summary }}
 
   exit-code:
     description: "Exit code from the cursor-agent process"
-
-  cache-hit:
-    description: "Whether the Cursor CLI binary was restored from cache"
+    value: ${{ steps.agent.outputs.exit-code }}
 
 runs:
-  using: "node24"
-  main: "dist/index.js"
+  using: "composite"
+  steps:
+    - name: Run Cursor Agent
+      id: agent
+      run: node $GITHUB_ACTION_PATH/dist/index.mjs
+      shell: bash
+      env:
+        INPUT_CURSOR_VERSION: ${{ inputs.cursor-version }}
+        INPUT_API_KEY: ${{ inputs.api-key }}
+        INPUT_PROMPT: ${{ inputs.prompt }}
+        INPUT_MODEL: ${{ inputs.model }}
+        INPUT_WORKING_DIRECTORY: ${{ inputs.working-directory }}
+        INPUT_PERMISSIONS: ${{ inputs.permissions }}
+        INPUT_TIMEOUT: ${{ inputs.timeout }}

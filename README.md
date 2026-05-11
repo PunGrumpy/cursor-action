@@ -161,7 +161,7 @@ env "INPUT_API-KEY=$CURSOR_API_KEY" \
     "INPUT_MODEL=auto" \
     "INPUT_PERMISSIONS=read-only" \
     "INPUT_TIMEOUT=60" \
-    node dist/index.js
+    node dist/index.mjs
 ```
 
 ## CI and release notes
