@@ -33,7 +33,7 @@ const parseSummary = (stdout: string): string => {
 
   const clean = trimmed.replaceAll(
     // eslint-disable-next-line no-control-regex
-    /\u001B\[[0-9;]*[mGKHF]/g,
+    /\u001B\[[0-9;]*[mGKHF]/gu,
     ""
   );
 
