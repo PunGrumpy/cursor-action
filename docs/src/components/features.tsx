@@ -76,7 +76,7 @@ const CONSUMER_AFTER = "`,\n      })";
 const LargeCard = () => (
   <a
     aria-labelledby="handoff"
-    className="border-fd-card-border bg-fd-card hover:bg-fd-card-hover rounded-xl border transition-colors grid grid-cols-1 items-center gap-y-8 p-7 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fd-ring lg:grid-cols-24 lg:gap-y-0"
+    className="border-fd-card-border bg-fd-card hover:bg-fd-card-hover focus-visible:outline-fd-ring grid grid-cols-1 items-center gap-y-8 rounded-xl border p-7 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 lg:grid-cols-24 lg:gap-y-0"
     href="/examples"
   >
     <div className="lg:col-start-1 lg:col-end-9 lg:pr-12">
@@ -216,7 +216,7 @@ const FeatureCard = ({ feature }: { feature: (typeof FEATURES)[number] }) => {
   return (
     <a
       aria-labelledby={headingId}
-      className="border-fd-card-border bg-fd-card hover:bg-fd-card-hover rounded-xl border transition-colors flex h-full grow flex-col p-7 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fd-ring"
+      className="border-fd-card-border bg-fd-card hover:bg-fd-card-hover focus-visible:outline-fd-ring flex h-full grow flex-col rounded-xl border p-7 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
       href={feature.href}
     >
       <div className="flex max-w-prose grow flex-col">

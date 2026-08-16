@@ -118,7 +118,7 @@ export const SiteFooter = () => (
               {column.links.map((link) => (
                 <li key={link.label}>
                   <a
-                    className="group text-fd-foreground inline-block py-1 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fd-ring"
+                    className="group text-fd-foreground focus-visible:outline-fd-ring inline-block py-1 text-sm focus-visible:outline-2 focus-visible:outline-offset-2"
                     href={link.href}
                     {...(link.external
                       ? { rel: "noreferrer", target: "_blank" }
@@ -146,7 +146,7 @@ export const SiteFooter = () => (
           <small className="text-sm">
             © 2026{" "}
             <a
-              className="hover:text-fd-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fd-ring"
+              className="hover:text-fd-foreground focus-visible:outline-fd-ring focus-visible:outline-2 focus-visible:outline-offset-2"
               href="https://www.pungrumpy.com"
               rel="noreferrer"
               target="_blank"

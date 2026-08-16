@@ -22,14 +22,14 @@ export const SiteHeader = () => (
   <header className="bg-fd-background fixed top-0 left-0 z-50 w-full">
     <div className="relative mx-auto grid h-14 max-w-6xl grid-cols-[1fr_auto] items-center px-5 lg:grid-cols-[auto_1fr_auto]">
       <a
-        className="bg-fd-foreground text-fd-background absolute top-2 left-5 -translate-y-full rounded-full px-4 py-2 text-sm opacity-0 transition-transform focus:translate-y-0 focus:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fd-ring"
+        className="bg-fd-foreground text-fd-background focus-visible:outline-fd-ring absolute top-2 left-5 -translate-y-full rounded-full px-4 py-2 text-sm opacity-0 transition-transform focus:translate-y-0 focus:opacity-100 focus-visible:outline-2 focus-visible:outline-offset-2"
         href="#main"
       >
         Skip to content
       </a>
 
       <a
-        className="col-start-1 col-end-2 row-start-1 row-end-2 inline-flex items-center gap-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fd-ring"
+        className="focus-visible:outline-fd-ring col-start-1 col-end-2 row-start-1 row-end-2 inline-flex items-center gap-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-offset-2"
         href="/"
       >
         <Mark className="size-[22px]" />
@@ -42,7 +42,7 @@ export const SiteHeader = () => (
             {NAV_LINKS.map((link) => (
               <li key={link.href}>
                 <a
-                  className="text-fd-muted-foreground hover:text-fd-foreground rounded-full px-3 py-2 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fd-ring"
+                  className="text-fd-muted-foreground hover:text-fd-foreground focus-visible:outline-fd-ring rounded-full px-3 py-2 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2"
                   href={link.href}
                 >
                   {link.label}
@@ -55,13 +55,13 @@ export const SiteHeader = () => (
 
       <div className="col-start-2 col-end-3 row-start-1 row-end-2 flex items-center gap-2 justify-self-end lg:col-start-3 lg:col-end-[-1]">
         <a
-          className="rounded-full p-1 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fd-ring lg:hidden"
+          className="focus-visible:outline-fd-ring rounded-full p-1 text-sm focus-visible:outline-2 focus-visible:outline-offset-2 lg:hidden"
           href="/quickstart"
         >
           Docs
         </a>
         <a
-          className="border-fd-foreground/20 hover:bg-fd-accent hidden rounded-full border px-[0.8em] pt-[0.45em] pb-[0.46em] text-sm leading-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fd-ring lg:inline-flex"
+          className="border-fd-foreground/20 hover:bg-fd-accent focus-visible:outline-fd-ring hidden rounded-full border px-[0.8em] pt-[0.45em] pb-[0.46em] text-sm leading-none transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 lg:inline-flex"
           href={MARKETPLACE}
           rel="noreferrer"
           target="_blank"
@@ -69,7 +69,7 @@ export const SiteHeader = () => (
           Marketplace
         </a>
         <a
-          className="bg-fd-foreground text-fd-background inline-flex rounded-full px-[0.8em] pt-[0.45em] pb-[0.46em] text-sm leading-none transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fd-ring"
+          className="bg-fd-foreground text-fd-background focus-visible:outline-fd-ring inline-flex rounded-full px-[0.8em] pt-[0.45em] pb-[0.46em] text-sm leading-none transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2"
           href={REPO}
           rel="noreferrer"
           target="_blank"

@@ -23,7 +23,7 @@ export const Caveats = () => (
       </li>
     </ul>
     <a
-      className="text-fd-primary mt-8 inline-flex min-h-11 items-center text-sm font-medium underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fd-ring"
+      className="text-fd-primary focus-visible:outline-fd-ring mt-8 inline-flex min-h-11 items-center text-sm font-medium underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2"
       href="/behaviour"
     >
       Read exactly how it behaves

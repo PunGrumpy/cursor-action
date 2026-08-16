@@ -20,7 +20,7 @@ export const Hero = () => (
 
     <div className="flex items-center justify-start gap-x-3">
       <a
-        className="bg-fd-foreground text-fd-background inline-flex items-center justify-center rounded-full px-[1.45em] pt-[0.89em] pb-[0.91em] text-sm leading-none transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fd-ring"
+        className="bg-fd-foreground text-fd-background focus-visible:outline-fd-ring inline-flex items-center justify-center rounded-full px-[1.45em] pt-[0.89em] pb-[0.91em] text-sm leading-none transition-opacity hover:opacity-90 focus-visible:outline-2 focus-visible:outline-offset-2"
         href="/quickstart"
       >
         Get started
@@ -32,7 +32,7 @@ export const Hero = () => (
           border-01 at 2.5% of the foreground, not a transparent pill with a
           heavy border. */}
       <a
-        className="border-fd-foreground/[0.025] bg-fd-accent inline-flex items-center justify-center rounded-full border px-[1.45em] pt-[0.89em] pb-[0.91em] text-sm leading-none transition-[filter] hover:brightness-125 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fd-ring"
+        className="border-fd-foreground/[0.025] bg-fd-accent focus-visible:outline-fd-ring inline-flex items-center justify-center rounded-full border px-[1.45em] pt-[0.89em] pb-[0.91em] text-sm leading-none transition-[filter] hover:brightness-125 focus-visible:outline-2 focus-visible:outline-offset-2"
         href={REPO}
         rel="noreferrer"
         target="_blank"

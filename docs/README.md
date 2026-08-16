@@ -11,6 +11,16 @@ bun run build        # static output in dist/public
 bun run brand        # regenerate the icons and the social card
 ```
 
+## The home page
+
+`src/pages/index.tsx` is the head tags and the composition; everything it renders lives in `src/components/` — `header`, `hero`, `preview`, `features`, `caveats`, `footer`, and the four pieces they share (`mark`, `window`, `cta`, `media-panel`). Anything two of them need is in `src/lib/`: the logo geometry, the site URL, and the handful of external destinations.
+
+Two things about it are not obvious:
+
+**Class lists are written out, never assembled.** There is no `focusRing` const and no `cardBase` const, so the same focus declaration appears on every focusable element and the card surface appears twice. That repetition is deliberate: a class list that is plain text in the markup is one that tooling can read and sort, and a template literal is not.
+
+**Prose is scanned too.** Tailwind reads every file in the project as raw text — comments and this page included — so writing a utility's name in a sentence emits that rule into the stylesheet. An earlier draft of this section did exactly that, twice, by naming two of them while explaining the problem. If a comment describes a shape, a colour or a layout, diff `dist/public/assets/*.css` before and after.
+
 ## Three rules worth knowing before editing
 
 **The reference tables are generated.** `content/reference.mdx` contains `{/* reference:start */}` and `{/* reference:end */}` markers, and everything between them is written by `bun run docs:reference` from the repository root, reading `action.yml`. Edit the manifest, not the table. CI regenerates it and fails if the result differs from what was committed.

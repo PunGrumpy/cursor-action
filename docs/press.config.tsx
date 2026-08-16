@@ -5,6 +5,7 @@ import { metaSchema, pageSchema } from "fumapress/adapters/mdx/schema";
 import { linkValidationPlugin } from "fumapress/plugins/link-validation";
 import { takumiPlugin } from "fumapress/plugins/takumi";
 
+import { MARKETPLACE, REPO } from "./src/lib/links";
 import { MARK_VIEW_BOX, markPath } from "./src/lib/mark";
 import { url } from "./src/lib/url";
 
@@ -36,14 +37,8 @@ export default defineConfig({
   content: docs.toFumadocsSource(),
   defaultLayoutProps: {
     links: [
-      {
-        text: "GitHub",
-        url: "https://github.com/PunGrumpy/cursor-action",
-      },
-      {
-        text: "Marketplace",
-        url: "https://github.com/marketplace/actions/cursor-action",
-      },
+      { text: "GitHub", url: REPO },
+      { text: "Marketplace", url: MARKETPLACE },
     ],
     nav: { title: SITE_NAME },
   },
