@@ -72,3 +72,38 @@
 :where(table) {
   font-variant-numeric: tabular-nums;
 }
+
+/*
+ * cursor.com sweeps a highlight across the word that marks work in progress —
+ * a `background-position` animation over clipped text, at 1.6s. Their version
+ * runs regardless of the visitor's motion preference; this one only runs when
+ * no preference against it is expressed, and otherwise renders as plain text
+ * in the highlight colour.
+ */
+.shimmer {
+  color: var(--color-fd-muted-foreground);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @keyframes shimmer {
+    from {
+      background-position: 200% 0;
+    }
+    to {
+      background-position: -200% 0;
+    }
+  }
+
+  .shimmer {
+    animation: shimmer 1.6s linear infinite;
+    background: linear-gradient(
+        90deg,
+        var(--color-fd-muted-foreground) 40%,
+        var(--color-fd-foreground) 50%,
+        var(--color-fd-muted-foreground) 60%
+      )
+      0 0 / 200% 100%;
+    background-clip: text;
+    color: transparent;
+  }
+}

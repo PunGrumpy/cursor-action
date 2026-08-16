@@ -1,3 +1,4 @@
+import { ThemeSwitch } from "fumadocs-ui/layouts/shared/slots/theme-switch";
 import { createHomeLayout } from "fumapress/layouts/home";
 
 import type PressConfig from "../../press.config";
@@ -24,7 +25,12 @@ const FEATURES = [
     body: "Every push to main runs the action on all three runners, so the platform you build on is the one it was tested on.",
     href: "/behaviour",
     cta: "See how it runs →",
-    lines: ["✓ Integration (ubuntu)", "✓ Integration (windows)", "✓ Integration (macos)", "✓ Build & Test"],
+    run: [
+      { label: "Build & Test", state: "done" },
+      { label: "Integration (ubuntu)", state: "done" },
+      { label: "Integration (windows)", state: "done" },
+      { label: "Integration (macos)", state: "running" },
+    ],
   },
   {
     title: "Documented honestly",
@@ -193,6 +199,8 @@ function Window({
   );
 }
 
+const REPO = "https://github.com/PunGrumpy/cursor-action";
+
 const FOOTER = [
   {
     heading: "Documentation",
@@ -207,34 +215,84 @@ const FOOTER = [
   {
     heading: "Project",
     links: [
-      { label: "GitHub", href: "https://github.com/PunGrumpy/cursor-action", external: true },
-      { label: "Marketplace", href: "https://github.com/marketplace/actions/cursor-action", external: true },
-      { label: "npm", href: "https://www.npmjs.com/package/@pungrumpy/cursor-action", external: true },
-      { label: "Releases", href: "https://github.com/PunGrumpy/cursor-action/releases", external: true },
-      { label: "Issues", href: "https://github.com/PunGrumpy/cursor-action/issues", external: true },
+      { label: "GitHub", href: REPO, external: true },
+      {
+        label: "Marketplace",
+        href: "https://github.com/marketplace/actions/cursor-action",
+        external: true,
+      },
+      {
+        label: "npm",
+        href: "https://www.npmjs.com/package/@pungrumpy/cursor-action",
+        external: true,
+      },
+      { label: "Releases", href: `${REPO}/releases`, external: true },
+      { label: "Changelog", href: `${REPO}/blob/main/CHANGELOG.md`, external: true },
+    ],
+  },
+  {
+    heading: "Community",
+    links: [
+      { label: "Issues", href: `${REPO}/issues`, external: true },
+      {
+        label: "Contributing",
+        href: `${REPO}/blob/main/.github/CONTRIBUTING.md`,
+        external: true,
+      },
+      {
+        label: "Code of conduct",
+        href: `${REPO}/blob/main/.github/CODE_OF_CONDUCT.md`,
+        external: true,
+      },
+      {
+        label: "Report a bug",
+        href: `${REPO}/issues/new?template=bug_report.md`,
+        external: true,
+      },
+      {
+        label: "Request a feature",
+        href: `${REPO}/issues/new?template=feature_request.md`,
+        external: true,
+      },
     ],
   },
   {
     heading: "Credits",
     links: [
       { label: "Cursor", href: "https://cursor.com", external: true },
-      { label: "@cursor/sdk", href: "https://www.npmjs.com/package/@cursor/sdk", external: true },
+      {
+        label: "@cursor/sdk",
+        href: "https://www.npmjs.com/package/@cursor/sdk",
+        external: true,
+      },
       { label: "Fumapress", href: "https://press.fumadocs.dev", external: true },
-      { label: "MIT licence", href: "https://github.com/PunGrumpy/cursor-action/blob/main/LICENSE", external: true },
+      {
+        label: "Bierstadt painting",
+        href: "https://commons.wikimedia.org/wiki/File:Bierstadt-Alaskan_Coastal_Range.jpg",
+        external: true,
+      },
+    ],
+  },
+  {
+    heading: "Legal",
+    links: [
+      { label: "MIT licence", href: `${REPO}/blob/main/LICENSE`, external: true },
     ],
   },
 ];
 
 /**
- * Their footer sits on the card surface, sets link columns in the secondary
- * text colour, and hides the external-link arrow until hover — the arrow is
- * there when you reach for the link and out of the way while you read.
+ * Their footer sits on the card surface and runs five link columns across the
+ * container: headings in the secondary colour, links in the primary one, and
+ * the external-link arrow hidden until hover so it is there when you reach for
+ * the link and out of the way while you read. The bottom bar splits the
+ * copyright from the appearance control.
  */
 function SiteFooter() {
   return (
-    <footer className="mt-24 bg-fd-card px-6 pt-14 pb-14">
+    <footer className="mt-24 bg-fd-card px-6 pt-16 pb-12">
       <div className="mx-auto max-w-6xl">
-        <nav className="mb-14 grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-3">
+        <nav className="mb-20 grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-5">
           {FOOTER.map((column) => (
             <div key={column.heading}>
               <h3 className="pb-2 text-fd-muted-foreground text-sm">
@@ -244,7 +302,7 @@ function SiteFooter() {
                 {column.links.map((link) => (
                   <li key={link.label}>
                     <a
-                      className={`group inline-block py-1 text-sm transition-colors hover:text-fd-foreground ${focusRing}`}
+                      className={`group inline-block py-1 text-fd-foreground text-sm ${focusRing}`}
                       href={link.href}
                       {...(link.external
                         ? { rel: "noreferrer", target: "_blank" }
@@ -267,21 +325,26 @@ function SiteFooter() {
           ))}
         </nav>
 
-        <div className="flex flex-col items-start justify-between gap-4 text-fd-muted-foreground md:flex-row md:items-center">
-          <small className="text-sm">
-            © 2026{" "}
-            <a
-              className={`hover:text-fd-foreground ${focusRing}`}
-              href="https://github.com/PunGrumpy"
-              rel="noreferrer"
-              target="_blank"
-            >
-              PunGrumpy
-            </a>
-          </small>
-          <small className="text-sm">
-            A community project, not affiliated with or endorsed by Cursor.
-          </small>
+        <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-fd-muted-foreground">
+            <small className="text-sm">
+              © 2026{" "}
+              <a
+                className={`hover:text-fd-foreground ${focusRing}`}
+                href="https://github.com/PunGrumpy"
+                rel="noreferrer"
+                target="_blank"
+              >
+                PunGrumpy
+              </a>
+            </small>
+            <small className="text-sm">
+              Not affiliated with or endorsed by Cursor
+            </small>
+          </div>
+          {/* Closing the gap opened by turning the layout's own nav off: without
+              this the home page had no way to change appearance. */}
+          <ThemeSwitch mode="light-dark-system" />
         </div>
       </div>
     </footer>
@@ -421,11 +484,40 @@ export default function HomePage() {
                     </a>
                   </div>
                 </div>
-                <figure className="pt-7">
-                  <div className="overflow-hidden rounded-md bg-fd-accent p-4">
-                    <pre className="overflow-hidden font-mono text-[12px] text-fd-muted-foreground leading-relaxed">
-                      <code>{feature.lines.join("\n")}</code>
-                    </pre>
+                {/* Decorative, like theirs: hidden from assistive tech, and
+                    nothing in it pretends to be a control. */}
+                <figure aria-hidden="true" className="pt-7">
+                  <div className="overflow-hidden rounded-md bg-fd-accent p-4 font-mono text-[12px] leading-relaxed">
+                    {feature.run ? (
+                      <ul className="space-y-1.5">
+                        {feature.run.map((step) => (
+                          <li className="flex items-center gap-2" key={step.label}>
+                            <span
+                              className={
+                                step.state === "done"
+                                  ? "text-fd-foreground"
+                                  : "text-fd-primary"
+                              }
+                            >
+                              {step.state === "done" ? "✓" : "•"}
+                            </span>
+                            <span
+                              className={
+                                step.state === "done"
+                                  ? "text-fd-muted-foreground"
+                                  : "shimmer"
+                              }
+                            >
+                              {step.label}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <pre className="overflow-hidden text-fd-muted-foreground">
+                        <code>{feature.lines?.join("\n")}</code>
+                      </pre>
+                    )}
                   </div>
                 </figure>
               </div>
