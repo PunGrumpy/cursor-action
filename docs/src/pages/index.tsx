@@ -198,6 +198,91 @@ function Window({
   );
 }
 
+const CONSUMER = `- name: Comment the review
+  uses: actions/github-script@v8
+  with:
+    script: |
+      github.rest.issues.createComment({
+        issue_number: context.issue.number,
+        owner: context.repo.owner,
+        repo: context.repo.repo,
+        body: \`\${{ steps.cursor.outputs.summary }}\`,
+      })`;
+
+/**
+ * cursor.com's `card--large`: one card across a 24-column grid, text in columns
+ * 1 to 9 and the media in 9 to 25, both vertically centred, collapsing to
+ * stacked rows below `lg`. The media sits on a flat panel a shade warmer than
+ * the page — they set `--layered-media-bg-light: #D9D5CF` and `-dark: #4A443B`,
+ * which is their own foreground hue rotated about 22 degrees toward yellow.
+ * Rotating this theme's foreground by the same amount lands on the same two
+ * values, because the two palettes share a foreground.
+ *
+ * The whole card is the link, as theirs is, but labelled by its heading — theirs
+ * takes its accessible name from every word inside it, which is a link name
+ * three sentences long.
+ */
+function LargeCard() {
+  return (
+    <a
+      aria-labelledby="handoff"
+      className={`group grid grid-cols-1 items-center gap-y-8 rounded-xl bg-fd-card p-7 transition-colors hover:bg-fd-accent lg:grid-cols-24 lg:gap-y-0 ${focusRing}`}
+      href="/examples"
+    >
+      <div className="lg:col-start-1 lg:col-end-9 lg:pr-12">
+        <h3
+          className="text-balance font-medium text-base"
+          id="handoff"
+        >
+          The answer is a value, not a log line
+        </h3>
+        <p className="mt-2 max-w-prose text-pretty text-fd-muted-foreground text-sm leading-relaxed">
+          <code className="font-mono text-fd-foreground">
+            steps.&lt;id&gt;.outputs.summary
+          </code>{" "}
+          holds whatever the agent wrote back. Comment it on the pull request,
+          append it to the job summary, or gate what runs next. The action does
+          not decide for you.
+        </p>
+        <span className="mt-8 inline-flex text-fd-primary text-sm">
+          See the examples
+          <span
+            aria-hidden="true"
+            className="inline-flex ps-[0.25em] transition-transform group-hover:translate-x-0.5"
+          >
+            →
+          </span>
+        </span>
+      </div>
+
+      {/* Decorative: the card is already labelled, and nothing in here is
+          reachable or meant to be read out a second time. */}
+      <div
+        aria-hidden="true"
+        className="lg:col-start-9 lg:col-end-25"
+        style={{
+          // Their two custom properties, one per appearance, applied by the
+          // panel below rather than by two stacked absolute layers.
+          ["--panel-light" as string]: "oklch(0.874 0.009 78.28)",
+          ["--panel-dark" as string]: "oklch(0.39 0.017 78.09)",
+        }}
+      >
+        <div className="h-[260px] overflow-hidden rounded-lg bg-[var(--panel-light)] p-6 sm:h-[300px] sm:p-8 dark:bg-[var(--panel-dark)]">
+          {/* Clipped by the panel rather than fitted to it, the way their demo
+              windows run past the bottom edge. */}
+          <div className="mx-auto max-w-xl">
+            <Window label="comment.yml">
+              <pre className="overflow-hidden p-5 font-mono text-[12.5px] leading-relaxed">
+                <code>{CONSUMER}</code>
+              </pre>
+            </Window>
+          </div>
+        </div>
+      </div>
+    </a>
+  );
+}
+
 /**
  * The illustration under each card. cursor.com's equivalents are animated but
  * inert — every control in their markup is `disabled` and the whole block is
@@ -554,7 +639,10 @@ export default function HomePage() {
             >
               What you get
             </h2>
-            <div className="grid grid-cols-1 items-stretch gap-4 xl:grid-cols-3">
+
+            <LargeCard />
+
+            <div className="mt-4 grid grid-cols-1 items-stretch gap-4 xl:grid-cols-3">
               {FEATURES.map((feature) => (
                 <div
                   className="flex h-full grow flex-col rounded-xl bg-fd-card p-7"
