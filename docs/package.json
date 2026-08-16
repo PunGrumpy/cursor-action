@@ -1,0 +1,34 @@
+{
+  "name": "docs",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "scripts": {
+    "brand": "bun scripts/generate-brand.tsx",
+    "dev": "waku dev",
+    "build": "waku build",
+    "start": "waku start",
+    "types:check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@base-ui/react": "^1.6.0",
+    "fumadocs-core": "^16.14.0",
+    "fumadocs-mdx": "^15.2.2",
+    "fumadocs-ui": "npm:@fumadocs/base-ui@^16.14.0",
+    "fumapress": "1.0.0-beta.3",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-server-dom-webpack": "^19.2.8",
+    "waku": "1.0.0-beta.8"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/bun": "^1.3.14",
+    "@types/mdx": "^2.0.14",
+    "@types/node": "^26.1.2",
+    "@types/react": "^19.2.18",
+    "@types/react-dom": "^19.2.4",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^6.0.3"
+  }
+}

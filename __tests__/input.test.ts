@@ -72,22 +72,22 @@ describe("getInputs", () => {
 
   it("throws on invalid permission value", () => {
     setupInputs({ permissions: "superuser" });
-    expect(() => getInputs()).toThrow(/Invalid 'permissions'/);
+    expect(() => getInputs()).toThrow(/Invalid 'permissions'/u);
   });
 
   it("throws on invalid timeout", () => {
     setupInputs({ timeout: "abc" });
-    expect(() => getInputs()).toThrow(/Invalid 'timeout'/);
+    expect(() => getInputs()).toThrow(/Invalid 'timeout'/u);
   });
 
   it("throws on zero timeout", () => {
     setupInputs({ timeout: "0" });
-    expect(() => getInputs()).toThrow(/Invalid 'timeout'/);
+    expect(() => getInputs()).toThrow(/Invalid 'timeout'/u);
   });
 
   it("throws on empty prompt", () => {
     setupInputs({ prompt: "   " });
-    expect(() => getInputs()).toThrow(/cannot be empty/);
+    expect(() => getInputs()).toThrow(/cannot be empty/u);
   });
 
   it("warns on very long timeout", () => {

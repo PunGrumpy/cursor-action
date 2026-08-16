@@ -31,7 +31,7 @@ export const getInputs = (): ActionInputs => {
     );
   }
 
-  const timeout = Number.parseInt(timeoutRaw, 10);
+  const timeout = Math.trunc(Number(timeoutRaw));
   if (Number.isNaN(timeout) || timeout <= 0) {
     throw new Error(
       `Invalid 'timeout' value: '${timeoutRaw}'. Must be a positive integer (seconds).`

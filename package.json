@@ -27,15 +27,19 @@
   },
   "scripts": {
     "build": "tsdown",
+    "changeset": "changeset",
+    "changeset:publish": "bun run build && changeset publish",
+    "changeset:version": "changeset version",
     "dev": "tsdown --watch",
+    "docs:build": "bun --cwd=docs run build",
+    "docs:dev": "bun --cwd=docs run dev",
+    "docs:reference": "bun run scripts/generate-reference.ts",
+    "format": "ultracite fix",
+    "lint": "ultracite check",
     "test": "bun test",
     "test:coverage": "bun test --coverage",
     "typecheck": "tsc --noEmit",
-    "lint": "ultracite check",
-    "format": "ultracite fix",
-    "changeset": "changeset",
-    "changeset:version": "changeset version",
-    "changeset:publish": "bun run build && changeset publish"
+    "prepare": "husky || exit 0"
   },
   "dependencies": {
     "@actions/core": "^3.0.0",
@@ -44,10 +48,11 @@
   "devDependencies": {
     "@changesets/cli": "^2.30.0",
     "@types/bun": "latest",
-    "oxfmt": "^0.41.0",
-    "oxlint": "^1.56.0",
+    "husky": "^9.1.7",
+    "oxfmt": "^0.63.0",
+    "oxlint": "^1.78.0",
     "tsdown": "^0.22.0",
-    "ultracite": "7.3.2"
+    "ultracite": "^7.10.5"
   },
   "peerDependencies": {
     "typescript": "^5"

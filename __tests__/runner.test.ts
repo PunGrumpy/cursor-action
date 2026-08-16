@@ -45,18 +45,18 @@ const mockStreamError = async function* mockStreamError() {
 
 /**
  * Yields only after 1.1s so a 1s action timeout can fire first.
- * @yields {{ text: string }}
+ * @yields {{ text: string }} The chunk that arrives too late.
  */
-const streamAfter1100ms = async function* streamAfter1100msGen() {
+const streamAfter1100ms = async function* streamAfter1100ms() {
   await Bun.sleep(1100);
   yield { text: "too late" };
 };
 
 /**
  * Completes only after 1.2s when cancel is unsupported (timeout still scheduled).
- * @yields {{ text: string }}
+ * @yields {{ text: string }} The chunk that arrives after the timeout.
  */
-const streamAfter1200ms = async function* streamAfter1200msGen() {
+const streamAfter1200ms = async function* streamAfter1200ms() {
   await Bun.sleep(1200);
   yield { text: "ok" };
 };

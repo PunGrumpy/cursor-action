@@ -2,8 +2,7 @@
 
 Run [Cursor](https://cursor.com) agents in GitHub Actions using the official [`@cursor/sdk`](https://www.npmjs.com/package/@cursor/sdk).
 
-[![CI](https://github.com/PunGrumpy/cursor-action/actions/workflows/ci.yml/badge.svg)](https://github.com/PunGrumpy/cursor-action/actions/workflows/ci.yml)
-[![Release](https://github.com/PunGrumpy/cursor-action/actions/workflows/release.yml/badge.svg)](https://github.com/PunGrumpy/cursor-action/actions/workflows/release.yml)
+[![CI](https://github.com/PunGrumpy/cursor-action/actions/workflows/ci.yml/badge.svg)](https://github.com/PunGrumpy/cursor-action/actions/workflows/ci.yml) [![Release](https://github.com/PunGrumpy/cursor-action/actions/workflows/release.yml/badge.svg)](https://github.com/PunGrumpy/cursor-action/actions/workflows/release.yml)
 
 ## Quickstart
 
@@ -27,114 +26,38 @@ Run [Cursor](https://cursor.com) agents in GitHub Actions using the official [`@
 
 The action runs on `ubuntu-latest`, `windows-latest`, and `macos-latest`.
 
-## Inputs
+## Reference
 
-| Input               | Required | Default     | Description                                                                        |
-| ------------------- | -------- | ----------- | ---------------------------------------------------------------------------------- |
-| `api-key`           | ✅       | —           | Cursor API key (store in GitHub Secrets).                                          |
-| `prompt`            | ✅       | —           | Prompt passed to the agent.                                                        |
-| `model`             | ❌       | `default`   | Model id for the Cursor SDK (e.g. `default`, `composer-2`). Not `auto`.            |
-| `working-directory` | ❌       | `.`         | Directory the agent operates in.                                                   |
-| `timeout`           | ❌       | `300`       | Timeout in seconds. On timeout the action asks the SDK to cancel the run.          |
-| `permissions`       | ❌       | `read-only` | **Not wired to the SDK.** Accepted for compatibility only — see the warning below. |
-| `cursor-version`    | ❌       | `latest`    | **Deprecated, ignored.** The SDK manages the agent version.                        |
+<!-- reference:start -->
 
-> [!WARNING]
-> `permissions` does not restrict the agent today. The value is validated and
-> then discarded — tool access follows whatever your API key and account allow,
-> so `read-only` does **not** stop the agent from editing files or running
-> shell commands. It is wired to the SDK's tool restrictions in v2.
+### Inputs
 
-## Outputs
+| Input | Required | Default | Description |
+| --- | --- | --- | --- |
+| `cursor-version` | ❌ | `latest` | (Deprecated) The SDK automatically manages the agent version. |
+| `api-key` | ✅ | — | Cursor API key for authentication |
+| `prompt` | ✅ | — | Prompt to pass to cursor-agent |
+| `model` | ❌ | `default` | Model id for the agent (e.g. default, composer-2). The Cursor SDK does not accept auto. |
+| `working-directory` | ❌ | `.` | Working directory for the agent to operate in |
+| `permissions` | ❌ | `read-only` | Validated but NOT enforced: 'read-only' does not stop the agent from editing files or running shell commands. Wired to the SDK in v2. |
+| `timeout` | ❌ | `300` | Timeout in seconds for the agent run |
 
-| Output      | Description                                         |
-| ----------- | --------------------------------------------------- |
-| `summary`   | Agent text response.                                |
-| `exit-code` | `0` when the SDK call succeeded, `1` when it threw. |
+### Outputs
 
-> [!IMPORTANT]
-> Treat `summary` as untrusted model output. Pass it through `env:` rather than
-> interpolating `${{ steps.<id>.outputs.summary }}` directly into a `run:`
-> script or a `github-script` body — interpolation splices the text into the
-> script before it executes.
+| Output      | Description                               |
+| ----------- | ----------------------------------------- |
+| `summary`   | Text summary returned by the cursor-agent |
+| `exit-code` | Exit code from the cursor-agent process   |
 
-## Examples
+<!-- reference:end -->
 
-### Comment the result on a pull request
+> [!WARNING] `permissions` does not restrict the agent today. The value is validated and then discarded — tool access follows whatever your API key and account allow, so `read-only` does **not** stop the agent from editing files or running shell commands. It is wired to the SDK's tool restrictions in v2.
 
-```yaml
-name: Cursor Code Review
+> [!IMPORTANT] Treat `summary` as untrusted model output. Pass it through `env:` rather than interpolating `${{ steps.<id>.outputs.summary }}` directly into a `run:` script or a `github-script` body — interpolation splices the text into the script before it executes.
 
-on:
-  pull_request:
+## Documentation
 
-jobs:
-  review:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      pull-requests: write
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Run Cursor Agent
-        id: review
-        uses: PunGrumpy/cursor-action@v1
-        with:
-          api-key: ${{ secrets.CURSOR_API_KEY }}
-          prompt: |
-            Review the changes in this repository.
-            Focus on correctness, security, and performance.
-            Be concise.
-
-      - name: Comment on PR
-        uses: actions/github-script@v7
-        env:
-          SUMMARY: ${{ steps.review.outputs.summary }}
-        with:
-          script: |
-            await github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: `## 🤖 Cursor Review\n\n${process.env.SUMMARY}`
-            })
-```
-
-Pull requests from forks get a read-only `GITHUB_TOKEN`, so the comment step
-fails there. Do not reach for `pull_request_target` to work around it — that
-runs with a writable token in the context of the fork's code.
-
-### Pick a model and a working directory
-
-```yaml
-- uses: PunGrumpy/cursor-action@v1
-  with:
-    api-key: ${{ secrets.CURSOR_API_KEY }}
-    prompt: "Summarize the TypeScript errors you can find."
-    model: composer-2
-    working-directory: ./src
-    timeout: "600"
-```
-
-## How this action behaves
-
-- Creates a local SDK agent (`Agent.create({ local: { cwd } })`) against the
-  resolved `working-directory`, sends the prompt, and streams the response.
-- Streamed text is collected, then replaced by the final run result when the SDK
-  provides one.
-- On timeout, the run is cancelled if the SDK reports `cancel` support. A
-  cancelled run currently still reports success — fixed in v2.
-- Writes a job summary with the status, exit code, agent response, and any
-  stderr or diagnostics.
-- The API key is registered with `::add-mask::` before the agent starts.
-
-The action is a composite action: it sets up Node.js 24, runs
-`npm ci --omit=dev` inside its own action directory, and then executes
-`dist/index.mjs`. `@cursor/sdk` cannot be bundled into a single file — it
-dynamically imports its own chunks at runtime and resolves a native
-`@cursor/sdk-<platform>` package — so it has to be installed as a real
-dependency tree. Expect a few seconds of install time per job.
+Worked examples, what the action does at runtime, and troubleshooting live in [`docs/`](docs), which is published as the documentation site. The tables above are generated from `action.yml` by the same script that generates the site's reference page, so neither can drift from the manifest.
 
 ## Local development
 
@@ -152,12 +75,16 @@ bun run test
 bun run build
 ```
 
-`dist/` is committed on purpose — GitHub Actions executes it straight from the
-tag. If you changed anything under `src/`, run `bun run build` and commit the
-result; CI fails when `dist/` is out of date. The bundle only contains this
-repository's own code (a few KB); `@actions/core` and `@cursor/sdk` stay
-external and are installed by the action at runtime, so `package-lock.json`
-must stay in sync with `package.json`.
+`dist/` is committed on purpose — GitHub Actions executes it straight from the tag. If you changed anything under `src/`, run `bun run build` and commit the result; CI fails when `dist/` is out of date. The bundle only contains this repository's own code (a few KB); `@actions/core` and `@cursor/sdk` stay external and are installed by the action at runtime, so `package-lock.json` must stay in sync with `package.json`.
+
+### Work on the documentation site
+
+```bash
+bun run docs:reference   # regenerate the reference tables from action.yml
+bun run docs:dev         # http://localhost:3000
+```
+
+`docs/` is a separate Fumapress project with its own lockfile, so `bun install` at the repository root does not pull in its dependencies.
 
 ### Run the action entrypoint locally
 
@@ -175,33 +102,15 @@ env "INPUT_API-KEY=$CURSOR_API_KEY" \
 
 ## CI and release notes
 
-- `CI` runs `typecheck`, `test`, `build`, and a `dist/` freshness check on every
-  push and pull request.
-- The `Integration` jobs install the action's runtime dependencies and run it
-  with an invalid key on Ubuntu, Windows, and macOS. Being rejected at
-  authentication is the pass condition: it proves the dependency tree resolves
-  and the SDK reaches Cursor, without spending an agent run.
-- `Smoke Test` runs the action for real and needs a `CURSOR_API_KEY` on a paid
-  plan, so it only runs from the Actions tab (`workflow_dispatch`).
-- `Release` runs Changesets on pushes to `main` to open a release PR or publish,
-  then moves the `v1` tag to the published version.
-- `uses: PunGrumpy/cursor-action@v1` tracks the latest `v1.x.x`. Pin a full tag
-  or a commit SHA if you want a frozen version.
-
-## Troubleshooting
-
-### The agent exits non-zero
-
-- Confirm `CURSOR_API_KEY` is set and valid — an invalid key surfaces as
-  `Invalid User API Key` in the job summary.
-- If you set `model`, confirm your account can use it. Start with `default`.
-- The job summary carries the agent response, stderr, and diagnostics for the
-  failed run.
+- `CI` runs `typecheck`, `test`, `build`, and a `dist/` freshness check on every push and pull request.
+- The `Integration` jobs install the action's runtime dependencies and run it with an invalid key on Ubuntu, Windows, and macOS. Being rejected at authentication is the pass condition: it proves the dependency tree resolves and the SDK reaches Cursor, without spending an agent run.
+- `Smoke Test` runs the action for real and needs a `CURSOR_API_KEY` on a paid plan, so it only runs from the Actions tab (`workflow_dispatch`).
+- `Release` runs Changesets on pushes to `main` to open a release PR or publish, then moves the `v1` tag to the published version.
+- `uses: PunGrumpy/cursor-action@v1` tracks the latest `v1.x.x`. Pin a full tag or a commit SHA if you want a frozen version.
 
 ## Versioning
 
-This project uses [Changesets](https://github.com/changesets/changesets). See
-[`.changeset/README.md`](.changeset/README.md) for the contribution workflow.
+This project uses [Changesets](https://github.com/changesets/changesets). See [`.changeset/README.md`](.changeset/README.md) for the contribution workflow.
 
 ## License
 

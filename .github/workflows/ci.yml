@@ -47,6 +47,35 @@ jobs:
             exit 1
           fi
 
+  docs:
+    name: Docs
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - uses: oven-sh/setup-bun@v2
+        name: Install Bun
+      - name: Install dependencies
+        run: |
+          bun install
+          bun install --cwd docs
+      # action.yml is the only place inputs and outputs are described. If this
+      # step changes a file, the documentation had drifted from the manifest.
+      - name: Verify the reference matches action.yml
+        run: |
+          bun run docs:reference
+          if [ -n "$(git status --porcelain README.md docs/content/reference.mdx)" ]; then
+            echo "::error::the generated reference is out of date. Run 'bun run docs:reference' and commit the result."
+            git diff -- README.md docs/content/reference.mdx
+            exit 1
+          fi
+      # Fails on broken internal links, which is the cheapest signal that a page
+      # still describes something that no longer exists.
+      - name: Build the documentation site
+        run: bun run docs:build
+
   # Proves the distribution path without spending an agent run: `npm ci` is the
   # same install the composite action performs, and a rejected key still means
   # the externals resolved, the SDK loaded its own lazy chunks, and the request

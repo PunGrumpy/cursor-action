@@ -1,4 +1,4 @@
-import { resolve } from "node:path";
+import path from "node:path";
 
 import { info, warning } from "@actions/core";
 import { Agent } from "@cursor/sdk";
@@ -6,7 +6,7 @@ import { Agent } from "@cursor/sdk";
 import type { ActionInputs, AgentResult } from "./types";
 
 export const runAgent = async (inputs: ActionInputs): Promise<AgentResult> => {
-  const cwd = resolve(inputs.workingDirectory);
+  const cwd = path.resolve(inputs.workingDirectory);
 
   info(`Running Cursor Agent in: ${cwd}`);
   info(`Model: ${inputs.model}`);

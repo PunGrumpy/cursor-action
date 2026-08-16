@@ -1,0 +1,85 @@
+---
+title: Examples
+description: Workflows you can copy into a repository as they are.
+---
+
+## Comment a review on a pull request
+
+```yaml
+name: Cursor Code Review
+
+on:
+  pull_request:
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Run Cursor Agent
+        id: review
+        uses: PunGrumpy/cursor-action@v1
+        with:
+          api-key: ${{ secrets.CURSOR_API_KEY }}
+          prompt: |
+            Review the changes in this repository.
+            Focus on correctness, security, and performance.
+            Be concise.
+
+      - name: Comment on PR
+        uses: actions/github-script@v7
+        env:
+          SUMMARY: ${{ steps.review.outputs.summary }}
+        with:
+          script: |
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: `## 🤖 Cursor Review\n\n${process.env.SUMMARY}`
+            })
+```
+
+Pull requests from forks get a read-only `GITHUB_TOKEN`, so the comment step fails there. Do not reach for `pull_request_target` to work around it: that runs with a writable token in the context of the fork's own code.
+
+## Pick a model and a working directory
+
+```yaml
+- uses: PunGrumpy/cursor-action@v1
+  with:
+    api-key: ${{ secrets.CURSOR_API_KEY }}
+    prompt: "Summarize the TypeScript errors you can find."
+    model: composer-2
+    working-directory: ./src
+    timeout: "600"
+```
+
+## Fail the job on the agent's verdict
+
+`exit-code` only reports whether the SDK call succeeded, so gate on the text instead, and keep the text out of the script itself:
+
+```yaml
+- name: Run Cursor Agent
+  id: audit
+  uses: PunGrumpy/cursor-action@v1
+  with:
+    api-key: ${{ secrets.CURSOR_API_KEY }}
+    prompt: |
+      Look for hardcoded credentials in this repository.
+      Reply with exactly BLOCK or PASS on the first line, then your reasoning.
+
+- name: Enforce the verdict
+  env:
+    SUMMARY: ${{ steps.audit.outputs.summary }}
+  run: |
+    if [ "$(head -n 1 <<<"$SUMMARY")" = "BLOCK" ]; then
+      echo "::error::the agent flagged this change"
+      exit 1
+    fi
+```
+
+A model can always answer in a shape you did not ask for, so treat this as a signal, not a gate you can rely on.
