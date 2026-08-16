@@ -1,5 +1,32 @@
 # @pungrumpy/cursor-action
 
+## 1.0.1
+
+### Patch Changes
+
+- cf2ab49: Publish a moving `v1` tag on every release, so `uses: PunGrumpy/cursor-action@v1`
+  resolves to the latest `v1.x.x`. Previously only exact `vX.Y.Z` tags existed and
+  `@v1` did not resolve at all.
+- 2c2f2ba: Update `@cursor/sdk` to 1.0.28. It drops `sqlite3` from its dependencies in
+  favour of an optional `@cursor/sdk/sqlite` entry point, so the action no longer
+  pulls a native module that has to be prebuilt or compiled during install.
+- cf2ab49: Document that `permissions` is validated but never enforced: the value is not
+  passed to the SDK, so `read-only` does **not** stop the agent from editing files
+  or running shell commands. Tool access follows your API key and account. It is
+  wired to the SDK's tool restrictions in v2.
+
+  `cursor-version` is likewise ignored — the SDK manages the agent version.
+
+- cf2ab49: Fix the action failing with a module resolution error at every published tag.
+  `dist/` was gitignored while `action.yml` executed `dist/index.mjs`, so the file
+  never existed for consumers — only this repository's own smoke test worked,
+  because it downloaded `dist/` as a build artifact first.
+
+  `dist/` is now committed. It holds only this repository's own code (5.8 kB):
+  `@cursor/sdk` cannot be bundled, because it dynamically imports its own webpack
+  chunks at runtime and resolves a native `@cursor/sdk-<platform>` package, so it
+  stays external and the action installs it.
+
 ## 1.0.0
 
 ### Major Changes
