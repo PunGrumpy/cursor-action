@@ -1,27 +1,8 @@
-@import "tailwindcss";
-/* Carries the semantic tokens this theme does not restyle — info, warning,
-   error, success, idea and the diff colors. Its neutral palette is replaced
-   wholesale by the blocks below. */
-@import "fumadocs-ui/css/lib/default-colors.css";
-@import "fumadocs-ui/css/preset.css";
-@import "fumapress/css/preset.css";
+@import 'tailwindcss';
+@import 'fumadocs-ui/css/lib/default-colors.css';
+@import 'fumadocs-ui/css/preset.css';
+@import 'fumapress/css/preset.css';
 
-/*
- * Palette derived from cursor.com's own theme tokens: warm neutrals tinted
- * toward olive rather than blue (hue ~92-107 at very low chroma), lifted by a
- * single hot orange. Authored in OKLCH so lightness steps are perceptually
- * even and the accent holds its hue across both appearances.
- *
- * Secondary text diverges from cursor.com: theirs sits at 60% of the
- * foreground, which measures APCA Lc 65.3 in light and Lc 44.5 in dark against
- * body text's Lc 75 threshold, so this uses their stronger fg-02 step instead
- * (Lc 91.4 / 81.2).
- *
- * The accent is their #f54e00 exactly, in both appearances, as they use it —
- * including as text on `.btn-tertiary`. As text it measures Lc 56.5 on the
- * light background and Lc 39.7 on the dark one, under the Lc 60 floor for
- * non-body text, so keep it to short labels and never body copy.
- */
 @theme {
   --color-fd-background: oklch(0.975 0.004 106.47);
   --color-fd-foreground: oklch(0.263 0.013 100.51);
@@ -41,22 +22,12 @@
   --color-fd-ring: oklch(0.652 0.214 37.99);
   --color-fd-overlay: oklch(0.263 0.013 100.51 / 0.2);
   --color-fd-selection: oklch(0.263 0.013 100.51 / 0.15);
-  /* cursor.com's `card-hover-light-hex`, the step a feature card takes under
-     the pointer: #f0efeb against a #f2f1ed card. Six thousandths of lightness
-     — enough to answer the pointer, not enough to look like a state change. */
   --color-fd-card-hover: oklch(0.952 0.005 95.1);
-  /* Their `border-01`: the foreground at 2.4%, drawn on every card. */
   --color-fd-card-border: oklch(0.263 0.013 100.51 / 0.024);
-  /* Their `--layered-media-bg-*`: the panel a demo is staged on. It is the
-     foreground hue turned about 22 degrees toward yellow, which is why it
-     reads as a different material rather than another shade of the page. */
   --color-fd-media: oklch(0.874 0.009 78.28);
 
-  /* Geist and Geist Mono stand in for CursorGothic and Berkeley Mono, which
-     are licensed and cannot be redistributed here. One family for both means
-     the code samples share the text's proportions and warmth. */
-  --default-font-family: "Geist", system-ui, sans-serif;
-  --font-mono: "Geist Mono", ui-monospace, monospace;
+  --default-font-family: 'Geist', system-ui, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, monospace;
 }
 
 .dark {
@@ -83,44 +54,19 @@
   --color-fd-media: oklch(0.39 0.017 78.09);
 }
 
-/*
- * cursor.com tints a selection with `--color-theme-fg-15` — its own foreground
- * at 15% — and leaves the text colour alone, so selected text stays legible in
- * either appearance instead of inverting to a browser blue. Same values here:
- * #26251e26 in light, #edecec26 in dark.
- *
- * It is a token per appearance rather than a `color-mix()` off the foreground,
- * because Lightning CSS resolves `color-mix()` against the `:root` value at
- * build time and bakes in the light one, leaving dark selections invisible.
- */
 ::selection {
   background-color: var(--color-fd-selection);
 }
 
-/*
- * Fumapress gives the home layout its own centred container with a 16px gutter.
- * This page sets its own — the same one the fixed header sets — and two of them
- * stack, so below 1200px the hero text sat 16px inside the header logo it is
- * meant to line up with. The page owns its measure; the layout owns none.
- */
 [data-fd-home-layout-container] {
   max-width: none;
   padding: 0;
 }
 
-/* Numerals in the reference tables are compared column-to-column, so they need
-   to align rather than fit. */
 :where(table) {
   font-variant-numeric: tabular-nums;
 }
 
-/*
- * cursor.com sweeps a highlight across the word that marks work in progress —
- * a `background-position` animation over clipped text, at 1.6s. Their version
- * runs regardless of the visitor's motion preference; this one only runs when
- * no preference against it is expressed, and otherwise renders as plain text
- * in the highlight colour.
- */
 .shimmer {
   color: var(--color-fd-muted-foreground);
 }
@@ -149,44 +95,18 @@
   }
 }
 
-/*
- * The card demos.
- *
- * Layout lives out here and motion lives in the guarded block below, so a
- * visitor who asks for less motion gets the demo in its *finished* state — the
- * run complete, the text typed, the table full — rather than a broken frame of
- * one. Motion is added to a picture that already reads; it is never what makes
- * the picture readable. The demos are `aria-hidden`, so nothing here is
- * information a reader could miss either way.
- */
-
 /* Three glyphs sharing one cell. Only the last is opaque at rest. */
 .step > * {
   grid-area: 1 / 1;
 }
 
-/* One line of typed text; `--chars` is both the finished width and the width
-   the animation ends on. */
 .type {
   display: block;
   overflow: hidden;
   white-space: nowrap;
 }
 
-/*
- * All three demos run on one 16s clock, because they sit side by side and three
- * unrelated periods read as noise rather than as three things happening.
- */
 @media (prefers-reduced-motion: no-preference) {
-  /*
-   * A CI job. Each step is three stacked glyphs — queued, running, done — and
-   * only one is opaque at a time. A shared cycle cannot give each row a
-   * different amount of *queued* time by phase alone, so the cycle is twice the
-   * run and every row waits out the second half; the negative delay places each
-   * row's turn two seconds after the one above it.
-   *
-   * Run at 0-8s, then the ticks clear one by one and it starts over.
-   */
   @keyframes step-queued {
     0%,
     49.9% {
@@ -244,11 +164,6 @@
     animation-name: step-done;
   }
 
-  /*
-   * The agent writing its summary. `ch` is exact in a monospace face, so the
-   * clip lands on a character boundary rather than mid-glyph, and `steps()`
-   * makes it appear one character at a time instead of sliding.
-   */
   @keyframes type-first {
     0% {
       width: 0;
@@ -300,10 +215,6 @@
     animation: caret 1.1s steps(1, end) infinite;
   }
 
-  /*
-   * The reference table, arriving a row at a time — the card's claim is that it
-   * is generated from action.yml rather than written, so it assembles.
-   */
   @keyframes row-in {
     0% {
       opacity: 0;
