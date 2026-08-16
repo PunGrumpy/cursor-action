@@ -38,7 +38,8 @@
     "lint": "ultracite check",
     "test": "bun test",
     "test:coverage": "bun test --coverage",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepare": "husky"
   },
   "dependencies": {
     "@actions/core": "^3.0.0",
@@ -47,6 +48,7 @@
   "devDependencies": {
     "@changesets/cli": "^2.30.0",
     "@types/bun": "latest",
+    "husky": "^9.1.7",
     "oxfmt": "^0.41.0",
     "oxlint": "^1.56.0",
     "tsdown": "^0.22.0",
