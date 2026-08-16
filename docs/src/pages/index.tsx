@@ -212,17 +212,20 @@ function Window({
  * four hover.
  */
 const cardBase =
-  "group rounded-xl border border-fd-card-border bg-fd-card transition-colors hover:bg-fd-card-hover";
+  "rounded-xl border border-fd-card-border bg-fd-card transition-colors hover:bg-fd-card-hover";
 
-/** Their `.btn-tertiary`: the accent as text, with the arrow moving on hover. */
+/**
+ * Their `.btn-tertiary`: the accent as text. The arrow is fixed — the card's
+ * own background is what answers the pointer, and a second thing moving under
+ * the same hover is one motion too many for one intent.
+ */
 function Cta({ children }: { children: React.ReactNode }) {
   return (
     <span className="inline-flex text-fd-primary text-sm">
       {children}
-      <span
-        aria-hidden="true"
-        className="inline-flex ps-[0.25em] transition-transform group-hover:translate-x-0.5"
-      >
+      {/* The same 0.25em lead-in the hero buttons use, at full strength: the
+          accent is already close to its contrast floor as text. */}
+      <span aria-hidden="true" className="inline-flex ps-[0.25em]">
         →
       </span>
     </span>
