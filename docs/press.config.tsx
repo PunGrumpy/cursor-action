@@ -6,6 +6,7 @@ import { linkValidationPlugin } from "fumapress/plugins/link-validation";
 import { takumiPlugin } from "fumapress/plugins/takumi";
 
 import { MARK_VIEW_BOX, markPath } from "./src/lib/mark";
+import { url } from "./src/lib/url";
 
 const docs = defineDocs({
   dir: "content",
@@ -22,20 +23,10 @@ const docs = defineDocs({
   },
 });
 
-// Vercel exposes the production domain at build time, so the deployment does
-// not have to be pinned to a domain that has not been chosen yet.
-const baseUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL
-  ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
-  : "http://localhost:3000";
+
 
 const SITE_NAME = "Cursor Action";
 
-/**
- * The dark-appearance tokens from `src/app.css`, resolved out of OKLCH because
- * the OG renderer has no stylesheet to read them from. `muted` is the same
- * stronger secondary step the site uses, not a dimmer one: a card is read at
- * thumbnail size in a feed, where less contrast is exactly wrong.
- */
 const OG = {
   accent: "#f54e00",
   background: "#14120b",
@@ -106,19 +97,16 @@ export default defineConfig({
   },
   site: {
     name: SITE_NAME,
-    baseUrl,
+    baseUrl: url,
     git: {
       user: "PunGrumpy",
       repo: "cursor-action",
       branch: "main",
-      // This site lives in `docs/`, so "Edit on GitHub" has to start there.
       rootDir: "docs",
     },
   },
 })
   .adapters(fumadocsMdx())
-  // Search, sitemap, robots.txt, llms.txt and RSS come from the "recommended"
-  // preset. Three plugins are named here instead.
   .plugins(
     // The reference tables are generated from action.yml, but prose still rots,
     // and a broken link is the cheapest signal that a page describes something
