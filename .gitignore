@@ -2,9 +2,11 @@
 node_modules
 
 # output
+# `dist/` is committed on purpose: GitHub Actions runs `dist/index.mjs`
+# straight from the tag, with no install step.
 out
-dist
 *.tgz
+*.map
 
 # code coverage
 coverage
