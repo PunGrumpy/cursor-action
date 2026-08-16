@@ -17,9 +17,6 @@ const FEATURES = [
     href: "/quickstart",
     cta: "Read the quickstart",
     figure: "outputs",
-    // The two outputs action.yml actually declares, rather than another copy
-    // of the step above — the card is about what comes back, not what goes in.
-    // The summary is split by line because each line is typed separately.
     summary: ['"Two risks: the retry', 'loop has no ceiling."'],
   },
   {
@@ -41,8 +38,6 @@ const FEATURES = [
     href: "/reference",
     cta: "Open the reference",
     figure: "Reference",
-    // The point of the card is that the reference states what an input does
-    // *not* do, so the figure is that column and nothing else.
     inputs: [
       { name: "prompt", state: "works" },
       { name: "timeout", state: "works" },
@@ -55,25 +50,12 @@ const FEATURES = [
 const focusRing =
   "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fd-ring";
 
-/**
- * cursor.com sizes both buttons at 14px, normal weight, with
- * `--button-padding-default: .89em 1.45em .91em` and a fully rounded radius.
- * The filled one carries the foreground colour, not the brand orange.
- */
 const buttonBase = `inline-flex items-center justify-center rounded-full px-[1.45em] pt-[0.89em] pb-[0.91em] text-sm leading-none ${focusRing}`;
 
-/** `.btn-icon` on cursor.com: inline-flex, 0.25em of lead-in, 70% opacity. */
 const buttonIcon = "inline-flex ps-[0.25em] opacity-70";
 
-/**
- * cursor.com backs its hero stage with a landscape painting and dims it with
- * `filter: brightness(.9)` in the dark theme. Same treatment, different
- * painting: Bierstadt's *Alaskan Coastal Range*, public domain since 1902 and
- * therefore ours to serve. See docs/README.md.
- */
 const WALLPAPER = "/hero-wallpaper.webp";
 
-/** See `src/lib/mark.ts`, which the favicons and the OG card also draw from. */
 function Mark({ className }: { className?: string }) {
   return (
     <svg
@@ -95,16 +77,8 @@ const NAV_LINKS = [
   { href: "/behaviour", label: "Behaviour" },
 ];
 
-/**
- * cursor.com's header is a three-column grid — logo, nav, actions — 56px tall
- * and fixed to the top. The nav is not centred by the grid: it is absolutely
- * positioned at 50% and pulled back by half its own size, so it stays centred
- * on the viewport however wide the logo and the action cluster grow.
- *
- * The action cluster is a plain text link, then a ghost pill bordered at 20%
- * of the foreground, then the filled pill. Both pills are 14px, weight normal.
- */
-function SiteHeader() {
+
+const SiteHeader = () => {
   return (
     <header className="fixed top-0 left-0 z-50 w-full bg-fd-background">
       <div className="relative mx-auto grid h-14 max-w-6xl grid-cols-[1fr_auto] items-center px-5 lg:grid-cols-[auto_1fr_auto]">
@@ -169,18 +143,14 @@ function SiteHeader() {
   );
 }
 
-/**
- * The window chrome cursor.com floats over its hero panel: a 10px radius, a
- * 28px title bar with three 10px dots at 20% of the foreground and a centred
- * label at 70% opacity, and a two-layer shadow closed off by a 1px border.
- */
-function Window({
+
+const  Window = ({
   label,
   children,
 }: {
   label: string;
   children: React.ReactNode;
-}) {
+}) => {
   return (
     <div
       className="overflow-hidden rounded-[10px] bg-fd-card"
@@ -204,22 +174,10 @@ function Window({
   );
 }
 
-/**
- * Every card on the page, large or small. cursor.com's `.card` is a filled
- * surface with a 1px border at 2.4% of the foreground, and `.card:is(a):hover`
- * lifts it — the hover *is* the link affordance in their system, which is why
- * a card that is not a link never gets one. All four of ours are links, so all
- * four hover.
- */
 const cardBase =
   "rounded-xl border border-fd-card-border bg-fd-card transition-colors hover:bg-fd-card-hover";
 
-/**
- * Their `.btn-tertiary`: the accent as text. The arrow is fixed — the card's
- * own background is what answers the pointer, and a second thing moving under
- * the same hover is one motion too many for one intent.
- */
-function Cta({ children }: { children: React.ReactNode }) {
+const Cta = ({ children }: { children: React.ReactNode }) => {
   return (
     <span className="inline-flex text-fd-primary text-sm">
       {children}
@@ -232,18 +190,13 @@ function Cta({ children }: { children: React.ReactNode }) {
   );
 }
 
-/**
- * The stage a demo sits on: their `media-border-container`, a flat panel in the
- * warmer `--color-fd-media` with the figure clipped to it. Using it under the
- * small cards too is what stops the section carrying two visual languages.
- */
-function MediaPanel({
+const MediaPanel = ({
   children,
   className = "",
 }: {
   children: React.ReactNode;
   className?: string;
-}) {
+}) => {
   return (
     <div
       className={`overflow-hidden rounded-lg bg-fd-media ${className}`}
@@ -253,11 +206,6 @@ function MediaPanel({
   );
 }
 
-/**
- * Split around the interpolation on purpose: the shimmer marks the one token
- * the whole section is about, and it is the same highlight the card to its left
- * uses on the value being read.
- */
 const CONSUMER_BEFORE = `- name: Comment the review
   uses: actions/github-script@v8
   with:
@@ -270,16 +218,7 @@ const CONSUMER_BEFORE = `- name: Comment the review
 const CONSUMER_TOKEN = "${{ steps.cursor.outputs.summary }}";
 const CONSUMER_AFTER = "`,\n      })";
 
-/**
- * cursor.com's `card--large`: one card across a 24-column grid, text in columns
- * 1 to 9 and the media in 9 to 25, both vertically centred, collapsing to
- * stacked rows below `lg`.
- *
- * The whole card is the link, as theirs is, but labelled by its heading — theirs
- * takes its accessible name from every word inside it, which is a link name
- * three sentences long.
- */
-function LargeCard() {
+const LargeCard = () => {
   return (
     <a
       aria-labelledby="handoff"
@@ -303,12 +242,8 @@ function LargeCard() {
         </span>
       </div>
 
-      {/* Decorative: the card is already labelled, and nothing in here is
-          reachable or meant to be read out a second time. */}
       <div aria-hidden="true" className="lg:col-start-9 lg:col-end-25">
         <MediaPanel className="h-[260px] p-6 sm:h-[300px] sm:p-8">
-          {/* Clipped by the panel rather than fitted to it, the way their demo
-              windows run past the bottom edge. */}
           <div className="mx-auto max-w-xl">
             <Window label="comment.yml">
               <pre className="overflow-hidden p-5 font-mono text-[12.5px] leading-relaxed">
@@ -326,16 +261,7 @@ function LargeCard() {
   );
 }
 
-/**
- * The illustration under each card. cursor.com's equivalents are animated but
- * inert — every control in their markup is `disabled` and the whole block is
- * `aria-hidden` — so these are pictures of the product, not miniatures of it.
- *
- * Each one is a window on the same media panel the large card stages its demo
- * on, and each shows a different artefact — the outputs, a run, the reference —
- * so no two cards illustrate the same thing twice.
- */
-function FeatureFigure({ feature }: { feature: (typeof FEATURES)[number] }) {
+const FeatureFigure = ({ feature }: { feature: (typeof FEATURES)[number] }) => {
   const body = (() => {
     if (feature.summary) {
       return (
@@ -513,19 +439,9 @@ const FOOTER: FooterColumn[] = [
   },
 ];
 
-/**
- * Their footer sits on the card surface and runs five link columns across the
- * container: headings in the secondary colour, links in the primary one, and
- * the external-link arrow hidden until hover so it is there when you reach for
- * the link and out of the way while you read. The bottom bar splits the
- * copyright from the appearance control.
- */
-function SiteFooter() {
+const SiteFooter = () => {
   return (
     <footer className="mt-24 bg-fd-card">
-      {/* Same container as the header and the page body — max width, then the
-          gutter inside it. With the gutter on the <footer> instead, its columns
-          started 20px left of everything above them. */}
       <div className="mx-auto max-w-6xl px-5 pt-16 pb-12">
         <nav className="mb-20 grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-5">
           {FOOTER.map((column) => (
@@ -577,8 +493,6 @@ function SiteFooter() {
               Not affiliated with or endorsed by Cursor
             </small>
           </div>
-          {/* Closing the gap opened by turning the layout's own nav off: without
-              this the home page had no way to change appearance. */}
           <ThemeSwitch mode="light-dark-system" />
         </div>
       </div>
@@ -586,21 +500,12 @@ function SiteFooter() {
   );
 }
 
-/**
- * Adapted from the pair cursor.com runs on its own home page: a benefit-led
- * noun phrase suffixed with the product, and a description that says what the
- * agent does before it says what to do about it.
- */
 const TITLE = "AI Coding Agent for Your GitHub Workflows | Cursor Action";
 const DESCRIPTION =
   "Built to fit the workflows you already have, a Cursor agent turns a prompt into a step output. Hand off reviews, summaries, and changes to CI.";
-/**
- * Read from the config rather than written down, so this page's canonical and
- * og:url come from the same Vercel-supplied domain every other page's do.
- */
 const SITE_URL = PressConfig.get().site?.baseUrl ?? "";
 
-export default function HomePage() {
+const HomePage = () => {
   return (
     <>
       {/* React hoists these into the document head; the file-based route has no
@@ -799,3 +704,5 @@ export default function HomePage() {
     </>
   );
 }
+
+export default HomePage;
