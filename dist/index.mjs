@@ -1,5 +1,5 @@
 import { endGroup, getInput, info, setFailed, setOutput, setSecret, startGroup, summary, warning } from "@actions/core";
-import { resolve } from "node:path";
+import path from "node:path";
 import { Agent } from "@cursor/sdk";
 //#region src/input.ts
 const VALID_PERMISSIONS = [
@@ -18,7 +18,7 @@ const getInputs = () => {
 	const timeoutRaw = getInput("timeout", { required: false }) || "300";
 	if (cursorVersion && cursorVersion !== "latest") warning("The 'cursor-version' input is deprecated. The Action now uses the official @cursor/sdk which automatically manages the agent version.");
 	if (!VALID_PERMISSIONS.includes(permissionsRaw)) throw new Error(`Invalid 'permissions' value: '${permissionsRaw}'. Must be one of: ${VALID_PERMISSIONS.join(", ")}`);
-	const timeout = Number.parseInt(timeoutRaw, 10);
+	const timeout = Math.trunc(Number(timeoutRaw));
 	if (Number.isNaN(timeout) || timeout <= 0) throw new Error(`Invalid 'timeout' value: '${timeoutRaw}'. Must be a positive integer (seconds).`);
 	if (timeout > 3600) warning(`Timeout is set to ${timeout}s (${Math.round(timeout / 60)}min). This is unusually long — consider if your prompt can be shortened.`);
 	if (!prompt.trim()) throw new Error("The 'prompt' input cannot be empty.");
@@ -47,7 +47,7 @@ const parseSummary = (stdout) => {
 			if (typeof parsed.text === "string") return parsed.text.trim();
 		}
 	} catch {}
-	return trimmed.replaceAll(/\u001B\[[0-9;]*[mGKHF]/g, "");
+	return trimmed.replaceAll(/\u001B\[[0-9;]*[mGKHF]/gu, "");
 };
 const writeJobSummary = async (text, result) => {
 	const status = result.exitCode === 0 ? "✅ Success" : `❌ Failed (exit ${result.exitCode})`;
@@ -82,7 +82,7 @@ const maskSecret = (apiKey) => setSecret(apiKey);
 //#endregion
 //#region src/runner.ts
 const runAgent = async (inputs) => {
-	const cwd = resolve(inputs.workingDirectory);
+	const cwd = path.resolve(inputs.workingDirectory);
 	info(`Running Cursor Agent in: ${cwd}`);
 	info(`Model: ${inputs.model}`);
 	if (inputs.permissions !== "read-only") warning("The `permissions` input is not passed to Cursor SDK Agent.create; tool access follows your API key / account, not this field.");
