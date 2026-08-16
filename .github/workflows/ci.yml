@@ -5,6 +5,7 @@ on:
     branches:
       - main
   pull_request:
+  workflow_dispatch:
 
 jobs:
   build:
@@ -46,12 +47,69 @@ jobs:
             exit 1
           fi
 
+  # Proves the distribution path without spending an agent run: `npm ci` is the
+  # same install the composite action performs, and a rejected key still means
+  # the externals resolved, the SDK loaded its own lazy chunks, and the request
+  # reached Cursor. Both distribution bugs this test was written for died well
+  # before authentication, so an auth error is a pass.
+  integration:
+    name: Integration (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    needs:
+      - build
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+      - name: Install runtime dependencies
+        run: npm ci --omit=dev --no-audit --no-fund
+      - name: Reach the Cursor API with an invalid key
+        shell: bash
+        env:
+          "INPUT_API-KEY": "invalid-key-used-to-probe-the-transport"
+          INPUT_PROMPT: "Say nothing."
+          INPUT_TIMEOUT: "60"
+          # Stay out of the checkout so this repo's own .cursor/ config and
+          # hooks cannot influence the run.
+          "INPUT_WORKING-DIRECTORY": ${{ runner.temp }}
+        run: |
+          set +e
+          OUTPUT="$(node dist/index.mjs 2>&1)"
+          set -e
+          echo "$OUTPUT"
+
+          if grep -qE "Cannot find module|ERR_MODULE_NOT_FOUND" <<<"$OUTPUT"; then
+            echo "::error::the action could not load its own dependencies"
+            exit 1
+          fi
+
+          if ! grep -q "Invalid User API Key" <<<"$OUTPUT"; then
+            echo "::error::expected the run to be rejected at authentication, got something else"
+            exit 1
+          fi
+
+          echo "Reached the Cursor API and was rejected at authentication, as expected."
+
+  # Spends a real agent run, so it needs a CURSOR_API_KEY on a paid plan and is
+  # never triggered automatically. Run it from the Actions tab before a release.
   smoke-test:
     name: Smoke Test (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     needs:
       - build
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    if: ${{ github.event_name == 'workflow_dispatch' }}
     strategy:
       fail-fast: false
       matrix:
