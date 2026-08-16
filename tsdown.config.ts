@@ -2,32 +2,16 @@ import { defineConfig } from "tsdown";
 
 export default defineConfig({
   clean: true,
-  deps: {
-    alwaysBundle: ["@actions/core", "@cursor/sdk"],
-    neverBundle: ["sqlite3"],
-    onlyBundle: false,
-  },
-  // `dist/` is committed, so every rebuild rewrites the whole blob in git
-  // history. Emit the single file the runner needs and nothing else.
+  // `dist/` is committed, so emit only what the action loads.
   dts: false,
   entry: ["src/index.ts"],
+  // @cursor/sdk dynamically imports its own webpack chunks (162.js, 986.js, ...)
+  // at runtime, relative to its package directory, and resolves a native
+  // @cursor/sdk-<platform> package for `rg` / `cursorsandbox`. Bundling it
+  // produces a file that imports fine and then dies inside Agent.create, so
+  // both runtime dependencies stay external and the action installs them.
+  external: ["@actions/core", "@cursor/sdk"],
   format: ["esm"],
-  // @cursor/sdk ships prebuilt code that uses direct `eval`; we bundle it for the
-  // action runtime. Suppress Rolldown's EVAL warnings for that dependency only.
-  inputOptions: {
-    onLog(level, log, defaultHandler) {
-      if (
-        level === "warn" &&
-        typeof log === "object" &&
-        log.code === "EVAL" &&
-        (log.id?.includes("@cursor/sdk") ||
-          log.loc?.file?.includes("@cursor/sdk"))
-      ) {
-        return;
-      }
-      defaultHandler(level, log);
-    },
-  },
   outExtensions: () => ({ js: ".mjs" }),
   sourcemap: false,
   target: "node20",

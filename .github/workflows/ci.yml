@@ -59,8 +59,6 @@ jobs:
           - ubuntu-latest
           - windows-latest
           - macos-latest
-    env:
-      CURSOR_SMOKE_TEST_MODEL: default
     permissions:
       contents: read
     steps:
@@ -72,7 +70,7 @@ jobs:
         with:
           api-key: ${{ secrets.CURSOR_API_KEY }}
           prompt: "Say 'smoke test passed' and nothing else."
-          model: ${{ env.CURSOR_SMOKE_TEST_MODEL }}
+          model: "default"
           # Run outside the checkout so this repo's own .cursor/ config and
           # hooks cannot influence the headless run.
           working-directory: ${{ runner.temp }}
