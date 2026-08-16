@@ -7,6 +7,9 @@ export default defineConfig({
     neverBundle: ["sqlite3"],
     onlyBundle: false,
   },
+  // `dist/` is committed, so every rebuild rewrites the whole blob in git
+  // history. Emit the single file the runner needs and nothing else.
+  dts: false,
   entry: ["src/index.ts"],
   format: ["esm"],
   // @cursor/sdk ships prebuilt code that uses direct `eval`; we bundle it for the
@@ -26,5 +29,6 @@ export default defineConfig({
     },
   },
   outExtensions: () => ({ js: ".mjs" }),
+  sourcemap: false,
   target: "node20",
 });
