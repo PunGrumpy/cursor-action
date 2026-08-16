@@ -39,7 +39,7 @@
   },
   "dependencies": {
     "@actions/core": "^3.0.0",
-    "@cursor/sdk": "^1.0.12"
+    "@cursor/sdk": "^1.0.28"
   },
   "devDependencies": {
     "@changesets/cli": "^2.30.0",
