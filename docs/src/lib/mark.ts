@@ -27,7 +27,7 @@ const vertex = (i: number): Point =>
 const hexagon = (): string => {
   let d = "";
 
-  for (let i = 0; i < SIDES; i++) {
+  for (let i = 0; i < SIDES; i += 1) {
     const here = vertex(i);
     const before = vertex(i - 1);
     const after = vertex(i + 1);
@@ -61,6 +61,4 @@ export const MARK_VIEW_BOX = `0 0 ${SIZE} ${SIZE}`;
  * @param scale Size of the counter. 1 reads correctly from roughly 20px up;
  *   1.4 is the small-size cut, where a counter at 1 closes to a slit.
  */
-export const markPath = (scale = 1): string => 
-  hexagon() + counter(scale)
-;
+export const markPath = (scale = 1): string => hexagon() + counter(scale);
