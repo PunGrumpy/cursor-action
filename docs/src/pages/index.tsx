@@ -12,38 +12,38 @@ const WORKFLOW = `- name: Run Cursor Agent
 
 const FEATURES = [
   {
-    title: "One step, one output",
     body: "Send a prompt, read the response from steps.<id>.outputs.summary, and pipe it wherever the workflow needs it.",
-    href: "/quickstart",
     cta: "Read the quickstart",
     figure: "outputs",
+    href: "/quickstart",
     summary: ['"Two risks: the retry', 'loop has no ceiling."'],
+    title: "One step, one output",
   },
   {
-    title: "Ubuntu, Windows, macOS",
     body: "Every push to main runs the action on all three runners, so the platform you build on is the one it was tested on.",
-    href: "/behaviour",
     cta: "See how it runs",
     figure: "Actions",
+    href: "/behaviour",
     run: [
       { label: "Build & Test", state: "done" },
       { label: "Integration (ubuntu)", state: "done" },
       { label: "Integration (windows)", state: "done" },
       { label: "Integration (macos)", state: "running" },
     ],
+    title: "Ubuntu, Windows, macOS",
   },
   {
-    title: "Documented honestly",
     body: "The reference tables are generated from action.yml, and the inputs that do not work yet say so on the page.",
-    href: "/reference",
     cta: "Open the reference",
     figure: "Reference",
+    href: "/reference",
     inputs: [
       { name: "prompt", state: "works" },
       { name: "timeout", state: "works" },
       { name: "permissions", state: "Not enforced" },
       { name: "cursor-version", state: "Ignored" },
     ],
+    title: "Documented honestly",
   },
 ];
 
@@ -77,20 +77,19 @@ const NAV_LINKS = [
   { href: "/behaviour", label: "Behaviour" },
 ];
 
-
-const SiteHeader = () => {
-  return (
-    <header className="fixed top-0 left-0 z-50 w-full bg-fd-background">
+const SiteHeader = () => 
+  (
+    <header className="bg-fd-background fixed top-0 left-0 z-50 w-full">
       <div className="relative mx-auto grid h-14 max-w-6xl grid-cols-[1fr_auto] items-center px-5 lg:grid-cols-[auto_1fr_auto]">
         <a
-          className={`-translate-y-full absolute top-2 left-5 rounded-full bg-fd-foreground px-4 py-2 text-fd-background text-sm opacity-0 transition-transform focus:translate-y-0 focus:opacity-100 ${focusRing}`}
+          className={`bg-fd-foreground text-fd-background absolute top-2 left-5 -translate-y-full rounded-full px-4 py-2 text-sm opacity-0 transition-transform focus:translate-y-0 focus:opacity-100 ${focusRing}`}
           href="#main"
         >
           Skip to content
         </a>
 
         <a
-          className={`col-start-1 col-end-2 row-start-1 row-end-2 inline-flex items-center gap-2 font-medium text-sm ${focusRing}`}
+          className={`col-start-1 col-end-2 row-start-1 row-end-2 inline-flex items-center gap-2 text-sm font-medium ${focusRing}`}
           href="/"
         >
           <Mark className="size-[22px]" />
@@ -98,12 +97,12 @@ const SiteHeader = () => {
         </a>
 
         <div className="hidden lg:block">
-          <nav className="-translate-x-1/2 -translate-y-1/2 absolute top-1/2 left-1/2">
+          <nav className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
             <ul className="flex items-center justify-center">
               {NAV_LINKS.map((link) => (
                 <li key={link.href}>
                   <a
-                    className={`rounded-full px-3 py-2 text-fd-muted-foreground text-sm transition-colors hover:text-fd-foreground ${focusRing}`}
+                    className={`text-fd-muted-foreground hover:text-fd-foreground rounded-full px-3 py-2 text-sm transition-colors ${focusRing}`}
                     href={link.href}
                   >
                     {link.label}
@@ -122,7 +121,7 @@ const SiteHeader = () => {
             Docs
           </a>
           <a
-            className={`hidden rounded-full border border-fd-foreground/20 px-[0.8em] pt-[0.45em] pb-[0.46em] text-sm leading-none transition-colors hover:bg-fd-accent lg:inline-flex ${focusRing}`}
+            className={`border-fd-foreground/20 hover:bg-fd-accent hidden rounded-full border px-[0.8em] pt-[0.45em] pb-[0.46em] text-sm leading-none transition-colors lg:inline-flex ${focusRing}`}
             href="https://github.com/marketplace/actions/cursor-action"
             rel="noreferrer"
             target="_blank"
@@ -130,7 +129,7 @@ const SiteHeader = () => {
             Marketplace
           </a>
           <a
-            className={`inline-flex rounded-full bg-fd-foreground px-[0.8em] pt-[0.45em] pb-[0.46em] text-fd-background text-sm leading-none transition-opacity hover:opacity-90 ${focusRing}`}
+            className={`bg-fd-foreground text-fd-background inline-flex rounded-full px-[0.8em] pt-[0.45em] pb-[0.46em] text-sm leading-none transition-opacity hover:opacity-90 ${focusRing}`}
             href="https://github.com/PunGrumpy/cursor-action"
             rel="noreferrer"
             target="_blank"
@@ -140,46 +139,45 @@ const SiteHeader = () => {
         </div>
       </div>
     </header>
-  );
-}
+  )
+;
 
-
-const  Window = ({
+const Window = ({
   label,
   children,
 }: {
   label: string;
   children: React.ReactNode;
-}) => {
-  return (
+}) => 
+  (
     <div
-      className="overflow-hidden rounded-[10px] bg-fd-card"
+      className="bg-fd-card overflow-hidden rounded-[10px]"
       style={{
         boxShadow:
           "0 28px 70px rgb(0 0 0 / 0.14), 0 14px 32px rgb(0 0 0 / 0.1), 0 0 0 1px var(--color-fd-border)",
       }}
     >
-      <div className="relative flex h-7 items-center border-fd-border border-b px-2">
+      <div className="border-fd-border relative flex h-7 items-center border-b px-2">
         <div aria-hidden="true" className="flex items-center gap-1.5">
-          <span className="inline-block size-2.5 rounded-full bg-fd-foreground/20" />
-          <span className="inline-block size-2.5 rounded-full bg-fd-foreground/20" />
-          <span className="inline-block size-2.5 rounded-full bg-fd-foreground/20" />
+          <span className="bg-fd-foreground/20 inline-block size-2.5 rounded-full" />
+          <span className="bg-fd-foreground/20 inline-block size-2.5 rounded-full" />
+          <span className="bg-fd-foreground/20 inline-block size-2.5 rounded-full" />
         </div>
-        <div className="-translate-x-1/2 -translate-y-1/2 pointer-events-none absolute top-1/2 left-1/2 truncate text-center text-[13px] opacity-70">
+        <div className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 truncate text-center text-[13px] opacity-70">
           {label}
         </div>
       </div>
       {children}
     </div>
-  );
-}
+  )
+;
 
 const cardBase =
   "rounded-xl border border-fd-card-border bg-fd-card transition-colors hover:bg-fd-card-hover";
 
-const Cta = ({ children }: { children: React.ReactNode }) => {
-  return (
-    <span className="inline-flex text-fd-primary text-sm">
+const Cta = ({ children }: { children: React.ReactNode }) => 
+  (
+    <span className="text-fd-primary inline-flex text-sm">
       {children}
       {/* The same 0.25em lead-in the hero buttons use, at full strength: the
           accent is already close to its contrast floor as text. */}
@@ -187,8 +185,8 @@ const Cta = ({ children }: { children: React.ReactNode }) => {
         →
       </span>
     </span>
-  );
-}
+  )
+;
 
 const MediaPanel = ({
   children,
@@ -196,15 +194,13 @@ const MediaPanel = ({
 }: {
   children: React.ReactNode;
   className?: string;
-}) => {
-  return (
-    <div
-      className={`overflow-hidden rounded-lg bg-fd-media ${className}`}
-    >
+}) => 
+  (
+    <div className={`bg-fd-media overflow-hidden rounded-lg ${className}`}>
       {children}
     </div>
-  );
-}
+  )
+;
 
 const CONSUMER_BEFORE = `- name: Comment the review
   uses: actions/github-script@v8
@@ -218,19 +214,19 @@ const CONSUMER_BEFORE = `- name: Comment the review
 const CONSUMER_TOKEN = "${{ steps.cursor.outputs.summary }}";
 const CONSUMER_AFTER = "`,\n      })";
 
-const LargeCard = () => {
-  return (
+const LargeCard = () => 
+  (
     <a
       aria-labelledby="handoff"
       className={`${cardBase} grid grid-cols-1 items-center gap-y-8 p-7 lg:grid-cols-24 lg:gap-y-0 ${focusRing}`}
       href="/examples"
     >
       <div className="lg:col-start-1 lg:col-end-9 lg:pr-12">
-        <h3 className="text-balance font-medium text-base" id="handoff">
+        <h3 className="text-base font-medium text-balance" id="handoff">
           The answer is a value, not a log line
         </h3>
-        <p className="mt-2 max-w-prose text-pretty text-fd-muted-foreground text-sm leading-relaxed">
-          <code className="font-mono text-fd-foreground">
+        <p className="text-fd-muted-foreground mt-2 max-w-prose text-sm leading-relaxed text-pretty">
+          <code className="text-fd-foreground font-mono">
             steps.&lt;id&gt;.outputs.summary
           </code>{" "}
           holds whatever the agent wrote back. Comment it on the pull request,
@@ -258,8 +254,8 @@ const LargeCard = () => {
         </MediaPanel>
       </div>
     </a>
-  );
-}
+  )
+;
 
 const FeatureFigure = ({ feature }: { feature: (typeof FEATURES)[number] }) => {
   const body = (() => {
@@ -283,7 +279,7 @@ const FeatureFigure = ({ feature }: { feature: (typeof FEATURES)[number] }) => {
               </span>
             ))}
           </dd>
-          <dt className="pt-1.5 text-fd-muted-foreground">exit-code</dt>
+          <dt className="text-fd-muted-foreground pt-1.5">exit-code</dt>
           <dd className="text-fd-foreground">
             0<span className="caret text-fd-primary">▌</span>
           </dd>
@@ -298,10 +294,7 @@ const FeatureFigure = ({ feature }: { feature: (typeof FEATURES)[number] }) => {
             <li className="flex items-center gap-2" key={step.label}>
               {/* Three glyphs in one cell, one opaque at a time. Without the
                   animation only the last is drawn, so the run reads complete. */}
-              <span
-                className="step grid"
-                style={{ ["--step" as string]: i }}
-              >
+              <span className="step grid" style={{ ["--step" as string]: i }}>
                 <span className="step--queued text-fd-muted-foreground opacity-0">
                   ○
                 </span>
@@ -329,8 +322,8 @@ const FeatureFigure = ({ feature }: { feature: (typeof FEATURES)[number] }) => {
             <span
               className={
                 input.state === "works"
-                  ? "ms-auto text-fd-foreground"
-                  : "ms-auto text-fd-primary"
+                  ? "text-fd-foreground ms-auto"
+                  : "text-fd-primary ms-auto"
               }
             >
               {input.state === "works" ? "✓" : input.state}
@@ -350,110 +343,122 @@ const FeatureFigure = ({ feature }: { feature: (typeof FEATURES)[number] }) => {
       </Window>
     </MediaPanel>
   );
-}
+};
 
 const REPO = "https://github.com/PunGrumpy/cursor-action";
 
-type FooterColumn = {
+interface FooterColumn {
   heading: string;
   links: { label: string; href: string; external?: boolean }[];
-};
+}
 
 const FOOTER: FooterColumn[] = [
   {
     heading: "Documentation",
     links: [
-      { label: "Quickstart", href: "/quickstart" },
-      { label: "Reference", href: "/reference" },
-      { label: "Examples", href: "/examples" },
-      { label: "Behaviour", href: "/behaviour" },
-      { label: "Troubleshooting", href: "/troubleshooting" },
+      { href: "/quickstart", label: "Quickstart" },
+      { href: "/reference", label: "Reference" },
+      { href: "/examples", label: "Examples" },
+      { href: "/behaviour", label: "Behaviour" },
+      { href: "/troubleshooting", label: "Troubleshooting" },
     ],
   },
   {
     heading: "Project",
     links: [
-      { label: "GitHub", href: REPO, external: true },
+      { external: true, href: REPO, label: "GitHub" },
       {
-        label: "Marketplace",
+        external: true,
         href: "https://github.com/marketplace/actions/cursor-action",
-        external: true,
+        label: "Marketplace",
       },
       {
-        label: "npm",
-        href: "https://www.npmjs.com/package/@pungrumpy/cursor-action",
         external: true,
+        href: "https://www.npmjs.com/package/@pungrumpy/cursor-action",
+        label: "npm",
       },
-      { label: "Releases", href: `${REPO}/releases`, external: true },
-      { label: "Changelog", href: `${REPO}/blob/main/CHANGELOG.md`, external: true },
+      { external: true, href: `${REPO}/releases`, label: "Releases" },
+      {
+        external: true,
+        href: `${REPO}/blob/main/CHANGELOG.md`,
+        label: "Changelog",
+      },
     ],
   },
   {
     heading: "Community",
     links: [
-      { label: "Issues", href: `${REPO}/issues`, external: true },
+      { external: true, href: `${REPO}/issues`, label: "Issues" },
       {
-        label: "Contributing",
+        external: true,
         href: `${REPO}/blob/main/.github/CONTRIBUTING.md`,
-        external: true,
+        label: "Contributing",
       },
       {
-        label: "Code of conduct",
+        external: true,
         href: `${REPO}/blob/main/.github/CODE_OF_CONDUCT.md`,
-        external: true,
+        label: "Code of conduct",
       },
       {
-        label: "Report a bug",
+        external: true,
         href: `${REPO}/issues/new?template=bug_report.md`,
-        external: true,
+        label: "Report a bug",
       },
       {
-        label: "Request a feature",
-        href: `${REPO}/issues/new?template=feature_request.md`,
         external: true,
+        href: `${REPO}/issues/new?template=feature_request.md`,
+        label: "Request a feature",
       },
     ],
   },
   {
     heading: "Credits",
     links: [
-      { label: "Cursor", href: "https://cursor.com", external: true },
+      { external: true, href: "https://cursor.com", label: "Cursor" },
       {
-        label: "@cursor/sdk",
+        external: true,
         href: "https://www.npmjs.com/package/@cursor/sdk",
-        external: true,
+        label: "@cursor/sdk",
       },
-      { label: "Fumapress", href: "https://press.fumadocs.dev", external: true },
       {
-        label: "Bierstadt painting",
-        href: "https://commons.wikimedia.org/wiki/File:Bierstadt-Alaskan_Coastal_Range.jpg",
         external: true,
+        href: "https://press.fumadocs.dev",
+        label: "Fumapress",
+      },
+      {
+        external: true,
+        href: "https://commons.wikimedia.org/wiki/File:Bierstadt-Alaskan_Coastal_Range.jpg",
+        label: "Bierstadt painting",
       },
     ],
   },
   {
     heading: "Legal",
     links: [
-      { label: "MIT licence", href: `${REPO}/blob/main/LICENSE`, external: true },
+      {
+        external: true,
+        href: `${REPO}/blob/main/LICENSE`,
+        label: "MIT licence",
+      },
     ],
   },
 ];
 
-const SiteFooter = () => {
-  return (
-    <footer className="mt-24 bg-fd-card">
+const SiteFooter = () => 
+  (
+    <footer className="bg-fd-card mt-24">
       <div className="mx-auto max-w-6xl px-5 pt-16 pb-12">
         <nav className="mb-20 grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-5">
           {FOOTER.map((column) => (
             <div key={column.heading}>
-              <h3 className="pb-2 text-fd-muted-foreground text-sm">
+              <h3 className="text-fd-muted-foreground pb-2 text-sm">
                 {column.heading}
               </h3>
               <ul>
                 {column.links.map((link) => (
                   <li key={link.label}>
                     <a
-                      className={`group inline-block py-1 text-fd-foreground text-sm ${focusRing}`}
+                      className={`group text-fd-foreground inline-block py-1 text-sm ${focusRing}`}
                       href={link.href}
                       {...(link.external
                         ? { rel: "noreferrer", target: "_blank" }
@@ -477,7 +482,7 @@ const SiteFooter = () => {
         </nav>
 
         <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-1 text-fd-muted-foreground">
+          <div className="text-fd-muted-foreground flex flex-wrap items-center gap-x-6 gap-y-1">
             <small className="text-sm">
               © 2026{" "}
               <a
@@ -497,16 +502,16 @@ const SiteFooter = () => {
         </div>
       </div>
     </footer>
-  );
-}
+  )
+;
 
 const TITLE = "AI Coding Agent for Your GitHub Workflows | Cursor Action";
 const DESCRIPTION =
   "Built to fit the workflows you already have, a Cursor agent turns a prompt into a step output. Hand off reviews, summaries, and changes to CI.";
 const SITE_URL = PressConfig.get().site?.baseUrl ?? "";
 
-const HomePage = () => {
-  return (
+const HomePage = () => 
+  (
     <>
       {/* React hoists these into the document head; the file-based route has no
           frontmatter for the page-meta plugin to read. */}
@@ -541,7 +546,7 @@ const HomePage = () => {
               --text-md-lg, one colour — the two-tone reading of it came from a
               screenshot caught mid-animation, not from the design. */}
           <section className="max-w-prose pt-24 pb-14 text-left sm:pt-32">
-            <h1 className="mb-6 text-balance font-normal text-[1.625rem] leading-[1.25] tracking-[-0.01em]">
+            <h1 className="mb-6 text-[1.625rem] leading-[1.25] font-normal tracking-[-0.01em] text-balance">
               Cursor Action runs your coding agent inside the workflows you
               already have.
             </h1>
@@ -560,7 +565,7 @@ const HomePage = () => {
                   with border-01 at 2.5% of the foreground, not a transparent
                   pill with a heavy border. */}
               <a
-                className={`${buttonBase} border border-fd-foreground/[0.025] bg-fd-accent transition-[filter] hover:brightness-125`}
+                className={`${buttonBase} border-fd-foreground/[0.025] bg-fd-accent border transition-[filter] hover:brightness-125`}
                 href="https://github.com/PunGrumpy/cursor-action"
                 rel="noreferrer"
                 target="_blank"
@@ -582,10 +587,10 @@ const HomePage = () => {
             <h2 className="sr-only" id="preview">
               What a run looks like
             </h2>
-            <div className="relative isolate overflow-hidden rounded-xl border border-fd-border bg-fd-accent p-8 sm:p-12">
+            <div className="border-fd-border bg-fd-accent relative isolate overflow-hidden rounded-xl border p-8 sm:p-12">
               <img
                 alt=""
-                className="-z-10 absolute inset-0 h-full w-full object-cover dark:brightness-90"
+                className="absolute inset-0 -z-10 h-full w-full object-cover dark:brightness-90"
                 src={WALLPAPER}
               />
 
@@ -598,7 +603,7 @@ const HomePage = () => {
 
                 {/* Offset and layered over the first, the way the CLI window sits
                     over the desktop one on cursor.com. */}
-                <div className="-mb-6 relative z-10 ml-auto w-full max-w-md translate-y-[-2.5rem] sm:mr-[-2rem]">
+                <div className="relative z-10 -mb-6 ml-auto w-full max-w-md translate-y-[-2.5rem] sm:mr-[-2rem]">
                   <Window label="Job summary">
                     <div className="p-5">
                       <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-1.5 font-mono text-[13px]">
@@ -607,9 +612,9 @@ const HomePage = () => {
                         <dt className="text-fd-muted-foreground">Exit code</dt>
                         <dd className="tabular-nums">0</dd>
                       </dl>
-                      <p className="mt-4 text-[13px] text-fd-muted-foreground leading-relaxed">
+                      <p className="text-fd-muted-foreground mt-4 text-[13px] leading-relaxed">
                         The response also lands in{" "}
-                        <code className="font-mono text-fd-foreground">
+                        <code className="text-fd-foreground font-mono">
                           outputs.summary
                         </code>
                         , ready for the next step to comment, gate, or ignore.
@@ -628,7 +633,7 @@ const HomePage = () => {
               filled panel. */}
           <section aria-labelledby="features" className="pb-24">
             <h2
-              className="mb-6 max-w-md text-balance font-normal text-[1.625rem] leading-[1.25] tracking-[-0.01em]"
+              className="mb-6 max-w-md text-[1.625rem] leading-[1.25] font-normal tracking-[-0.01em] text-balance"
               id="features"
             >
               What you get
@@ -648,10 +653,10 @@ const HomePage = () => {
                   >
                     <div className="flex max-w-prose grow flex-col">
                       <div>
-                        <h3 className="font-medium text-base" id={headingId}>
+                        <h3 className="text-base font-medium" id={headingId}>
                           {feature.title}
                         </h3>
-                        <p className="mt-2 text-pretty text-fd-muted-foreground text-sm leading-relaxed">
+                        <p className="text-fd-muted-foreground mt-2 text-sm leading-relaxed text-pretty">
                           {feature.body}
                         </p>
                       </div>
@@ -674,14 +679,16 @@ const HomePage = () => {
 
           <section aria-labelledby="caveats" className="pb-24">
             <h2
-              className="font-normal text-[1.625rem] leading-[1.25] tracking-[-0.01em]"
+              className="text-[1.625rem] leading-[1.25] font-normal tracking-[-0.01em]"
               id="caveats"
             >
               What it does not do yet
             </h2>
-            <ul className="mt-8 max-w-2xl space-y-4 text-fd-muted-foreground text-sm leading-relaxed">
+            <ul className="text-fd-muted-foreground mt-8 max-w-2xl space-y-4 text-sm leading-relaxed">
               <li>
-                <code className="font-mono text-fd-foreground">permissions</code>{" "}
+                <code className="text-fd-foreground font-mono">
+                  permissions
+                </code>{" "}
                 is accepted but never enforced. <code>read-only</code> will not
                 stop the agent editing files or running shell commands.
               </li>
@@ -691,7 +698,7 @@ const HomePage = () => {
               </li>
             </ul>
             <a
-              className={`mt-8 inline-flex min-h-11 items-center font-medium text-fd-primary text-sm underline underline-offset-4 ${focusRing}`}
+              className={`text-fd-primary mt-8 inline-flex min-h-11 items-center text-sm font-medium underline underline-offset-4 ${focusRing}`}
               href="/behaviour"
             >
               Read exactly how it behaves
@@ -702,7 +709,7 @@ const HomePage = () => {
 
       <SiteFooter />
     </>
-  );
-}
+  )
+;
 
 export default HomePage;

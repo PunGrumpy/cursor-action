@@ -23,8 +23,6 @@ const docs = defineDocs({
   },
 });
 
-
-
 const SITE_NAME = "Cursor Action";
 
 const OG = {
@@ -39,7 +37,6 @@ export default defineConfig({
   // Deployed to a CDN as a static site, so no route may depend on a server.
   mode: "static",
   defaultLayoutProps: {
-    nav: { title: SITE_NAME },
     links: [
       {
         text: "GitHub",
@@ -50,6 +47,7 @@ export default defineConfig({
         url: "https://github.com/marketplace/actions/cursor-action",
       },
     ],
+    nav: { title: SITE_NAME },
   },
   meta: {
     root() {
@@ -96,14 +94,14 @@ export default defineConfig({
     },
   },
   site: {
-    name: SITE_NAME,
     baseUrl: url,
     git: {
-      user: "PunGrumpy",
-      repo: "cursor-action",
       branch: "main",
+      repo: "cursor-action",
       rootDir: "docs",
+      user: "PunGrumpy",
     },
+    name: SITE_NAME,
   },
 })
   .adapters(fumadocsMdx())
@@ -183,7 +181,6 @@ export default defineConfig({
     // one replaces the default title and og:title rather than adding a second
     // set, and Takumi's og:image still wraps the result.
     {
-      name: "site:page-meta",
       init() {
         this.interceptPageMeta(({ page }) => {
           const title = `${page.data.title} | ${SITE_NAME}`;
@@ -212,5 +209,6 @@ export default defineConfig({
           );
         });
       },
+      name: "site:page-meta",
     }
   );

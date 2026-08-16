@@ -41,7 +41,7 @@ const hexagon = (): string => {
   }
 
   return `${d}Z`;
-}
+};
 
 const counter = (scale: number): string => {
   const backX = C - 2 * scale;
@@ -53,7 +53,7 @@ const counter = (scale: number): string => {
     `L${round(tipX)} ${round(C)}` +
     `L${round(backX)} ${round(C + halfHeight)}Z`
   );
-}
+};
 
 export const MARK_VIEW_BOX = `0 0 ${SIZE} ${SIZE}`;
 
@@ -61,6 +61,6 @@ export const MARK_VIEW_BOX = `0 0 ${SIZE} ${SIZE}`;
  * @param scale Size of the counter. 1 reads correctly from roughly 20px up;
  *   1.4 is the small-size cut, where a counter at 1 closes to a slit.
  */
-export const markPath = (scale = 1): string => {
-  return hexagon() + counter(scale);
-}
+export const markPath = (scale = 1): string => 
+  hexagon() + counter(scale)
+;

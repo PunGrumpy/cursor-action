@@ -46,7 +46,8 @@ function squircle(size: number, inset: number, exponent = 5): string {
 
   /** Sample i, wrapping, so the curve closes without a special case. */
   const at = (i: number): [number, number] => {
-    const t = ((((i % SEGMENTS) + SEGMENTS) % SEGMENTS) / SEGMENTS) * 2 * Math.PI;
+    const t =
+      ((((i % SEGMENTS) + SEGMENTS) % SEGMENTS) / SEGMENTS) * 2 * Math.PI;
     const cos = Math.cos(t);
     const sin = Math.sin(t);
     const p = 2 / exponent;
@@ -218,4 +219,6 @@ await Bun.write(
   await render(card, { format: "png", height: 630, width: 1200 })
 );
 
-console.log("Wrote favicon.svg, favicon-light.svg, apple-touch-icon.png, icon-192.png, icon-512.png, og.png");
+console.log(
+  "Wrote favicon.svg, favicon-light.svg, apple-touch-icon.png, icon-192.png, icon-512.png, og.png"
+);
