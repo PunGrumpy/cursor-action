@@ -28,7 +28,8 @@ no longer exists is the cheapest way to notice.
 
 **The brand assets are generated too.** `src/lib/mark.ts` computes the logo, and
 `bun run brand` draws every file in `public/` that contains it — both favicons,
-the PNG icons, `logo.svg`, and the `og.png` social card — plus the header uses
+`favicon.ico`, the PNG icons, `logo.svg`, and the `og.png` social card — plus
+the header uses
 the same function. Editing an SVG in `public/` by hand puts it one regeneration
 away from being overwritten. The counter in the mark takes a scale, because the
 one that reads at 220px closes to a slit at 16px; that is optical sizing, not a

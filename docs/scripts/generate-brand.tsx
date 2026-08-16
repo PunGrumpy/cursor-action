@@ -20,6 +20,8 @@ import { render } from "takumi-js";
 import { MARK_VIEW_BOX, markPath } from "../src/lib/mark";
 
 const PUBLIC = new URL("../public/", import.meta.url).pathname;
+/** Intermediate rasters for the ICO, which are not themselves shipped. */
+const TMP = `${require("node:os").tmpdir()}/cursor-action-brand-`;
 
 /** The same values `src/app.css` resolves its OKLCH tokens to. */
 const LIGHT = { background: "#f7f7f4", foreground: "#26251e" };
@@ -117,6 +119,55 @@ for (const size of [180, 192, 512]) {
   const name = size === 180 ? "apple-touch-icon.png" : `icon-${size}.png`;
   await Bun.$`bunx sharp-cli --input ${PUBLIC}favicon.svg --output ${PUBLIC}${name} --format png resize ${size} ${size}`.quiet();
 }
+
+/**
+ * ICO, hand-assembled: a 6-byte directory header, a 16-byte entry per image,
+ * then the images. Every target has read PNG payloads inside ICO since Vista,
+ * so the entries point at PNG bytes rather than at DIBs — which also means no
+ * BMP encoder and no dependency to write one.
+ *
+ * It takes the light artwork. Anything still reading a .ico rather than the
+ * SVG is old enough to be sitting in light chrome.
+ */
+const ICO_SIZES = [16, 32, 48];
+
+const icoImages = await Promise.all(
+  ICO_SIZES.map(async (size) => {
+    const path = `${TMP}ico-${size}.png`;
+    await Bun.$`bunx sharp-cli --input ${PUBLIC}favicon-light.svg --output ${path} --format png resize ${size} ${size}`.quiet();
+    return new Uint8Array(await Bun.file(path).arrayBuffer());
+  })
+);
+
+const HEADER = 6;
+const ENTRY = 16;
+const ico = new Uint8Array(
+  HEADER +
+    ENTRY * icoImages.length +
+    icoImages.reduce((sum, image) => sum + image.length, 0)
+);
+const view = new DataView(ico.buffer);
+
+view.setUint16(2, 1, true); // 1 = icon, not cursor
+view.setUint16(4, icoImages.length, true);
+
+let offset = HEADER + ENTRY * icoImages.length;
+icoImages.forEach((image, i) => {
+  const entry = HEADER + ENTRY * i;
+  const size = ICO_SIZES[i] as number;
+
+  ico[entry] = size; // 256 would be written as 0; nothing here is that big
+  ico[entry + 1] = size;
+  view.setUint16(entry + 4, 1, true); // colour planes
+  view.setUint16(entry + 6, 32, true); // bits per pixel
+  view.setUint32(entry + 8, image.length, true);
+  view.setUint32(entry + 12, offset, true);
+
+  ico.set(image, offset);
+  offset += image.length;
+});
+
+await Bun.write(`${PUBLIC}favicon.ico`, ico);
 
 // ---------------------------------------------------------------------------
 // Open-graph card

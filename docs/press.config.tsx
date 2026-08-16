@@ -77,7 +77,9 @@ export default defineConfig({
           {/* Two files rather than one with `currentColor`, because an SVG
               favicon is rendered outside the document and cannot inherit from
               it. The unqualified link comes first for engines that ignore
-              `media` on an icon; the qualified pair decides for the rest. */}
+              `media` on an icon; the qualified pair decides for the rest.
+              The ICO leads for anything that cannot read SVG at all. */}
+          <link href="/favicon.ico" rel="icon" sizes="16x16 32x32 48x48" />
           <link href="/favicon-light.svg" rel="icon" type="image/svg+xml" />
           <link
             href="/favicon-light.svg"
