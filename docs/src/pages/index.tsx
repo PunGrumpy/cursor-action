@@ -36,6 +36,86 @@ const focusRing =
  */
 const buttonBase = `inline-flex items-center justify-center gap-2 rounded-full px-[1.45em] pt-[0.89em] pb-[0.91em] text-sm leading-none ${focusRing}`;
 
+const NAV_LINKS = [
+  { href: "/quickstart", label: "Quickstart" },
+  { href: "/reference", label: "Reference" },
+  { href: "/examples", label: "Examples" },
+  { href: "/behaviour", label: "Behaviour" },
+];
+
+/**
+ * cursor.com's header is a three-column grid — logo, nav, actions — 56px tall
+ * and fixed to the top. The nav is not centred by the grid: it is absolutely
+ * positioned at 50% and pulled back by half its own size, so it stays centred
+ * on the viewport however wide the logo and the action cluster grow.
+ *
+ * The action cluster is a plain text link, then a ghost pill bordered at 20%
+ * of the foreground, then the filled pill. Both pills are 14px, weight normal.
+ */
+function SiteHeader() {
+  return (
+    <header className="fixed top-0 left-0 z-50 w-full border-fd-border border-b bg-fd-background">
+      <div className="relative mx-auto grid h-14 max-w-6xl grid-cols-[1fr_auto] items-center px-6 lg:grid-cols-[auto_1fr_auto]">
+        <a
+          className={`-translate-y-full absolute top-2 left-6 rounded-full bg-fd-foreground px-4 py-2 text-fd-background text-sm opacity-0 transition-transform focus:translate-y-0 focus:opacity-100 ${focusRing}`}
+          href="#main"
+        >
+          Skip to content
+        </a>
+
+        <a
+          className={`col-start-1 col-end-2 row-start-1 row-end-2 font-medium text-sm ${focusRing}`}
+          href="/"
+        >
+          Cursor Action
+        </a>
+
+        <div className="hidden lg:block">
+          <nav className="-translate-x-1/2 -translate-y-1/2 absolute top-1/2 left-1/2">
+            <ul className="flex items-center justify-center">
+              {NAV_LINKS.map((link) => (
+                <li key={link.href}>
+                  <a
+                    className={`rounded-full px-3 py-2 text-fd-muted-foreground text-sm transition-colors hover:text-fd-foreground ${focusRing}`}
+                    href={link.href}
+                  >
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        </div>
+
+        <div className="col-start-2 col-end-3 row-start-1 row-end-2 flex items-center gap-2 justify-self-end lg:col-start-3 lg:col-end-[-1]">
+          <a
+            className={`rounded-full p-1 text-sm lg:hidden ${focusRing}`}
+            href="/quickstart"
+          >
+            Docs
+          </a>
+          <a
+            className={`hidden rounded-full border border-fd-foreground/20 px-[1.35em] pt-[0.78em] pb-[0.8em] text-sm leading-none transition-colors hover:bg-fd-accent lg:inline-flex ${focusRing}`}
+            href="https://github.com/marketplace/actions/cursor-action"
+            rel="noreferrer"
+            target="_blank"
+          >
+            Marketplace
+          </a>
+          <a
+            className={`inline-flex rounded-full bg-fd-foreground px-[1.35em] pt-[0.78em] pb-[0.8em] text-fd-background text-sm leading-none transition-opacity hover:opacity-90 ${focusRing}`}
+            href="https://github.com/PunGrumpy/cursor-action"
+            rel="noreferrer"
+            target="_blank"
+          >
+            GitHub
+          </a>
+        </div>
+      </div>
+    </header>
+  );
+}
+
 /**
  * The window chrome cursor.com floats over its hero panel: a 10px radius, a
  * 28px title bar with three 10px dots at 20% of the foreground and a centred
@@ -73,7 +153,7 @@ function Window({
 
 export default function HomePage() {
   return (
-    <HomeLayout>
+    <HomeLayout layoutProps={{ nav: { enabled: false } }}>
       {/* React hoists these into the document head; the file-based route has no
           frontmatter to carry them. */}
       <title>Cursor Action — run a Cursor agent in GitHub Actions</title>
@@ -81,7 +161,10 @@ export default function HomePage() {
         content="Run a Cursor agent as a step in any GitHub Actions workflow and read its response as a step output."
         name="description"
       />
-      <div className="mx-auto w-full max-w-6xl px-6 pb-28">
+      <SiteHeader />
+
+      {/* The header is fixed, so the content starts below its 56px. */}
+      <div className="mx-auto w-full max-w-6xl px-6 pt-14 pb-28" id="main">
         <section className="pt-24 pb-14 sm:pt-32">
           {/* --text-md-lg is 1.625rem at --leading-snug, weight normal. The
               second sentence drops to the muted step, the way cursor.com
