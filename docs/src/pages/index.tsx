@@ -36,6 +36,41 @@ const focusRing =
  */
 const buttonBase = `inline-flex items-center justify-center gap-2 rounded-full px-[1.45em] pt-[0.89em] pb-[0.91em] text-sm leading-none ${focusRing}`;
 
+/**
+ * The window chrome cursor.com floats over its hero panel: a 10px radius, a
+ * 28px title bar with three 10px dots at 20% of the foreground and a centred
+ * label at 70% opacity, and a two-layer shadow closed off by a 1px border.
+ */
+function Window({
+  label,
+  children,
+}: {
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div
+      className="overflow-hidden rounded-[10px] bg-fd-card"
+      style={{
+        boxShadow:
+          "0 28px 70px rgb(0 0 0 / 0.14), 0 14px 32px rgb(0 0 0 / 0.1), 0 0 0 1px var(--color-fd-border)",
+      }}
+    >
+      <div className="relative flex h-7 items-center border-fd-border border-b px-2">
+        <div aria-hidden="true" className="flex items-center gap-1.5">
+          <span className="inline-block size-2.5 rounded-full bg-fd-foreground/20" />
+          <span className="inline-block size-2.5 rounded-full bg-fd-foreground/20" />
+          <span className="inline-block size-2.5 rounded-full bg-fd-foreground/20" />
+        </div>
+        <div className="-translate-x-1/2 -translate-y-1/2 pointer-events-none absolute top-1/2 left-1/2 truncate text-center text-[13px] opacity-70">
+          {label}
+        </div>
+      </div>
+      {children}
+    </div>
+  );
+}
+
 export default function HomePage() {
   return (
     <HomeLayout>
@@ -77,43 +112,48 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* cursor.com hands the space under the hero to one large product
-            still. The equivalent here is the thing you actually look at: the
-            step in the log, and the summary it writes. */}
+        {/* cursor.com stages its product shots on a filled panel and floats
+            two overlapping windows over it, each with a 28px-height title bar,
+            three 10px dots at 20% of the foreground, a centred label, and a
+            layered shadow closed off by a 1px border. Same construction here,
+            over a warm gradient rather than their photograph. */}
         <section aria-labelledby="preview" className="pb-24">
           <h2 className="sr-only" id="preview">
             What a run looks like
           </h2>
-          <div className="overflow-hidden rounded-2xl border border-fd-border bg-fd-card">
-            <div className="flex items-center gap-2 border-fd-border border-b px-4 py-3">
-              <span className="inline-block size-2.5 rounded-full bg-fd-border" />
-              <span className="inline-block size-2.5 rounded-full bg-fd-border" />
-              <span className="inline-block size-2.5 rounded-full bg-fd-border" />
-              <span className="ml-2 font-mono text-fd-muted-foreground text-xs">
-                .github/workflows/review.yml
-              </span>
-            </div>
-            <div className="grid gap-px bg-fd-border md:grid-cols-2">
-              <pre className="overflow-x-auto bg-fd-card p-6 font-mono text-[13px] leading-relaxed">
-                <code>{WORKFLOW}</code>
-              </pre>
-              <div className="bg-fd-card p-6">
-                <p className="font-mono text-fd-muted-foreground text-xs uppercase tracking-[0.14em]">
-                  Job summary
-                </p>
-                <dl className="mt-4 grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 font-mono text-[13px]">
-                  <dt className="text-fd-muted-foreground">Status</dt>
-                  <dd>Success</dd>
-                  <dt className="text-fd-muted-foreground">Exit code</dt>
-                  <dd className="tabular-nums">0</dd>
-                </dl>
-                <p className="mt-5 text-fd-muted-foreground text-sm leading-relaxed">
-                  The agent's response lands in the job summary and in{" "}
-                  <code className="font-mono text-fd-foreground">
-                    outputs.summary
-                  </code>
-                  , ready for the next step to comment, gate, or ignore.
-                </p>
+          <div className="relative isolate overflow-hidden rounded-xl border border-fd-border bg-fd-accent p-8 sm:p-12">
+            <div
+              aria-hidden="true"
+              className="-z-10 absolute inset-0 bg-[radial-gradient(120%_120%_at_20%_0%,var(--color-fd-secondary),var(--color-fd-background))]"
+            />
+
+            <div className="relative mx-auto max-w-3xl">
+              <Window label="GitHub Actions · review.yml">
+                <pre className="overflow-x-auto p-5 font-mono text-[13px] leading-relaxed">
+                  <code>{WORKFLOW}</code>
+                </pre>
+              </Window>
+
+              {/* Offset and layered over the first, the way the CLI window sits
+                  over the desktop one on cursor.com. */}
+              <div className="-mb-6 relative z-10 ml-auto w-full max-w-md translate-y-[-2.5rem] sm:mr-[-2rem]">
+                <Window label="Job summary">
+                  <div className="p-5">
+                    <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-1.5 font-mono text-[13px]">
+                      <dt className="text-fd-muted-foreground">Status</dt>
+                      <dd>Success</dd>
+                      <dt className="text-fd-muted-foreground">Exit code</dt>
+                      <dd className="tabular-nums">0</dd>
+                    </dl>
+                    <p className="mt-4 text-[13px] text-fd-muted-foreground leading-relaxed">
+                      The response also lands in{" "}
+                      <code className="font-mono text-fd-foreground">
+                        outputs.summary
+                      </code>
+                      , ready for the next step to comment, gate, or ignore.
+                    </p>
+                  </div>
+                </Window>
               </div>
             </div>
           </div>
