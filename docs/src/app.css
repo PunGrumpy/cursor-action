@@ -12,12 +12,15 @@
  * single hot orange. Authored in OKLCH so lightness steps are perceptually
  * even and the accent holds its hue across both appearances.
  *
- * Two values deliberately diverge from cursor.com. Its secondary text sits at
- * 60% of the foreground, which measures APCA Lc 65.3 in light and Lc 44.5 in
- * dark against body text's Lc 75 threshold, so this uses its stronger fg-02
- * step instead (Lc 91.4 / 81.2). And #f54e00 itself is never text: it measures
- * Lc 56.5 on the light background and Lc 39.7 on the dark one, so links and
- * filled controls use a lightness-shifted variant of the same hue.
+ * Secondary text diverges from cursor.com: theirs sits at 60% of the
+ * foreground, which measures APCA Lc 65.3 in light and Lc 44.5 in dark against
+ * body text's Lc 75 threshold, so this uses their stronger fg-02 step instead
+ * (Lc 91.4 / 81.2).
+ *
+ * The accent is their #f54e00 exactly, in both appearances, as they use it —
+ * including as text on `.btn-tertiary`. As text it measures Lc 56.5 on the
+ * light background and Lc 39.7 on the dark one, under the Lc 60 floor for
+ * non-body text, so keep it to short labels and never body copy.
  */
 @theme {
   --color-fd-background: oklch(0.975 0.004 106.47);
@@ -29,13 +32,13 @@
   --color-fd-card: oklch(0.958 0.005 95.1);
   --color-fd-card-foreground: oklch(0.263 0.013 100.51);
   --color-fd-border: oklch(0.263 0.013 100.51 / 0.1);
-  --color-fd-primary: oklch(0.567 0.184 37.99);
+  --color-fd-primary: oklch(0.652 0.214 37.99);
   --color-fd-primary-foreground: oklch(1 0 0);
   --color-fd-secondary: oklch(0.936 0.007 97.36);
   --color-fd-secondary-foreground: oklch(0.263 0.013 100.51);
   --color-fd-accent: oklch(0.936 0.007 97.36);
   --color-fd-accent-foreground: oklch(0.263 0.013 100.51);
-  --color-fd-ring: oklch(0.567 0.184 37.99);
+  --color-fd-ring: oklch(0.652 0.214 37.99);
   --color-fd-overlay: oklch(0.263 0.013 100.51 / 0.2);
 
   /* Geist and JetBrains Mono stand in for CursorGothic and Berkeley Mono,
@@ -54,16 +57,13 @@
   --color-fd-card: oklch(0.214 0.012 91.77);
   --color-fd-card-foreground: oklch(0.944 0.001 17.18);
   --color-fd-border: oklch(0.944 0.001 17.18 / 0.1);
-  /* L 0.797 rather than 0.777: the sidebar's active row tints its surface with
-     this same colour, and the darker step measured APCA Lc 57.6 against it,
-     under the Lc 60 floor for non-body text. */
-  --color-fd-primary: oklch(0.797 0.128 37.99);
-  --color-fd-primary-foreground: oklch(0.182 0.014 94.03);
+  --color-fd-primary: oklch(0.652 0.214 37.99);
+  --color-fd-primary-foreground: oklch(1 0 0);
   --color-fd-secondary: oklch(0.235 0.012 91.75);
   --color-fd-secondary-foreground: oklch(0.944 0.001 17.18);
   --color-fd-accent: oklch(0.26 0.011 91.72);
   --color-fd-accent-foreground: oklch(0.944 0.001 17.18);
-  --color-fd-ring: oklch(0.777 0.134 37.99);
+  --color-fd-ring: oklch(0.652 0.214 37.99);
   --color-fd-overlay: oklch(0 0 0 / 0.4);
 }
 

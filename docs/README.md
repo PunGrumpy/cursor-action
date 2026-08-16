@@ -27,11 +27,11 @@ no longer exists is the cheapest way to notice.
 
 ## Third-party assets
 
-`public/hero-wallpaper.webp` is the wallpaper cursor.com uses behind its own
-hero, re-encoded from their
-[PNG](https://cursor.com/marketing-static/demos/cursor-wallpaper.png). It is
-Cursor's artwork, not ours, and the repository's MIT licence does not cover it.
-Replace it with an image of our own if that ever matters.
+`public/hero-wallpaper.webp` is Albert Bierstadt's *Alaskan Coastal Range*
+(before 1889), re-encoded to WebP from
+[Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Bierstadt-Alaskan_Coastal_Range.jpg).
+Bierstadt died in 1902, so the painting is in the public domain worldwide and
+carries no licence obligation.
 
 ## Deployment
 
