@@ -36,6 +36,15 @@ const focusRing =
  */
 const buttonBase = `inline-flex items-center justify-center gap-2 rounded-full px-[1.45em] pt-[0.89em] pb-[0.91em] text-sm leading-none ${focusRing}`;
 
+/**
+ * cursor.com backs its hero stage with this wallpaper and dims it with
+ * `filter: brightness(.9)` in the dark theme. Linked from their origin rather
+ * than copied here: it is their asset, and the file is 1.4 MB served with
+ * `cache-control: max-age=0`. Swap this one constant for an image of our own
+ * when that trade stops being worth it.
+ */
+const WALLPAPER = "https://cursor.com/marketing-static/demos/cursor-wallpaper.png";
+
 const NAV_LINKS = [
   { href: "/quickstart", label: "Quickstart" },
   { href: "/reference", label: "Reference" },
@@ -205,9 +214,10 @@ export default function HomePage() {
             What a run looks like
           </h2>
           <div className="relative isolate overflow-hidden rounded-xl border border-fd-border bg-fd-accent p-8 sm:p-12">
-            <div
-              aria-hidden="true"
-              className="-z-10 absolute inset-0 bg-[radial-gradient(120%_120%_at_20%_0%,var(--color-fd-secondary),var(--color-fd-background))]"
+            <img
+              alt=""
+              className="-z-10 absolute inset-0 h-full w-full object-cover dark:brightness-90"
+              src={WALLPAPER}
             />
 
             <div className="relative mx-auto max-w-3xl">
