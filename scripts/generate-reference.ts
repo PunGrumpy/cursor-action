@@ -96,10 +96,12 @@ const manifest = Bun.YAML.parse(
 ) as Manifest;
 const reference = renderReference(manifest);
 
-for (const target of TARGETS) {
-  const current = await Bun.file(target.file).text();
-  await Bun.write(target.file, replaceBlock(current, reference, target));
-}
+await Promise.all(
+  TARGETS.map(async (target) => {
+    const current = await Bun.file(target.file).text();
+    await Bun.write(target.file, replaceBlock(current, reference, target));
+  })
+);
 
 // oxfmt re-aligns markdown tables, and it measures ✅ / ❌ as two columns wide.
 // Letting it own the final shape is what keeps `bun run format` from undoing
