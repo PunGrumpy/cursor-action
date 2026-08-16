@@ -19,13 +19,8 @@ const FEATURES = [
     figure: "outputs",
     // The two outputs action.yml actually declares, rather than another copy
     // of the step above — the card is about what comes back, not what goes in.
-    outputs: [
-      {
-        name: "summary",
-        value: '"Two risks: the retry\nloop has no ceiling."',
-      },
-      { name: "exit-code", value: "0" },
-    ],
+    // The summary is split by line because each line is typed separately.
+    summary: ['"Two risks: the retry', 'loop has no ceiling."'],
   },
   {
     title: "Ubuntu, Windows, macOS",
@@ -255,7 +250,12 @@ function MediaPanel({
   );
 }
 
-const CONSUMER = `- name: Comment the review
+/**
+ * Split around the interpolation on purpose: the shimmer marks the one token
+ * the whole section is about, and it is the same highlight the card to its left
+ * uses on the value being read.
+ */
+const CONSUMER_BEFORE = `- name: Comment the review
   uses: actions/github-script@v8
   with:
     script: |
@@ -263,8 +263,9 @@ const CONSUMER = `- name: Comment the review
         issue_number: context.issue.number,
         owner: context.repo.owner,
         repo: context.repo.repo,
-        body: \`\${{ steps.cursor.outputs.summary }}\`,
-      })`;
+        body: \``;
+const CONSUMER_TOKEN = "${{ steps.cursor.outputs.summary }}";
+const CONSUMER_AFTER = "`,\n      })";
 
 /**
  * cursor.com's `card--large`: one card across a 24-column grid, text in columns
@@ -308,7 +309,11 @@ function LargeCard() {
           <div className="mx-auto max-w-xl">
             <Window label="comment.yml">
               <pre className="overflow-hidden p-5 font-mono text-[12.5px] leading-relaxed">
-                <code>{CONSUMER}</code>
+                <code>
+                  {CONSUMER_BEFORE}
+                  <span className="shimmer">{CONSUMER_TOKEN}</span>
+                  {CONSUMER_AFTER}
+                </code>
               </pre>
             </Window>
           </div>
@@ -329,17 +334,30 @@ function LargeCard() {
  */
 function FeatureFigure({ feature }: { feature: (typeof FEATURES)[number] }) {
   const body = (() => {
-    if (feature.outputs) {
+    if (feature.summary) {
       return (
         <dl>
-          {feature.outputs.map((output) => (
-            <div className="pt-1.5 first:pt-0" key={output.name}>
-              <dt className="text-fd-muted-foreground">{output.name}</dt>
-              <dd className="whitespace-pre-line text-fd-foreground">
-                {output.value}
-              </dd>
-            </div>
-          ))}
+          <dt className="text-fd-muted-foreground">summary</dt>
+          <dd className="text-fd-foreground">
+            {feature.summary.map((line) => (
+              // `--chars` is the finished width and the resting width; the
+              // animation only starts it at zero.
+              <span
+                className="type"
+                key={line}
+                style={{
+                  ["--chars" as string]: `${line.length}ch`,
+                  ["--steps" as string]: line.length,
+                }}
+              >
+                {line}
+              </span>
+            ))}
+          </dd>
+          <dt className="pt-1.5 text-fd-muted-foreground">exit-code</dt>
+          <dd className="text-fd-foreground">
+            0<span className="caret text-fd-primary">▌</span>
+          </dd>
         </dl>
       );
     }
@@ -347,29 +365,37 @@ function FeatureFigure({ feature }: { feature: (typeof FEATURES)[number] }) {
     if (feature.run) {
       return (
         <ul className="space-y-1.5">
-          {feature.run.map((step) => {
-            const done = step.state === "done";
-            return (
-              <li className="flex items-center gap-2" key={step.label}>
-                <span
-                  className={done ? "text-fd-foreground" : "text-fd-primary"}
-                >
-                  {done ? "✓" : "•"}
+          {feature.run.map((step, i) => (
+            <li className="flex items-center gap-2" key={step.label}>
+              {/* Three glyphs in one cell, one opaque at a time. Without the
+                  animation only the last is drawn, so the run reads complete. */}
+              <span
+                className="step grid"
+                style={{ ["--step" as string]: i }}
+              >
+                <span className="step--queued text-fd-muted-foreground opacity-0">
+                  ○
                 </span>
-                <span className={done ? "text-fd-muted-foreground" : "shimmer"}>
-                  {step.label}
+                <span className="step--running text-fd-primary opacity-0">
+                  ●
                 </span>
-              </li>
-            );
-          })}
+                <span className="step--done text-fd-foreground">✓</span>
+              </span>
+              <span className="text-fd-muted-foreground">{step.label}</span>
+            </li>
+          ))}
         </ul>
       );
     }
 
     return (
       <ul className="space-y-1.5">
-        {feature.inputs?.map((input) => (
-          <li className="flex items-baseline gap-3" key={input.name}>
+        {feature.inputs?.map((input, i) => (
+          <li
+            className="row-in flex items-baseline gap-3"
+            key={input.name}
+            style={{ ["--row" as string]: i }}
+          >
             <span className="text-fd-muted-foreground">{input.name}</span>
             <span
               className={
