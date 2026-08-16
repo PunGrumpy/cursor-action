@@ -44,9 +44,7 @@ jobs:
             })
 ```
 
-Pull requests from forks get a read-only `GITHUB_TOKEN`, so the comment step
-fails there. Do not reach for `pull_request_target` to work around it: that runs
-with a writable token in the context of the fork's own code.
+Pull requests from forks get a read-only `GITHUB_TOKEN`, so the comment step fails there. Do not reach for `pull_request_target` to work around it: that runs with a writable token in the context of the fork's own code.
 
 ## Pick a model and a working directory
 
@@ -62,8 +60,7 @@ with a writable token in the context of the fork's own code.
 
 ## Fail the job on the agent's verdict
 
-`exit-code` only reports whether the SDK call succeeded, so gate on the text
-instead, and keep the text out of the script itself:
+`exit-code` only reports whether the SDK call succeeded, so gate on the text instead, and keep the text out of the script itself:
 
 ```yaml
 - name: Run Cursor Agent
@@ -85,5 +82,4 @@ instead, and keep the text out of the script itself:
     fi
 ```
 
-A model can always answer in a shape you did not ask for, so treat this as a
-signal, not a gate you can rely on.
+A model can always answer in a shape you did not ask for, so treat this as a signal, not a gate you can rely on.

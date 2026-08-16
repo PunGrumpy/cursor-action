@@ -3,23 +3,21 @@ title: Reference
 description: Every input and output, generated from action.yml.
 ---
 
-The tables below are generated from `action.yml` by
-`bun run docs:reference`, and CI fails when they drift from it. They cannot
-describe an input the action does not have, or a default it does not use.
+The tables below are generated from `action.yml` by `bun run docs:reference`, and CI fails when they drift from it. They cannot describe an input the action does not have, or a default it does not use.
 
 {/* reference:start */}
 
 ### Inputs
 
-| Input               | Required | Default     | Description                                                                                                                           |
-| ------------------- | -------- | ----------- | ------------------------------------------------------------------------------------------------------------------------------------- |
-| `cursor-version`    | ❌        | `latest`    | (Deprecated) The SDK automatically manages the agent version.                                                                         |
-| `api-key`           | ✅        | —           | Cursor API key for authentication                                                                                                     |
-| `prompt`            | ✅        | —           | Prompt to pass to cursor-agent                                                                                                        |
-| `model`             | ❌        | `default`   | Model id for the agent (e.g. default, composer-2). The Cursor SDK does not accept auto.                                               |
-| `working-directory` | ❌        | `.`         | Working directory for the agent to operate in                                                                                         |
-| `permissions`       | ❌        | `read-only` | Validated but NOT enforced: 'read-only' does not stop the agent from editing files or running shell commands. Wired to the SDK in v2. |
-| `timeout`           | ❌        | `300`       | Timeout in seconds for the agent run                                                                                                  |
+| Input | Required | Default | Description |
+| --- | --- | --- | --- |
+| `cursor-version` | ❌ | `latest` | (Deprecated) The SDK automatically manages the agent version. |
+| `api-key` | ✅ | — | Cursor API key for authentication |
+| `prompt` | ✅ | — | Prompt to pass to cursor-agent |
+| `model` | ❌ | `default` | Model id for the agent (e.g. default, composer-2). The Cursor SDK does not accept auto. |
+| `working-directory` | ❌ | `.` | Working directory for the agent to operate in |
+| `permissions` | ❌ | `read-only` | Validated but NOT enforced: 'read-only' does not stop the agent from editing files or running shell commands. Wired to the SDK in v2. |
+| `timeout` | ❌ | `300` | Timeout in seconds for the agent run |
 
 ### Outputs
 
@@ -34,26 +32,16 @@ describe an input the action does not have, or a default it does not use.
 
 ### `permissions`
 
-Validated against `read-only`, `read-write` and `full`, then discarded. It is
-never passed to the SDK, so tool access follows whatever your API key and
-account allow. `read-only` is not a sandbox and does not prevent file edits or
-shell commands.
+Validated against `read-only`, `read-write` and `full`, then discarded. It is never passed to the SDK, so tool access follows whatever your API key and account allow. `read-only` is not a sandbox and does not prevent file edits or shell commands.
 
-v2 wires it to the SDK's `disallowedTools`, renamed to `agent-permissions` to
-stop it colliding with the workflow-level `permissions:` key.
+v2 wires it to the SDK's `disallowedTools`, renamed to `agent-permissions` to stop it colliding with the workflow-level `permissions:` key.
 
 ### `cursor-version`
 
-Ignored since v1.0.0. The SDK resolves the agent version itself, and pinning a
-Cursor build is no longer possible from this action. Passing anything other
-than `latest` emits a warning. It is removed in v2.
+Ignored since v1.0.0. The SDK resolves the agent version itself, and pinning a Cursor build is no longer possible from this action. Passing anything other than `latest` emits a warning. It is removed in v2.
 
 ## Outputs
 
-`summary` is model output. Pass it through `env:` rather than interpolating
-`${{ steps.<id>.outputs.summary }}` into a `run:` script or a `github-script`
-body — interpolation splices the text into the script before it executes. Every
-example on [Examples](/examples) does this.
+`summary` is model output. Pass it through `env:` rather than interpolating `${{ steps.<id>.outputs.summary }}` into a `run:` script or a `github-script` body — interpolation splices the text into the script before it executes. Every example on [Examples](/examples) does this.
 
-`exit-code` is `0` when the SDK call succeeded and `1` when it threw. It does
-not yet distinguish a timeout from a failure; see [Behaviour](/behaviour).
+`exit-code` is `0` when the SDK call succeeded and `1` when it threw. It does not yet distinguish a timeout from a failure; see [Behaviour](/behaviour).

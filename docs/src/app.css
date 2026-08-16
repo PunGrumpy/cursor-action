@@ -1,7 +1,7 @@
-@import 'tailwindcss';
-@import 'fumadocs-ui/css/lib/default-colors.css';
-@import 'fumadocs-ui/css/preset.css';
-@import 'fumapress/css/preset.css';
+@import "tailwindcss";
+@import "fumadocs-ui/css/lib/default-colors.css";
+@import "fumadocs-ui/css/preset.css";
+@import "fumapress/css/preset.css";
 
 @theme {
   --color-fd-background: oklch(0.975 0.004 106.47);
@@ -26,8 +26,8 @@
   --color-fd-card-border: oklch(0.263 0.013 100.51 / 0.024);
   --color-fd-media: oklch(0.874 0.009 78.28);
 
-  --default-font-family: 'Geist', system-ui, sans-serif;
-  --font-mono: 'Geist Mono', ui-monospace, monospace;
+  --default-font-family: "Geist", system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, monospace;
 }
 
 .dark {

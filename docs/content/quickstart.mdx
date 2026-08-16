@@ -3,8 +3,7 @@ title: Quickstart
 description: Add the action to a workflow and read the agent response back.
 ---
 
-Run a [Cursor](https://cursor.com) agent as a step in any GitHub Actions
-workflow, and read its response back as a step output.
+Run a [Cursor](https://cursor.com) agent as a step in any GitHub Actions workflow, and read its response back as a step output.
 
 ## Quickstart
 
@@ -28,12 +27,9 @@ The action runs on `ubuntu-latest`, `windows-latest`, and `macos-latest`.
 
 ## What it does not do yet
 
-Two inputs are accepted but have no effect. They are documented on
-[Reference](/reference), and both are addressed in v2:
+Two inputs are accepted but have no effect. They are documented on [Reference](/reference), and both are addressed in v2:
 
-- `permissions` does **not** restrict the agent. `read-only` will not stop it
-  from editing files or running shell commands.
+- `permissions` does **not** restrict the agent. `read-only` will not stop it from editing files or running shell commands.
 - A run that times out or fails inside the agent still reports success.
 
-Read [Behaviour](/behaviour) before wiring this into anything that gates a
-merge.
+Read [Behaviour](/behaviour) before wiring this into anything that gates a merge.

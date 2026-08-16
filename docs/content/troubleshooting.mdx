@@ -5,27 +5,20 @@ description: What the common failures mean.
 
 ## `Invalid User API Key`
 
-The key is missing, malformed, or was revoked. Check that the secret is set on
-the repository (or organisation) and exposed to the job.
+The key is missing, malformed, or was revoked. Check that the secret is set on the repository (or organisation) and exposed to the job.
 
 ## `[plan_required] ... not available for free users`
 
-The key is valid but the account cannot run agents. This is billing, not
-configuration: nothing in the workflow will fix it.
+The key is valid but the account cannot run agents. This is billing, not configuration: nothing in the workflow will fix it.
 
 ## A model id is rejected
 
-Start from `default`. The SDK rejects `auto`, and the error lists the ids your
-account can actually use. `model` is passed through untouched.
+Start from `default`. The SDK rejects `auto`, and the error lists the ids your account can actually use. `model` is passed through untouched.
 
 ## The step succeeded but nothing happened
 
-Check the job summary. A cancelled or errored run currently still exits `0`, so
-an empty `summary` with a green step usually means the run hit `timeout`. See
-[Behaviour](/behaviour).
+Check the job summary. A cancelled or errored run currently still exits `0`, so an empty `summary` with a green step usually means the run hit `timeout`. See [Behaviour](/behaviour).
 
 ## `Cannot find module`
 
-The action failed to install its own dependencies, which points at the runner's
-network or a corrupted npm cache rather than at your workflow. Re-run the job;
-if it persists, open an issue with the full step log.
+The action failed to install its own dependencies, which points at the runner's network or a corrupted npm cache rather than at your workflow. Re-run the job; if it persists, open an issue with the full step log.
