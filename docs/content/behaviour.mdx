@@ -1,0 +1,52 @@
+---
+title: Behaviour
+description: What the action actually does at runtime, including what it gets wrong.
+---
+
+## The run
+
+1. Inputs are validated. An empty `prompt`, an unknown `permissions` value, or a
+   non-positive `timeout` fails the step before anything is sent.
+2. The API key is registered with `::add-mask::`.
+3. A local SDK agent is created against the resolved `working-directory`
+   (`Agent.create({ local: { cwd } })`) and the prompt is sent.
+4. Streamed text is collected, then replaced by the final run result when the
+   SDK provides one.
+5. A job summary is written with the status, exit code, agent response, and any
+   stderr or diagnostics.
+
+## Timeouts report success
+
+When `timeout` elapses the action asks the SDK to cancel the run, and a
+cancelled run still exits `0`. The same is true when the run itself ends in an
+error state: `run.wait()` returns a result carrying `status` and `error`, and
+the action currently ignores both.
+
+Until v2 maps those onto real exit codes, a green step does not prove the agent
+finished.
+
+## Why it installs instead of shipping one file
+
+The action is a composite action: it sets up Node.js 24, runs
+`npm ci --omit=dev` inside its own action directory, and then executes
+`dist/index.mjs`. Expect a few seconds of install time per job.
+
+`@cursor/sdk` cannot be bundled into a single file. It is a webpack build that
+dynamically imports its own chunks at runtime, resolved relative to its own
+package directory, and it resolves a native `@cursor/sdk-<platform>` package for
+the `rg` and `cursorsandbox` binaries. A bundle containing it imports cleanly
+and then fails inside `Agent.create`.
+
+`dist/` is committed and holds only this repository's own code, a few kB.
+
+## Treat the summary as untrusted
+
+`summary` is model output. Interpolating it into a `run:` script or a
+`github-script` body splices the text into the script before it executes. Pass
+it through `env:` instead — every example on [Examples](/examples) does.
+
+## Isolation
+
+The agent runs in `working-directory`, and Cursor loads project rules, hooks and
+settings from there. Point it somewhere outside the checkout when you want a run
+that the repository's own `.cursor/` configuration cannot influence.
