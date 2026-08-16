@@ -27,15 +27,18 @@
   },
   "scripts": {
     "build": "tsdown",
+    "changeset": "changeset",
+    "changeset:publish": "bun run build && changeset publish",
+    "changeset:version": "changeset version",
     "dev": "tsdown --watch",
+    "docs:build": "bun --cwd docs run build",
+    "docs:dev": "bun --cwd docs run dev",
+    "docs:reference": "bun run scripts/generate-reference.ts",
+    "format": "ultracite fix",
+    "lint": "ultracite check",
     "test": "bun test",
     "test:coverage": "bun test --coverage",
-    "typecheck": "tsc --noEmit",
-    "lint": "ultracite check",
-    "format": "ultracite fix",
-    "changeset": "changeset",
-    "changeset:version": "changeset version",
-    "changeset:publish": "bun run build && changeset publish"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@actions/core": "^3.0.0",

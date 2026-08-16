@@ -12,9 +12,10 @@
     "order": "asc",
   },
   "experimentalSortPackageJson": true,
-  // `dist/` is a committed build artifact. Formatting it would make the
-  // bundle differ from `bun run build` output and fail CI's freshness check.
-  "ignorePatterns": ["dist/**"],
+  // `dist/` is a committed build artifact: formatting it would make the bundle
+  // differ from `bun run build` output. `docs/` is a separate Fumapress project
+  // that brings its own conventions.
+  "ignorePatterns": ["dist/**", "docs/**"],
   "jsxSingleQuote": false,
   "printWidth": 80,
   "quoteProps": "as-needed",
