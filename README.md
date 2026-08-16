@@ -51,9 +51,13 @@ The action runs on `ubuntu-latest`, `windows-latest`, and `macos-latest`.
 
 <!-- reference:end -->
 
-> [!WARNING] `permissions` does not restrict the agent today. The value is validated and then discarded — tool access follows whatever your API key and account allow, so `read-only` does **not** stop the agent from editing files or running shell commands. It is wired to the SDK's tool restrictions in v2.
+> [!WARNING]
+>
+> `permissions` does not restrict the agent today. The value is validated and then discarded — tool access follows whatever your API key and account allow, so `read-only` does **not** stop the agent from editing files or running shell commands. It is wired to the SDK's tool restrictions in v2.
 
-> [!IMPORTANT] Treat `summary` as untrusted model output. Pass it through `env:` rather than interpolating `${{ steps.<id>.outputs.summary }}` directly into a `run:` script or a `github-script` body — interpolation splices the text into the script before it executes.
+> [!IMPORTANT]
+>
+> Treat `summary` as untrusted model output. Pass it through `env:` rather than interpolating `${{ steps.<id>.outputs.summary }}` directly into a `run:` script or a `github-script` body — interpolation splices the text into the script before it executes.
 
 ## Documentation
 
