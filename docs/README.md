@@ -10,9 +10,10 @@ repository root does not pull in React, Waku, or Vite.
 bun install          # from this directory
 bun run dev          # http://localhost:3000
 bun run build        # static output in dist/public
+bun run brand        # regenerate the icons and the social card
 ```
 
-## Two rules worth knowing before editing
+## Three rules worth knowing before editing
 
 **The reference tables are generated.** `content/reference.mdx` contains
 `{/* reference:start */}` and `{/* reference:end */}` markers, and everything
@@ -24,6 +25,19 @@ fails if the result differs from what was committed.
 plugin here that is not part of Fumapress's `recommended` preset. Prose about
 an action that changes underneath it goes stale quietly; a link to a page that
 no longer exists is the cheapest way to notice.
+
+**The brand assets are generated too.** `src/lib/mark.ts` computes the logo, and
+`bun run brand` draws every file in `public/` that contains it — both favicons,
+the PNG icons, `logo.svg`, and the `og.png` social card — plus the header uses
+the same function. Editing an SVG in `public/` by hand puts it one regeneration
+away from being overwritten. The counter in the mark takes a scale, because the
+one that reads at 220px closes to a slit at 16px; that is optical sizing, not a
+second logo.
+
+Per-page social cards are rendered at build time by Takumi, configured in
+`press.config.tsx`. Its palette is written out as hex because the renderer has
+no stylesheet to read `--color-fd-*` from; the values are the same OKLCH tokens
+in `src/app.css`, resolved.
 
 ## Third-party assets
 
