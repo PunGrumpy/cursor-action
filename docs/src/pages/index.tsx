@@ -15,14 +15,23 @@ const FEATURES = [
   {
     title: "One step, one output",
     body: "Send a prompt, read the response from steps.<id>.outputs.summary, and pipe it wherever the workflow needs it.",
+    href: "/quickstart",
+    cta: "Read the quickstart →",
+    lines: ["- name: Run Cursor Agent", "  id: cursor", "  uses: PunGrumpy/", "    cursor-action@v1"],
   },
   {
     title: "Ubuntu, Windows, macOS",
     body: "Every push to main runs the action on all three runners, so the platform you build on is the one it was tested on.",
+    href: "/behaviour",
+    cta: "See how it runs →",
+    lines: ["✓ Integration (ubuntu)", "✓ Integration (windows)", "✓ Integration (macos)", "✓ Build & Test"],
   },
   {
     title: "Documented honestly",
     body: "The reference tables are generated from action.yml, and the inputs that do not work yet say so on the page.",
+    href: "/reference",
+    cta: "Open the reference →",
+    lines: ["permissions   read-only", "  validated, not enforced", "timeout       300", "cursor-version  ignored"],
   },
 ];
 
@@ -94,7 +103,7 @@ const NAV_LINKS = [
  */
 function SiteHeader() {
   return (
-    <header className="fixed top-0 left-0 z-50 w-full border-fd-border border-b bg-fd-background">
+    <header className="fixed top-0 left-0 z-50 w-full bg-fd-background">
       <div className="relative mx-auto grid h-14 max-w-6xl grid-cols-[1fr_auto] items-center px-6 lg:grid-cols-[auto_1fr_auto]">
         <a
           className={`-translate-y-full absolute top-2 left-6 rounded-full bg-fd-foreground px-4 py-2 text-fd-background text-sm opacity-0 transition-transform focus:translate-y-0 focus:opacity-100 ${focusRing}`}
@@ -291,23 +300,47 @@ export default function HomePage() {
           </div>
         </section>
 
+        {/* Their card grid: the heading sits in a narrow measure above a
+            stretch grid, and every card is a column that pushes its tertiary
+            link to the bottom with mt-auto, so the links line up across cards
+            of different text lengths. The figure below each one sits on a
+            filled panel. */}
         <section aria-labelledby="features" className="pb-24">
           <h2
-            className="font-normal text-[1.625rem] leading-[1.25] tracking-[-0.01em]"
+            className="mb-6 max-w-md text-balance font-normal text-[1.625rem] leading-[1.25] tracking-[-0.01em]"
             id="features"
           >
             What you get
           </h2>
-          <div className="mt-8 grid gap-4 sm:grid-cols-3">
+          <div className="grid grid-cols-1 items-stretch gap-4 xl:grid-cols-3">
             {FEATURES.map((feature) => (
               <div
-                className="rounded-xl border border-fd-border bg-fd-card p-6"
+                className="flex h-full grow flex-col rounded-xl bg-fd-card p-7"
                 key={feature.title}
               >
-                <h3 className="font-medium text-sm">{feature.title}</h3>
-                <p className="mt-3 text-fd-muted-foreground text-sm leading-relaxed">
-                  {feature.body}
-                </p>
+                <div className="flex max-w-prose grow flex-col">
+                  <div>
+                    <h3 className="font-medium text-base">{feature.title}</h3>
+                    <p className="mt-2 text-pretty text-fd-muted-foreground text-sm leading-relaxed">
+                      {feature.body}
+                    </p>
+                  </div>
+                  <div className="mt-auto pt-6">
+                    <a
+                      className={`text-fd-primary text-sm ${focusRing}`}
+                      href={feature.href}
+                    >
+                      {feature.cta}
+                    </a>
+                  </div>
+                </div>
+                <figure className="pt-7">
+                  <div className="overflow-hidden rounded-md bg-fd-accent p-4">
+                    <pre className="overflow-hidden font-mono text-[12px] text-fd-muted-foreground leading-relaxed">
+                      <code>{feature.lines.join("\n")}</code>
+                    </pre>
+                  </div>
+                </figure>
               </div>
             ))}
           </div>
