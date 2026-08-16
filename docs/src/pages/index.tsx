@@ -1,9 +1,7 @@
 import { ThemeSwitch } from "fumadocs-ui/layouts/shared/slots/theme-switch";
-import { createHomeLayout } from "fumapress/layouts/home";
 
-import type PressConfig from "../../press.config";
-
-const HomeLayout = createHomeLayout<typeof PressConfig.$context>();
+import PressConfig from "../../press.config";
+import { MARK_VIEW_BOX, markPath } from "../lib/mark";
 
 const WORKFLOW = `- name: Run Cursor Agent
   id: cursor
@@ -37,7 +35,14 @@ const FEATURES = [
     body: "The reference tables are generated from action.yml, and the inputs that do not work yet say so on the page.",
     href: "/reference",
     cta: "Open the reference →",
-    lines: ["permissions   read-only", "  validated, not enforced", "timeout       300", "cursor-version  ignored"],
+    // The point of the card is that the reference states what an input does
+    // *not* do, so the figure is that column and nothing else.
+    inputs: [
+      { name: "prompt", state: "works" },
+      { name: "timeout", state: "works" },
+      { name: "permissions", state: "Not enforced" },
+      { name: "cursor-version", state: "Ignored" },
+    ],
   },
 ];
 
@@ -62,13 +67,7 @@ const buttonIcon = "inline-flex ps-[0.25em] opacity-70";
  */
 const WALLPAPER = "/hero-wallpaper.webp";
 
-/**
- * Built the way Cursor builds its own mark rather than as line art: one solid
- * rounded hexagon with a shape cut out of it by `evenodd`. Their counter is a
- * wedge that reads as a cursor; ours is a play triangle, so the silhouette
- * carries Cursor and the counter carries run. The triangle's back edge is
- * vertical, matching the hexagon's own two vertical edges.
- */
+/** See `src/lib/mark.ts`, which the favicons and the OG card also draw from. */
 function Mark({ className }: { className?: string }) {
   return (
     <svg
@@ -76,9 +75,9 @@ function Mark({ className }: { className?: string }) {
       className={className}
       fill="currentColor"
       fillRule="evenodd"
-      viewBox="0 0 24 24"
+      viewBox={MARK_VIEW_BOX}
     >
-      <path d="M10.7 1.55Q12 0.8 13.3 1.55L20.4 5.65Q21.7 6.4 21.7 7.9L21.7 16.1Q21.7 17.6 20.4 18.35L13.3 22.45Q12 23.2 10.7 22.45L3.6 18.35Q2.3 17.6 2.3 16.1L2.3 7.9Q2.3 6.4 3.6 5.65ZM10 8.65L16 12L10 15.35Z" />
+      <path d={markPath()} />
     </svg>
   );
 }
@@ -102,9 +101,9 @@ const NAV_LINKS = [
 function SiteHeader() {
   return (
     <header className="fixed top-0 left-0 z-50 w-full bg-fd-background">
-      <div className="relative mx-auto grid h-14 max-w-6xl grid-cols-[1fr_auto] items-center px-6 lg:grid-cols-[auto_1fr_auto]">
+      <div className="relative mx-auto grid h-14 max-w-6xl grid-cols-[1fr_auto] items-center px-5 lg:grid-cols-[auto_1fr_auto]">
         <a
-          className={`-translate-y-full absolute top-2 left-6 rounded-full bg-fd-foreground px-4 py-2 text-fd-background text-sm opacity-0 transition-transform focus:translate-y-0 focus:opacity-100 ${focusRing}`}
+          className={`-translate-y-full absolute top-2 left-5 rounded-full bg-fd-foreground px-4 py-2 text-fd-background text-sm opacity-0 transition-transform focus:translate-y-0 focus:opacity-100 ${focusRing}`}
           href="#main"
         >
           Skip to content
@@ -199,9 +198,68 @@ function Window({
   );
 }
 
+/**
+ * The illustration under each card. cursor.com's equivalents are animated but
+ * inert — every control in their markup is `disabled` and the whole block is
+ * `aria-hidden` — so these are pictures of the product, not miniatures of it.
+ */
+function FeatureFigure({ feature }: { feature: (typeof FEATURES)[number] }) {
+  if (feature.run) {
+    return (
+      <ul className="space-y-1.5">
+        {feature.run.map((step) => {
+          const done = step.state === "done";
+          return (
+            <li className="flex items-center gap-2" key={step.label}>
+              <span className={done ? "text-fd-foreground" : "text-fd-primary"}>
+                {done ? "✓" : "•"}
+              </span>
+              <span className={done ? "text-fd-muted-foreground" : "shimmer"}>
+                {step.label}
+              </span>
+            </li>
+          );
+        })}
+      </ul>
+    );
+  }
+
+  if (feature.inputs) {
+    return (
+      <ul className="space-y-1.5">
+        {feature.inputs.map((input) => (
+          <li className="flex items-baseline gap-3" key={input.name}>
+            <span className="text-fd-muted-foreground">{input.name}</span>
+            <span
+              className={
+                input.state === "works"
+                  ? "ms-auto text-fd-foreground"
+                  : "ms-auto text-fd-primary"
+              }
+            >
+              {input.state === "works" ? "✓" : input.state}
+            </span>
+          </li>
+        ))}
+      </ul>
+    );
+  }
+
+  return (
+    <pre className="overflow-hidden text-fd-muted-foreground">
+      <code>{feature.lines?.join("\n")}</code>
+    </pre>
+  );
+}
+
 const REPO = "https://github.com/PunGrumpy/cursor-action";
 
-const FOOTER = [
+type FooterColumn = {
+  heading: string;
+  links: { label: string; href: string; external?: boolean }[];
+};
+
+const FOOTER: FooterColumn[] = [
   {
     heading: "Documentation",
     links: [
@@ -290,8 +348,11 @@ const FOOTER = [
  */
 function SiteFooter() {
   return (
-    <footer className="mt-24 bg-fd-card px-6 pt-16 pb-12">
-      <div className="mx-auto max-w-6xl">
+    <footer className="mt-24 bg-fd-card">
+      {/* Same container as the header and the page body — max width, then the
+          gutter inside it. With the gutter on the <footer> instead, its columns
+          started 20px left of everything above them. */}
+      <div className="mx-auto max-w-6xl px-5 pt-16 pb-12">
         <nav className="mb-20 grid grid-cols-2 gap-x-6 gap-y-10 md:grid-cols-5">
           {FOOTER.map((column) => (
             <div key={column.heading}>
@@ -331,11 +392,11 @@ function SiteFooter() {
               © 2026{" "}
               <a
                 className={`hover:text-fd-foreground ${focusRing}`}
-                href="https://github.com/PunGrumpy"
+                href="https://www.pungrumpy.com"
                 rel="noreferrer"
                 target="_blank"
               >
-                PunGrumpy
+                Noppakorn Kaewsalabnil
               </a>
             </small>
             <small className="text-sm">
@@ -351,209 +412,211 @@ function SiteFooter() {
   );
 }
 
+/**
+ * Adapted from the pair cursor.com runs on its own home page: a benefit-led
+ * noun phrase suffixed with the product, and a description that says what the
+ * agent does before it says what to do about it.
+ */
+const TITLE = "AI Coding Agent for Your GitHub Workflows | Cursor Action";
+const DESCRIPTION =
+  "Built to fit the workflows you already have, a Cursor agent turns a prompt into a step output. Hand off reviews, summaries, and changes to CI.";
+/**
+ * Read from the config rather than written down, so this page's canonical and
+ * og:url come from the same Vercel-supplied domain every other page's do.
+ */
+const SITE_URL = PressConfig.get().site?.baseUrl ?? "";
+
 export default function HomePage() {
   return (
-    <HomeLayout layoutProps={{ nav: { enabled: false } }}>
+    <>
       {/* React hoists these into the document head; the file-based route has no
-          frontmatter to carry them. */}
-      <title>Cursor Action — run a Cursor agent in GitHub Actions</title>
-      <meta
-        content="Run a Cursor agent as a step in any GitHub Actions workflow and read its response as a step output."
-        name="description"
-      />
+          frontmatter for the page-meta plugin to read. */}
+      <title>{TITLE}</title>
+      <meta content={DESCRIPTION} name="description" />
+      <link href={SITE_URL} rel="canonical" />
+      <meta content={TITLE} property="og:title" />
+      <meta content={DESCRIPTION} property="og:description" />
+      <meta content="Cursor Action" property="og:site_name" />
+      <meta content="website" property="og:type" />
+      <meta content={SITE_URL} property="og:url" />
+      <meta content={`${SITE_URL}/og.png`} property="og:image" />
+      <meta content="1200" property="og:image:width" />
+      <meta content="630" property="og:image:height" />
+      <meta content="summary_large_image" property="twitter:card" />
+
+      {/* Both of these sit outside the layout on purpose. Fumapress wraps the
+          layout's children in a `max-w-[1400px]` container, which stops the
+          footer's own background short of the viewport edges, and a `<footer>`
+          inside `<main>` is not a `contentinfo` landmark — nor a `<header>` a
+          `banner` one. Outside, they are both full-bleed and both landmarks. */}
       <SiteHeader />
 
-      {/* The header is fixed, so the content starts below its 56px. */}
-      <div className="mx-auto w-full max-w-6xl px-6 pt-14 pb-28" id="main">
-        {/* Their hero is one `max-w-prose` block: headline, then the buttons
-            directly under it. The headline is a single sentence at
-            --text-md-lg, one colour — the two-tone reading of it came from a
-            screenshot caught mid-animation, not from the design. */}
-        <section className="max-w-prose pt-24 pb-14 text-left sm:pt-32">
-          <h1 className="mb-6 text-balance font-normal text-[1.625rem] leading-[1.25] tracking-[-0.01em]">
-            Cursor Action runs your coding agent inside the workflows you
-            already have.
-          </h1>
+      {/* Not Fumapress's home layout. With its nav turned off it contributed
+          nothing this page uses, and it nested two <main> elements — its own
+          inside Fumadocs' — which is two `main` landmarks on one page. */}
+      <main className="flex-1" id="main">
+        {/* The header is fixed, so the content starts below its 56px. */}
+        <div className="mx-auto w-full max-w-6xl px-5 pt-14 pb-28">
+          {/* Their hero is one `max-w-prose` block: headline, then the buttons
+              directly under it. The headline is a single sentence at
+              --text-md-lg, one colour — the two-tone reading of it came from a
+              screenshot caught mid-animation, not from the design. */}
+          <section className="max-w-prose pt-24 pb-14 text-left sm:pt-32">
+            <h1 className="mb-6 text-balance font-normal text-[1.625rem] leading-[1.25] tracking-[-0.01em]">
+              Cursor Action runs your coding agent inside the workflows you
+              already have.
+            </h1>
 
-          <div className="flex items-center justify-start gap-x-3">
-            <a
-              className={`${buttonBase} bg-fd-foreground text-fd-background transition-opacity hover:opacity-90`}
-              href="/quickstart"
-            >
-              Get started
-              <span aria-hidden="true" className={buttonIcon}>
-                →
-              </span>
-            </a>
-            {/* `.btn--secondary` is filled with the card-03 surface and edged
-                with border-01 at 2.5% of the foreground, not a transparent
-                pill with a heavy border. */}
-            <a
-              className={`${buttonBase} border border-fd-foreground/[0.025] bg-fd-accent transition-[filter] hover:brightness-125`}
-              href="https://github.com/PunGrumpy/cursor-action"
-              rel="noreferrer"
-              target="_blank"
-            >
-              View on GitHub
-              <span aria-hidden="true" className={buttonIcon}>
-                →
-              </span>
-            </a>
-          </div>
-        </section>
+            <div className="flex items-center justify-start gap-x-3">
+              <a
+                className={`${buttonBase} bg-fd-foreground text-fd-background transition-opacity hover:opacity-90`}
+                href="/quickstart"
+              >
+                Get started
+                <span aria-hidden="true" className={buttonIcon}>
+                  →
+                </span>
+              </a>
+              {/* `.btn--secondary` is filled with the card-03 surface and edged
+                  with border-01 at 2.5% of the foreground, not a transparent
+                  pill with a heavy border. */}
+              <a
+                className={`${buttonBase} border border-fd-foreground/[0.025] bg-fd-accent transition-[filter] hover:brightness-125`}
+                href="https://github.com/PunGrumpy/cursor-action"
+                rel="noreferrer"
+                target="_blank"
+              >
+                View on GitHub
+                <span aria-hidden="true" className={buttonIcon}>
+                  →
+                </span>
+              </a>
+            </div>
+          </section>
 
-        {/* cursor.com stages its product shots on a filled panel and floats
-            two overlapping windows over it, each with a 28px-height title bar,
-            three 10px dots at 20% of the foreground, a centred label, and a
-            layered shadow closed off by a 1px border. Same construction here,
-            over a warm gradient rather than their photograph. */}
-        <section aria-labelledby="preview" className="pb-24">
-          <h2 className="sr-only" id="preview">
-            What a run looks like
-          </h2>
-          <div className="relative isolate overflow-hidden rounded-xl border border-fd-border bg-fd-accent p-8 sm:p-12">
-            <img
-              alt=""
-              className="-z-10 absolute inset-0 h-full w-full object-cover dark:brightness-90"
-              src={WALLPAPER}
-            />
+          {/* cursor.com stages its product shots on a filled panel and floats
+              two overlapping windows over it, each with a 28px-height title bar,
+              three 10px dots at 20% of the foreground, a centred label, and a
+              layered shadow closed off by a 1px border. Same construction here,
+              over a warm gradient rather than their photograph. */}
+          <section aria-labelledby="preview" className="pb-24">
+            <h2 className="sr-only" id="preview">
+              What a run looks like
+            </h2>
+            <div className="relative isolate overflow-hidden rounded-xl border border-fd-border bg-fd-accent p-8 sm:p-12">
+              <img
+                alt=""
+                className="-z-10 absolute inset-0 h-full w-full object-cover dark:brightness-90"
+                src={WALLPAPER}
+              />
 
-            <div className="relative mx-auto max-w-3xl">
-              <Window label="GitHub Actions · review.yml">
-                <pre className="overflow-x-auto p-5 font-mono text-[13px] leading-relaxed">
-                  <code>{WORKFLOW}</code>
-                </pre>
-              </Window>
-
-              {/* Offset and layered over the first, the way the CLI window sits
-                  over the desktop one on cursor.com. */}
-              <div className="-mb-6 relative z-10 ml-auto w-full max-w-md translate-y-[-2.5rem] sm:mr-[-2rem]">
-                <Window label="Job summary">
-                  <div className="p-5">
-                    <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-1.5 font-mono text-[13px]">
-                      <dt className="text-fd-muted-foreground">Status</dt>
-                      <dd>Success</dd>
-                      <dt className="text-fd-muted-foreground">Exit code</dt>
-                      <dd className="tabular-nums">0</dd>
-                    </dl>
-                    <p className="mt-4 text-[13px] text-fd-muted-foreground leading-relaxed">
-                      The response also lands in{" "}
-                      <code className="font-mono text-fd-foreground">
-                        outputs.summary
-                      </code>
-                      , ready for the next step to comment, gate, or ignore.
-                    </p>
-                  </div>
+              <div className="relative mx-auto max-w-3xl">
+                <Window label="review.yml">
+                  <pre className="overflow-x-auto p-5 font-mono text-[13px] leading-relaxed">
+                    <code>{WORKFLOW}</code>
+                  </pre>
                 </Window>
+
+                {/* Offset and layered over the first, the way the CLI window sits
+                    over the desktop one on cursor.com. */}
+                <div className="-mb-6 relative z-10 ml-auto w-full max-w-md translate-y-[-2.5rem] sm:mr-[-2rem]">
+                  <Window label="Job summary">
+                    <div className="p-5">
+                      <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-1.5 font-mono text-[13px]">
+                        <dt className="text-fd-muted-foreground">Status</dt>
+                        <dd>Success</dd>
+                        <dt className="text-fd-muted-foreground">Exit code</dt>
+                        <dd className="tabular-nums">0</dd>
+                      </dl>
+                      <p className="mt-4 text-[13px] text-fd-muted-foreground leading-relaxed">
+                        The response also lands in{" "}
+                        <code className="font-mono text-fd-foreground">
+                          outputs.summary
+                        </code>
+                        , ready for the next step to comment, gate, or ignore.
+                      </p>
+                    </div>
+                  </Window>
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+          </section>
 
-        {/* Their card grid: the heading sits in a narrow measure above a
-            stretch grid, and every card is a column that pushes its tertiary
-            link to the bottom with mt-auto, so the links line up across cards
-            of different text lengths. The figure below each one sits on a
-            filled panel. */}
-        <section aria-labelledby="features" className="pb-24">
-          <h2
-            className="mb-6 max-w-md text-balance font-normal text-[1.625rem] leading-[1.25] tracking-[-0.01em]"
-            id="features"
-          >
-            What you get
-          </h2>
-          <div className="grid grid-cols-1 items-stretch gap-4 xl:grid-cols-3">
-            {FEATURES.map((feature) => (
-              <div
-                className="flex h-full grow flex-col rounded-xl bg-fd-card p-7"
-                key={feature.title}
-              >
-                <div className="flex max-w-prose grow flex-col">
-                  <div>
-                    <h3 className="font-medium text-base">{feature.title}</h3>
-                    <p className="mt-2 text-pretty text-fd-muted-foreground text-sm leading-relaxed">
-                      {feature.body}
-                    </p>
+          {/* Their card grid: the heading sits in a narrow measure above a
+              stretch grid, and every card is a column that pushes its tertiary
+              link to the bottom with mt-auto, so the links line up across cards
+              of different text lengths. The figure below each one sits on a
+              filled panel. */}
+          <section aria-labelledby="features" className="pb-24">
+            <h2
+              className="mb-6 max-w-md text-balance font-normal text-[1.625rem] leading-[1.25] tracking-[-0.01em]"
+              id="features"
+            >
+              What you get
+            </h2>
+            <div className="grid grid-cols-1 items-stretch gap-4 xl:grid-cols-3">
+              {FEATURES.map((feature) => (
+                <div
+                  className="flex h-full grow flex-col rounded-xl bg-fd-card p-7"
+                  key={feature.title}
+                >
+                  <div className="flex max-w-prose grow flex-col">
+                    <div>
+                      <h3 className="font-medium text-base">{feature.title}</h3>
+                      <p className="mt-2 text-pretty text-fd-muted-foreground text-sm leading-relaxed">
+                        {feature.body}
+                      </p>
+                    </div>
+                    <div className="mt-auto pt-6">
+                      <a
+                        className={`text-fd-primary text-sm ${focusRing}`}
+                        href={feature.href}
+                      >
+                        {feature.cta}
+                      </a>
+                    </div>
                   </div>
-                  <div className="mt-auto pt-6">
-                    <a
-                      className={`text-fd-primary text-sm ${focusRing}`}
-                      href={feature.href}
-                    >
-                      {feature.cta}
-                    </a>
-                  </div>
+                  {/* Decorative, like theirs: hidden from assistive tech, and
+                      nothing in it pretends to be a control. */}
+                  <figure aria-hidden="true" className="pt-7">
+                    <div className="overflow-hidden rounded-md bg-fd-accent p-4 font-mono text-[12px] leading-relaxed">
+                      <FeatureFigure feature={feature} />
+                    </div>
+                  </figure>
                 </div>
-                {/* Decorative, like theirs: hidden from assistive tech, and
-                    nothing in it pretends to be a control. */}
-                <figure aria-hidden="true" className="pt-7">
-                  <div className="overflow-hidden rounded-md bg-fd-accent p-4 font-mono text-[12px] leading-relaxed">
-                    {feature.run ? (
-                      <ul className="space-y-1.5">
-                        {feature.run.map((step) => (
-                          <li className="flex items-center gap-2" key={step.label}>
-                            <span
-                              className={
-                                step.state === "done"
-                                  ? "text-fd-foreground"
-                                  : "text-fd-primary"
-                              }
-                            >
-                              {step.state === "done" ? "✓" : "•"}
-                            </span>
-                            <span
-                              className={
-                                step.state === "done"
-                                  ? "text-fd-muted-foreground"
-                                  : "shimmer"
-                              }
-                            >
-                              {step.label}
-                            </span>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <pre className="overflow-hidden text-fd-muted-foreground">
-                        <code>{feature.lines?.join("\n")}</code>
-                      </pre>
-                    )}
-                  </div>
-                </figure>
-              </div>
-            ))}
-          </div>
-        </section>
+              ))}
+            </div>
+          </section>
 
-        <section aria-labelledby="caveats" className="pb-24">
-          <h2
-            className="font-normal text-[1.625rem] leading-[1.25] tracking-[-0.01em]"
-            id="caveats"
-          >
-            What it does not do yet
-          </h2>
-          <ul className="mt-8 max-w-2xl space-y-4 text-fd-muted-foreground text-sm leading-relaxed">
-            <li>
-              <code className="font-mono text-fd-foreground">permissions</code>{" "}
-              is accepted but never enforced. <code>read-only</code> will not
-              stop the agent editing files or running shell commands.
-            </li>
-            <li>
-              A run that times out, or fails inside the agent, still reports
-              success. Do not gate a merge on it yet.
-            </li>
-          </ul>
-          <a
-            className={`mt-8 inline-flex min-h-11 items-center font-medium text-fd-primary text-sm underline underline-offset-4 ${focusRing}`}
-            href="/behaviour"
-          >
-            Read exactly how it behaves
-          </a>
-        </section>
-
-      </div>
+          <section aria-labelledby="caveats" className="pb-24">
+            <h2
+              className="font-normal text-[1.625rem] leading-[1.25] tracking-[-0.01em]"
+              id="caveats"
+            >
+              What it does not do yet
+            </h2>
+            <ul className="mt-8 max-w-2xl space-y-4 text-fd-muted-foreground text-sm leading-relaxed">
+              <li>
+                <code className="font-mono text-fd-foreground">permissions</code>{" "}
+                is accepted but never enforced. <code>read-only</code> will not
+                stop the agent editing files or running shell commands.
+              </li>
+              <li>
+                A run that times out, or fails inside the agent, still reports
+                success. Do not gate a merge on it yet.
+              </li>
+            </ul>
+            <a
+              className={`mt-8 inline-flex min-h-11 items-center font-medium text-fd-primary text-sm underline underline-offset-4 ${focusRing}`}
+              href="/behaviour"
+            >
+              Read exactly how it behaves
+            </a>
+          </section>
+        </div>
+      </main>
 
       <SiteFooter />
-    </HomeLayout>
+    </>
   );
 }

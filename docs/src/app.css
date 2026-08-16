@@ -40,11 +40,13 @@
   --color-fd-accent-foreground: oklch(0.263 0.013 100.51);
   --color-fd-ring: oklch(0.652 0.214 37.99);
   --color-fd-overlay: oklch(0.263 0.013 100.51 / 0.2);
+  --color-fd-selection: oklch(0.263 0.013 100.51 / 0.15);
 
-  /* Geist and JetBrains Mono stand in for CursorGothic and Berkeley Mono,
-     which are licensed and cannot be redistributed here. */
+  /* Geist and Geist Mono stand in for CursorGothic and Berkeley Mono, which
+     are licensed and cannot be redistributed here. One family for both means
+     the code samples share the text's proportions and warmth. */
   --default-font-family: "Geist", system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-mono: "Geist Mono", ui-monospace, monospace;
 }
 
 .dark {
@@ -65,6 +67,32 @@
   --color-fd-accent-foreground: oklch(0.944 0.001 17.18);
   --color-fd-ring: oklch(0.652 0.214 37.99);
   --color-fd-overlay: oklch(0 0 0 / 0.4);
+  --color-fd-selection: oklch(0.944 0.001 17.18 / 0.15);
+}
+
+/*
+ * cursor.com tints a selection with `--color-theme-fg-15` — its own foreground
+ * at 15% — and leaves the text colour alone, so selected text stays legible in
+ * either appearance instead of inverting to a browser blue. Same values here:
+ * #26251e26 in light, #edecec26 in dark.
+ *
+ * It is a token per appearance rather than a `color-mix()` off the foreground,
+ * because Lightning CSS resolves `color-mix()` against the `:root` value at
+ * build time and bakes in the light one, leaving dark selections invisible.
+ */
+::selection {
+  background-color: var(--color-fd-selection);
+}
+
+/*
+ * Fumapress gives the home layout its own centred container with a 16px gutter.
+ * This page sets its own — the same one the fixed header sets — and two of them
+ * stack, so below 1200px the hero text sat 16px inside the header logo it is
+ * meant to line up with. The page owns its measure; the layout owns none.
+ */
+[data-fd-home-layout-container] {
+  max-width: none;
+  padding: 0;
 }
 
 /* Numerals in the reference tables are compared column-to-column, so they need
