@@ -3,6 +3,7 @@ import { defineConfig } from "fumapress";
 import { fumadocsMdx } from "fumapress/adapters/mdx";
 import { metaSchema, pageSchema } from "fumapress/adapters/mdx/schema";
 import { linkValidationPlugin } from "fumapress/plugins/link-validation";
+import { sitemapPlugin } from "fumapress/plugins/sitemap";
 import { takumiPlugin } from "fumapress/plugins/takumi";
 
 import { MARKETPLACE, REPO } from "./src/lib/links";
@@ -56,11 +57,6 @@ export default defineConfig({
             href="https://fonts.googleapis.com/css2?family=Geist:ital,wght@0,100..900;1,100..900&family=Geist+Mono:wght@100..900&display=swap"
             rel="stylesheet"
           />
-          {/* Two files rather than one with `currentColor`, because an SVG
-              favicon is rendered outside the document and cannot inherit from
-              it. The unqualified link comes first for engines that ignore
-              `media` on an icon; the qualified pair decides for the rest.
-              The ICO leads for anything that cannot read SVG at all. */}
           <link href="/favicon.ico" rel="icon" sizes="16x16 32x32 48x48" />
           <link href="/favicon-light.svg" rel="icon" type="image/svg+xml" />
           <link
@@ -101,13 +97,8 @@ export default defineConfig({
 })
   .adapters(fumadocsMdx())
   .plugins(
-    // The reference tables are generated from action.yml, but prose still rots,
-    // and a broken link is the cheapest signal that a page describes something
-    // that no longer exists.
+    sitemapPlugin(),
     linkValidationPlugin(),
-    // Named explicitly so the preset does not add its own: the stock card is
-    // pink on near-black with a dashed rule, which belongs to no part of this
-    // site. Same layout, this site's palette.
     takumiPlugin({
       generate(page) {
         return {
@@ -172,9 +163,6 @@ export default defineConfig({
         };
       },
     }),
-    // Registered after Takumi so it sits inside Takumi's own interceptor: this
-    // one replaces the default title and og:title rather than adding a second
-    // set, and Takumi's og:image still wraps the result.
     {
       init() {
         this.interceptPageMeta(({ page }) => {
