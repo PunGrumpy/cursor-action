@@ -45,10 +45,6 @@ The action runs on `ubuntu-latest`, `windows-latest`, and `macos-latest`.
 > so `read-only` does **not** stop the agent from editing files or running
 > shell commands. It is wired to the SDK's tool restrictions in v2.
 
-> [!NOTE]
-> `cursor-version` is a no-op since v1.0.0. Pinning a Cursor build is no longer
-> possible from this action; the SDK resolves the agent version itself.
-
 ## Outputs
 
 | Output      | Description                                         |
@@ -197,11 +193,6 @@ env "INPUT_API-KEY=$CURSOR_API_KEY" \
 - If you set `model`, confirm your account can use it. Start with `default`.
 - The job summary carries the agent response, stderr, and diagnostics for the
   failed run.
-
-### The smoke test in this repository
-
-`.github/workflows/ci.yml` reads `CURSOR_SMOKE_TEST_MODEL` (default: `default`).
-Change it if your key cannot access that model.
 
 ## Versioning
 
