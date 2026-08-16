@@ -34,8 +34,6 @@ const OG = {
 
 export default defineConfig({
   content: docs.toFumadocsSource(),
-  // Deployed to a CDN as a static site, so no route may depend on a server.
-  mode: "static",
   defaultLayoutProps: {
     links: [
       {
@@ -93,6 +91,8 @@ export default defineConfig({
       );
     },
   },
+  // Deployed to a CDN as a static site, so no route may depend on a server.
+  mode: "static",
   site: {
     baseUrl: url,
     git: {
@@ -184,18 +184,18 @@ export default defineConfig({
       init() {
         this.interceptPageMeta(({ page }) => {
           const title = `${page.data.title} | ${SITE_NAME}`;
-          const url = this.siteConfig.baseUrl
+          const canonical = this.siteConfig.baseUrl
             ? new URL(page.url, this.siteConfig.baseUrl).href
             : page.url;
 
           return (
             <>
               <title>{title}</title>
-              <link href={url} rel="canonical" />
+              <link href={canonical} rel="canonical" />
               <meta content={title} property="og:title" />
               <meta content={SITE_NAME} property="og:site_name" />
               <meta content="article" property="og:type" />
-              <meta content={url} property="og:url" />
+              <meta content={canonical} property="og:url" />
               {page.data.description ? (
                 <>
                   <meta content={page.data.description} name="description" />
