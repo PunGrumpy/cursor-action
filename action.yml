@@ -43,10 +43,37 @@ inputs:
 outputs:
   summary:
     description: "Text summary returned by the cursor-agent"
+    value: ${{ steps.agent.outputs.summary }}
 
   exit-code:
     description: "Exit code from the cursor-agent process"
+    value: ${{ steps.agent.outputs.exit-code }}
 
+# @cursor/sdk cannot be bundled: it dynamically imports its own webpack chunks
+# at runtime and resolves a native @cursor/sdk-<platform> package. It has to be
+# installed as a real dependency tree, which a `node24` action cannot do.
 runs:
-  using: "node24"
-  main: "dist/index.mjs"
+  using: "composite"
+  steps:
+    - name: Setup Node.js
+      uses: actions/setup-node@v6
+      with:
+        node-version: "24"
+    - name: Install action dependencies
+      shell: bash
+      run: |
+        set -euo pipefail
+        cd "$GITHUB_ACTION_PATH"
+        npm ci --omit=dev --no-audit --no-fund
+    - name: Run Cursor Agent
+      id: agent
+      shell: bash
+      run: node "$GITHUB_ACTION_PATH/dist/index.mjs"
+      env:
+        "INPUT_API-KEY": ${{ inputs['api-key'] }}
+        "INPUT_CURSOR-VERSION": ${{ inputs['cursor-version'] }}
+        INPUT_MODEL: ${{ inputs.model }}
+        INPUT_PERMISSIONS: ${{ inputs.permissions }}
+        INPUT_PROMPT: ${{ inputs.prompt }}
+        INPUT_TIMEOUT: ${{ inputs.timeout }}
+        "INPUT_WORKING-DIRECTORY": ${{ inputs['working-directory'] }}
