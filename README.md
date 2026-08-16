@@ -133,8 +133,12 @@ runs with a writable token in the context of the fork's code.
   stderr or diagnostics.
 - The API key is registered with `::add-mask::` before the agent starts.
 
-The action ships as a bundled `dist/index.mjs` and runs on the `node24` runner,
-so there is no install step and no network fetch beyond the SDK's own calls.
+The action is a composite action: it sets up Node.js 24, runs
+`npm ci --omit=dev` inside its own action directory, and then executes
+`dist/index.mjs`. `@cursor/sdk` cannot be bundled into a single file — it
+dynamically imports its own chunks at runtime and resolves a native
+`@cursor/sdk-<platform>` package — so it has to be installed as a real
+dependency tree. Expect a few seconds of install time per job.
 
 ## Local development
 
@@ -154,7 +158,10 @@ bun run build
 
 `dist/` is committed on purpose — GitHub Actions executes it straight from the
 tag. If you changed anything under `src/`, run `bun run build` and commit the
-result; CI fails when `dist/` is out of date.
+result; CI fails when `dist/` is out of date. The bundle only contains this
+repository's own code (a few KB); `@actions/core` and `@cursor/sdk` stay
+external and are installed by the action at runtime, so `package-lock.json`
+must stay in sync with `package.json`.
 
 ### Run the action entrypoint locally
 
