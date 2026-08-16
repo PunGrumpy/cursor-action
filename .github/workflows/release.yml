@@ -55,3 +55,16 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: "" # Workaround for https://github.com/changesets/action/pull/545
+      # Consumers pin `uses: PunGrumpy/cursor-action@v1`, so the major tag has to
+      # follow every release. Changesets only creates the exact `vX.Y.Z` tag.
+      - name: Move major version tag
+        if: steps.changesets.outputs.published == 'true'
+        run: |
+          set -euo pipefail
+          VERSION="v$(node -p "require('./package.json').version")"
+          MAJOR="${VERSION%%.*}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -f "$MAJOR" "$VERSION"
+          git push -f origin "refs/tags/$MAJOR"
+          echo "Moved $MAJOR to $VERSION"

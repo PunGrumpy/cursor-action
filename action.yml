@@ -31,7 +31,7 @@ inputs:
     default: "."
 
   permissions:
-    description: "Reserved for workflow compatibility. Not sent to the SDK; tool access is API-key scoped."
+    description: "Validated but NOT enforced: 'read-only' does not stop the agent from editing files or running shell commands. Wired to the SDK in v2."
     required: false
     default: "read-only"
 
@@ -43,34 +43,10 @@ inputs:
 outputs:
   summary:
     description: "Text summary returned by the cursor-agent"
-    value: ${{ steps.agent.outputs.summary }}
 
   exit-code:
     description: "Exit code from the cursor-agent process"
-    value: ${{ steps.agent.outputs.exit-code }}
 
 runs:
-  using: "composite"
-  steps:
-    - name: Setup Node.js
-      uses: actions/setup-node@v6
-      with:
-        node-version: "24"
-    - name: Install action dependencies
-      shell: bash
-      run: |
-        set -euo pipefail
-        cd "$GITHUB_ACTION_PATH"
-        npm ci --omit=dev --no-audit --no-fund
-    - name: Run Cursor Agent
-      id: agent
-      run: node $GITHUB_ACTION_PATH/dist/index.mjs
-      shell: bash
-      env:
-        "INPUT_CURSOR-VERSION": ${{ inputs['cursor-version'] }}
-        "INPUT_API-KEY": ${{ inputs['api-key'] }}
-        INPUT_PROMPT: ${{ inputs.prompt }}
-        INPUT_MODEL: ${{ inputs.model }}
-        "INPUT_WORKING-DIRECTORY": ${{ inputs['working-directory'] }}
-        INPUT_PERMISSIONS: ${{ inputs.permissions }}
-        INPUT_TIMEOUT: ${{ inputs.timeout }}
+  using: "node24"
+  main: "dist/index.mjs"
