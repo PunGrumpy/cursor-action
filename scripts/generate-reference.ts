@@ -105,7 +105,9 @@ await Promise.all(
 
 // oxfmt re-aligns markdown tables, and it measures ✅ / ❌ as two columns wide.
 // Letting it own the final shape is what keeps `bun run format` from undoing
-// this script — and this script from undoing `bun run format`.
-await Bun.$`bunx oxfmt ${README}`.quiet();
+// this script — and this script from undoing `bun run format`. Every target
+// needs it, not just the README: a file this script writes and the formatter
+// then rewrites is one CI reports as out of date on the next run.
+await Bun.$`bunx oxfmt ${TARGETS.map((target) => target.file)}`.quiet();
 
 console.log(`Wrote ${README} and ${DOCS_REFERENCE} from ${ACTION_MANIFEST}.`);
