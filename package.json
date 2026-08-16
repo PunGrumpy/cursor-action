@@ -49,10 +49,10 @@
     "@changesets/cli": "^2.30.0",
     "@types/bun": "latest",
     "husky": "^9.1.7",
-    "oxfmt": "^0.41.0",
-    "oxlint": "^1.56.0",
+    "oxfmt": "^0.63.0",
+    "oxlint": "^1.78.0",
     "tsdown": "^0.22.0",
-    "ultracite": "7.3.2"
+    "ultracite": "^7.10.5"
   },
   "peerDependencies": {
     "typescript": "^5"
