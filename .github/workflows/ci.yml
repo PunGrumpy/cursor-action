@@ -42,52 +42,49 @@ jobs:
         run: |
           if [ -n "$(git status --porcelain dist/)" ]; then
             echo "::error::dist/ is out of date. Run 'bun run build' and commit the result."
-            git diff dist/
+            git diff --stat dist/
             exit 1
           fi
-      - name: Upload dist for smoke test
-        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
-        uses: actions/upload-artifact@v7
-        with:
-          name: dist
-          path: dist/
-          if-no-files-found: error
 
   smoke-test:
-    name: Smoke Test
-    runs-on: ubuntu-latest
+    name: Smoke Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
     needs:
       - build
     if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - windows-latest
+          - macos-latest
     env:
       CURSOR_SMOKE_TEST_MODEL: default
     permissions:
       contents: read
-      actions: read
     steps:
       - name: Checkout
         uses: actions/checkout@v6
-      - name: Download dist from build
-        uses: actions/download-artifact@v8
-        with:
-          name: dist
-          path: dist
-      - name: Prepare smoke workspace
-        run: mkdir -p /tmp/cursor-smoke
       - name: Run cursor-action (smoke test)
         id: cursor
         uses: ./
         with:
           api-key: ${{ secrets.CURSOR_API_KEY }}
           prompt: "Say 'smoke test passed' and nothing else."
-          cursor-version: "latest"
           model: ${{ env.CURSOR_SMOKE_TEST_MODEL }}
-          working-directory: "/tmp/cursor-smoke"
+          # Run outside the checkout so this repo's own .cursor/ config and
+          # hooks cannot influence the headless run.
+          working-directory: ${{ runner.temp }}
           permissions: "read-only"
           timeout: "60"
       - name: Assert output is non-empty
+        shell: bash
+        # Passed through env, never interpolated into the script: the summary is
+        # model output and would otherwise be executed as shell.
+        env:
+          SUMMARY: ${{ steps.cursor.outputs.summary }}
         run: |
-          SUMMARY="${{ steps.cursor.outputs.summary }}"
           if [ -z "$SUMMARY" ]; then
             echo "::error::cursor-action returned an empty summary"
             exit 1
