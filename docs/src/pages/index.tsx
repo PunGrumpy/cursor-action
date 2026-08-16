@@ -34,7 +34,10 @@ const focusRing =
  * `--button-padding-default: .89em 1.45em .91em` and a fully rounded radius.
  * The filled one carries the foreground colour, not the brand orange.
  */
-const buttonBase = `inline-flex items-center justify-center gap-2 rounded-full px-[1.45em] pt-[0.89em] pb-[0.91em] text-sm leading-none ${focusRing}`;
+const buttonBase = `inline-flex items-center justify-center rounded-full px-[1.45em] pt-[0.89em] pb-[0.91em] text-sm leading-none ${focusRing}`;
+
+/** `.btn-icon` on cursor.com: inline-flex, 0.25em of lead-in, 70% opacity. */
+const buttonIcon = "inline-flex ps-[0.25em] opacity-70";
 
 /**
  * cursor.com backs its hero stage with this wallpaper and dims it with
@@ -173,32 +176,39 @@ export default function HomePage() {
 
       {/* The header is fixed, so the content starts below its 56px. */}
       <div className="mx-auto w-full max-w-6xl px-6 pt-14 pb-28" id="main">
-        <section className="pt-24 pb-14 sm:pt-32">
-          {/* --text-md-lg is 1.625rem at --leading-snug, weight normal. The
-              second sentence drops to the muted step, the way cursor.com
-              splits its own headline. */}
-          <h1 className="max-w-2xl text-balance font-normal text-[1.625rem] leading-[1.25] tracking-[-0.01em]">
-            Cursor Action runs your coding agent{" "}
-            <span className="text-fd-muted-foreground">
-              inside the workflows you already have.
-            </span>
+        {/* Their hero is one `max-w-prose` block: headline, then the buttons
+            directly under it. The headline is a single sentence at
+            --text-md-lg, one colour — the two-tone reading of it came from a
+            screenshot caught mid-animation, not from the design. */}
+        <section className="max-w-prose pt-24 pb-14 text-left sm:pt-32">
+          <h1 className="mb-6 text-balance font-normal text-[1.625rem] leading-[1.25] tracking-[-0.01em]">
+            Cursor Action runs your coding agent inside the workflows you
+            already have.
           </h1>
 
-          <div className="mt-8 flex flex-wrap items-center gap-3">
+          <div className="flex items-center justify-start gap-x-3">
             <a
-              className={`${buttonBase} border border-fd-foreground bg-fd-foreground text-fd-background transition-opacity hover:opacity-90`}
+              className={`${buttonBase} bg-fd-foreground text-fd-background transition-opacity hover:opacity-90`}
               href="/quickstart"
             >
               Get started
+              <span aria-hidden="true" className={buttonIcon}>
+                →
+              </span>
             </a>
+            {/* `.btn--secondary` is filled with the card-03 surface and edged
+                with border-01 at 2.5% of the foreground, not a transparent
+                pill with a heavy border. */}
             <a
-              className={`${buttonBase} border border-fd-foreground/60 transition-colors hover:bg-fd-accent`}
+              className={`${buttonBase} border border-fd-foreground/[0.025] bg-fd-accent transition-[filter] hover:brightness-125`}
               href="https://github.com/PunGrumpy/cursor-action"
               rel="noreferrer"
               target="_blank"
             >
               View on GitHub
-              <span aria-hidden="true">→</span>
+              <span aria-hidden="true" className={buttonIcon}>
+                →
+              </span>
             </a>
           </div>
         </section>
