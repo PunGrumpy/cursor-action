@@ -41,6 +41,16 @@
   --color-fd-ring: oklch(0.652 0.214 37.99);
   --color-fd-overlay: oklch(0.263 0.013 100.51 / 0.2);
   --color-fd-selection: oklch(0.263 0.013 100.51 / 0.15);
+  /* cursor.com's `card-hover-light-hex`, the step a feature card takes under
+     the pointer: #f0efeb against a #f2f1ed card. Six thousandths of lightness
+     — enough to answer the pointer, not enough to look like a state change. */
+  --color-fd-card-hover: oklch(0.952 0.005 95.1);
+  /* Their `border-01`: the foreground at 2.4%, drawn on every card. */
+  --color-fd-card-border: oklch(0.263 0.013 100.51 / 0.024);
+  /* Their `--layered-media-bg-*`: the panel a demo is staged on. It is the
+     foreground hue turned about 22 degrees toward yellow, which is why it
+     reads as a different material rather than another shade of the page. */
+  --color-fd-media: oklch(0.874 0.009 78.28);
 
   /* Geist and Geist Mono stand in for CursorGothic and Berkeley Mono, which
      are licensed and cannot be redistributed here. One family for both means
@@ -68,6 +78,9 @@
   --color-fd-ring: oklch(0.652 0.214 37.99);
   --color-fd-overlay: oklch(0 0 0 / 0.4);
   --color-fd-selection: oklch(0.944 0.001 17.18 / 0.15);
+  --color-fd-card-hover: oklch(0.222 0.012 91.76);
+  --color-fd-card-border: oklch(0.944 0.001 17.18 / 0.024);
+  --color-fd-media: oklch(0.39 0.017 78.09);
 }
 
 /*

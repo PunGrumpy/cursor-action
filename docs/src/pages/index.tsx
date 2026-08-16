@@ -15,14 +15,24 @@ const FEATURES = [
     title: "One step, one output",
     body: "Send a prompt, read the response from steps.<id>.outputs.summary, and pipe it wherever the workflow needs it.",
     href: "/quickstart",
-    cta: "Read the quickstart →",
-    lines: ["- name: Run Cursor Agent", "  id: cursor", "  uses: PunGrumpy/", "    cursor-action@v1"],
+    cta: "Read the quickstart",
+    figure: "outputs",
+    // The two outputs action.yml actually declares, rather than another copy
+    // of the step above — the card is about what comes back, not what goes in.
+    outputs: [
+      {
+        name: "summary",
+        value: '"Two risks: the retry\nloop has no ceiling."',
+      },
+      { name: "exit-code", value: "0" },
+    ],
   },
   {
     title: "Ubuntu, Windows, macOS",
     body: "Every push to main runs the action on all three runners, so the platform you build on is the one it was tested on.",
     href: "/behaviour",
-    cta: "See how it runs →",
+    cta: "See how it runs",
+    figure: "Actions",
     run: [
       { label: "Build & Test", state: "done" },
       { label: "Integration (ubuntu)", state: "done" },
@@ -34,7 +44,8 @@ const FEATURES = [
     title: "Documented honestly",
     body: "The reference tables are generated from action.yml, and the inputs that do not work yet say so on the page.",
     href: "/reference",
-    cta: "Open the reference →",
+    cta: "Open the reference",
+    figure: "Reference",
     // The point of the card is that the reference states what an input does
     // *not* do, so the figure is that column and nothing else.
     inputs: [
@@ -198,6 +209,52 @@ function Window({
   );
 }
 
+/**
+ * Every card on the page, large or small. cursor.com's `.card` is a filled
+ * surface with a 1px border at 2.4% of the foreground, and `.card:is(a):hover`
+ * lifts it — the hover *is* the link affordance in their system, which is why
+ * a card that is not a link never gets one. All four of ours are links, so all
+ * four hover.
+ */
+const cardBase =
+  "group rounded-xl border border-fd-card-border bg-fd-card transition-colors hover:bg-fd-card-hover";
+
+/** Their `.btn-tertiary`: the accent as text, with the arrow moving on hover. */
+function Cta({ children }: { children: React.ReactNode }) {
+  return (
+    <span className="inline-flex text-fd-primary text-sm">
+      {children}
+      <span
+        aria-hidden="true"
+        className="inline-flex ps-[0.25em] transition-transform group-hover:translate-x-0.5"
+      >
+        →
+      </span>
+    </span>
+  );
+}
+
+/**
+ * The stage a demo sits on: their `media-border-container`, a flat panel in the
+ * warmer `--color-fd-media` with the figure clipped to it. Using it under the
+ * small cards too is what stops the section carrying two visual languages.
+ */
+function MediaPanel({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={`overflow-hidden rounded-lg bg-fd-media ${className}`}
+    >
+      {children}
+    </div>
+  );
+}
+
 const CONSUMER = `- name: Comment the review
   uses: actions/github-script@v8
   with:
@@ -212,11 +269,7 @@ const CONSUMER = `- name: Comment the review
 /**
  * cursor.com's `card--large`: one card across a 24-column grid, text in columns
  * 1 to 9 and the media in 9 to 25, both vertically centred, collapsing to
- * stacked rows below `lg`. The media sits on a flat panel a shade warmer than
- * the page — they set `--layered-media-bg-light: #D9D5CF` and `-dark: #4A443B`,
- * which is their own foreground hue rotated about 22 degrees toward yellow.
- * Rotating this theme's foreground by the same amount lands on the same two
- * values, because the two palettes share a foreground.
+ * stacked rows below `lg`.
  *
  * The whole card is the link, as theirs is, but labelled by its heading — theirs
  * takes its accessible name from every word inside it, which is a link name
@@ -226,14 +279,11 @@ function LargeCard() {
   return (
     <a
       aria-labelledby="handoff"
-      className={`group grid grid-cols-1 items-center gap-y-8 rounded-xl bg-fd-card p-7 transition-colors hover:bg-fd-accent lg:grid-cols-24 lg:gap-y-0 ${focusRing}`}
+      className={`${cardBase} grid grid-cols-1 items-center gap-y-8 p-7 lg:grid-cols-24 lg:gap-y-0 ${focusRing}`}
       href="/examples"
     >
       <div className="lg:col-start-1 lg:col-end-9 lg:pr-12">
-        <h3
-          className="text-balance font-medium text-base"
-          id="handoff"
-        >
+        <h3 className="text-balance font-medium text-base" id="handoff">
           The answer is a value, not a log line
         </h3>
         <p className="mt-2 max-w-prose text-pretty text-fd-muted-foreground text-sm leading-relaxed">
@@ -244,30 +294,15 @@ function LargeCard() {
           append it to the job summary, or gate what runs next. The action does
           not decide for you.
         </p>
-        <span className="mt-8 inline-flex text-fd-primary text-sm">
-          See the examples
-          <span
-            aria-hidden="true"
-            className="inline-flex ps-[0.25em] transition-transform group-hover:translate-x-0.5"
-          >
-            →
-          </span>
+        <span className="mt-8 block">
+          <Cta>See the examples</Cta>
         </span>
       </div>
 
       {/* Decorative: the card is already labelled, and nothing in here is
           reachable or meant to be read out a second time. */}
-      <div
-        aria-hidden="true"
-        className="lg:col-start-9 lg:col-end-25"
-        style={{
-          // Their two custom properties, one per appearance, applied by the
-          // panel below rather than by two stacked absolute layers.
-          ["--panel-light" as string]: "oklch(0.874 0.009 78.28)",
-          ["--panel-dark" as string]: "oklch(0.39 0.017 78.09)",
-        }}
-      >
-        <div className="h-[260px] overflow-hidden rounded-lg bg-[var(--panel-light)] p-6 sm:h-[300px] sm:p-8 dark:bg-[var(--panel-dark)]">
+      <div aria-hidden="true" className="lg:col-start-9 lg:col-end-25">
+        <MediaPanel className="h-[260px] p-6 sm:h-[300px] sm:p-8">
           {/* Clipped by the panel rather than fitted to it, the way their demo
               windows run past the bottom edge. */}
           <div className="mx-auto max-w-xl">
@@ -277,7 +312,7 @@ function LargeCard() {
               </pre>
             </Window>
           </div>
-        </div>
+        </MediaPanel>
       </div>
     </a>
   );
@@ -287,32 +322,53 @@ function LargeCard() {
  * The illustration under each card. cursor.com's equivalents are animated but
  * inert — every control in their markup is `disabled` and the whole block is
  * `aria-hidden` — so these are pictures of the product, not miniatures of it.
+ *
+ * Each one is a window on the same media panel the large card stages its demo
+ * on, and each shows a different artefact — the outputs, a run, the reference —
+ * so no two cards illustrate the same thing twice.
  */
 function FeatureFigure({ feature }: { feature: (typeof FEATURES)[number] }) {
-  if (feature.run) {
-    return (
-      <ul className="space-y-1.5">
-        {feature.run.map((step) => {
-          const done = step.state === "done";
-          return (
-            <li className="flex items-center gap-2" key={step.label}>
-              <span className={done ? "text-fd-foreground" : "text-fd-primary"}>
-                {done ? "✓" : "•"}
-              </span>
-              <span className={done ? "text-fd-muted-foreground" : "shimmer"}>
-                {step.label}
-              </span>
-            </li>
-          );
-        })}
-      </ul>
-    );
-  }
+  const body = (() => {
+    if (feature.outputs) {
+      return (
+        <dl>
+          {feature.outputs.map((output) => (
+            <div className="pt-1.5 first:pt-0" key={output.name}>
+              <dt className="text-fd-muted-foreground">{output.name}</dt>
+              <dd className="whitespace-pre-line text-fd-foreground">
+                {output.value}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      );
+    }
 
-  if (feature.inputs) {
+    if (feature.run) {
+      return (
+        <ul className="space-y-1.5">
+          {feature.run.map((step) => {
+            const done = step.state === "done";
+            return (
+              <li className="flex items-center gap-2" key={step.label}>
+                <span
+                  className={done ? "text-fd-foreground" : "text-fd-primary"}
+                >
+                  {done ? "✓" : "•"}
+                </span>
+                <span className={done ? "text-fd-muted-foreground" : "shimmer"}>
+                  {step.label}
+                </span>
+              </li>
+            );
+          })}
+        </ul>
+      );
+    }
+
     return (
       <ul className="space-y-1.5">
-        {feature.inputs.map((input) => (
+        {feature.inputs?.map((input) => (
           <li className="flex items-baseline gap-3" key={input.name}>
             <span className="text-fd-muted-foreground">{input.name}</span>
             <span
@@ -328,12 +384,16 @@ function FeatureFigure({ feature }: { feature: (typeof FEATURES)[number] }) {
         ))}
       </ul>
     );
-  }
+  })();
 
   return (
-    <pre className="overflow-hidden text-fd-muted-foreground">
-      <code>{feature.lines?.join("\n")}</code>
-    </pre>
+    <MediaPanel className="h-[188px] px-5 pt-5">
+      <Window label={feature.figure}>
+        <div className="p-4 font-mono text-[11.5px] leading-relaxed">
+          {body}
+        </div>
+      </Window>
+    </MediaPanel>
   );
 }
 
@@ -643,36 +703,38 @@ export default function HomePage() {
             <LargeCard />
 
             <div className="mt-4 grid grid-cols-1 items-stretch gap-4 xl:grid-cols-3">
-              {FEATURES.map((feature) => (
-                <div
-                  className="flex h-full grow flex-col rounded-xl bg-fd-card p-7"
-                  key={feature.title}
-                >
-                  <div className="flex max-w-prose grow flex-col">
-                    <div>
-                      <h3 className="font-medium text-base">{feature.title}</h3>
-                      <p className="mt-2 text-pretty text-fd-muted-foreground text-sm leading-relaxed">
-                        {feature.body}
-                      </p>
+              {FEATURES.map((feature) => {
+                const headingId = `feature-${feature.href.slice(1)}`;
+                return (
+                  <a
+                    aria-labelledby={headingId}
+                    className={`${cardBase} flex h-full grow flex-col p-7 ${focusRing}`}
+                    href={feature.href}
+                    key={feature.title}
+                  >
+                    <div className="flex max-w-prose grow flex-col">
+                      <div>
+                        <h3 className="font-medium text-base" id={headingId}>
+                          {feature.title}
+                        </h3>
+                        <p className="mt-2 text-pretty text-fd-muted-foreground text-sm leading-relaxed">
+                          {feature.body}
+                        </p>
+                      </div>
+                      {/* mt-auto so the links line up across cards whose text
+                          runs to different lengths, as theirs do. */}
+                      <div className="mt-auto pt-6">
+                        <Cta>{feature.cta}</Cta>
+                      </div>
                     </div>
-                    <div className="mt-auto pt-6">
-                      <a
-                        className={`text-fd-primary text-sm ${focusRing}`}
-                        href={feature.href}
-                      >
-                        {feature.cta}
-                      </a>
-                    </div>
-                  </div>
-                  {/* Decorative, like theirs: hidden from assistive tech, and
-                      nothing in it pretends to be a control. */}
-                  <figure aria-hidden="true" className="pt-7">
-                    <div className="overflow-hidden rounded-md bg-fd-accent p-4 font-mono text-[12px] leading-relaxed">
+                    {/* Decorative, like theirs: hidden from assistive tech, and
+                        nothing in it pretends to be a control. */}
+                    <figure aria-hidden="true" className="pt-7">
                       <FeatureFigure feature={feature} />
-                    </div>
-                  </figure>
-                </div>
-              ))}
+                    </figure>
+                  </a>
+                );
+              })}
             </div>
           </section>
 
