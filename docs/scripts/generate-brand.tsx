@@ -15,13 +15,15 @@
  * in the same typeface.
  */
 
+import { tmpdir } from "node:os";
+
 import { render } from "takumi-js";
 
 import { MARK_VIEW_BOX, markPath } from "../src/lib/mark";
 
 const PUBLIC = new URL("../public/", import.meta.url).pathname;
 /** Intermediate rasters for the ICO, which are not themselves shipped. */
-const TMP = `${require("node:os").tmpdir()}/cursor-action-brand-`;
+const TMP = `${tmpdir()}/cursor-action-brand-`;
 
 /** The same values `src/app.css` resolves its OKLCH tokens to. */
 const LIGHT = { background: "#f7f7f4", foreground: "#26251e" };
@@ -33,13 +35,16 @@ const DARK = { background: "#14120b", foreground: "#edecec" };
 
 const CANVAS = 512;
 
+/** Two decimals is the finest a 512-unit canvas can resolve. */
+const round = (x: number) => Number(x.toFixed(2));
+
 /**
  * A superellipse, |x/r|^n + |y/r|^n = 1, sampled and fitted with cubics rather
  * than approximated by arcs. At n = 4.2 the corner turns as continuously as the
  * rounded-rectangle shape platforms use for app icons, without needing a
  * per-corner smoothing parameter.
  */
-function squircle(size: number, inset: number, exponent = 5): string {
+const squircle = (size: number, inset: number, exponent = 5): string => {
   const r = size / 2 - inset;
   const c = size / 2;
   const SEGMENTS = 64;
@@ -57,13 +62,11 @@ function squircle(size: number, inset: number, exponent = 5): string {
     ];
   };
 
-  const f = (x: number) => Number(x.toFixed(2));
-
   // Catmull-Rom through the samples, converted to Bezier control points, so the
   // curve passes through every sample and stays smooth across the joins.
   const first = at(0);
-  let d = `M${f(first[0])} ${f(first[1])}`;
-  for (let i = 0; i < SEGMENTS; i++) {
+  let d = `M${round(first[0])} ${round(first[1])}`;
+  for (let i = 0; i < SEGMENTS; i += 1) {
     const [p0, p1, p2, p3] = [at(i - 1), at(i), at(i + 1), at(i + 2)];
     const c1: [number, number] = [
       p1[0] + (p2[0] - p0[0]) / 6,
@@ -73,16 +76,16 @@ function squircle(size: number, inset: number, exponent = 5): string {
       p2[0] - (p3[0] - p1[0]) / 6,
       p2[1] - (p3[1] - p1[1]) / 6,
     ];
-    d += `C${f(c1[0])} ${f(c1[1])} ${f(c2[0])} ${f(c2[1])} ${f(p2[0])} ${f(p2[1])}`;
+    d += `C${round(c1[0])} ${round(c1[1])} ${round(c2[0])} ${round(c2[1])} ${round(p2[0])} ${round(p2[1])}`;
   }
   return `${d}Z`;
-}
+};
 
 /**
  * The mark at the small-size counter, scaled to 71% of the canvas height and
  * centred — the proportion Cursor gives its own mark inside the same square.
  */
-function markGroup(fill: string): string {
+const markGroup = (fill: string): string => {
   const height = CANVAS * 0.71;
   const scale = height / 24;
   const offset = (CANVAS - height) / 2;
@@ -91,17 +94,16 @@ function markGroup(fill: string): string {
     `<g transform="translate(${offset.toFixed(2)} ${offset.toFixed(2)}) scale(${scale.toFixed(4)})">` +
     `<path d="${markPath(1.4)}" fill="${fill}" fill-rule="evenodd"/></g>`
   );
-}
+};
 
-function favicon({ background, foreground }: typeof LIGHT): string {
-  return [
+const favicon = ({ background, foreground }: typeof LIGHT): string =>
+  [
     `<svg xmlns="http://www.w3.org/2000/svg" width="${CANVAS}" height="${CANVAS}" viewBox="0 0 ${CANVAS} ${CANVAS}" fill="none">`,
     `<path d="${squircle(CANVAS, 0)}" fill="${background}"/>`,
     `<path d="${squircle(CANVAS, 4)}" stroke="${foreground}" stroke-opacity="0.2" stroke-width="8"/>`,
     markGroup(foreground),
     "</svg>\n",
   ].join("");
-}
 
 await Bun.write(`${PUBLIC}favicon-light.svg`, favicon(LIGHT));
 await Bun.write(`${PUBLIC}favicon.svg`, favicon(DARK));
@@ -116,10 +118,12 @@ await Bun.write(
 
 // The maskable and home-screen icons are raster only, and both platforms
 // composite them on their own chrome, so they take the dark ground.
-for (const size of [180, 192, 512]) {
-  const name = size === 180 ? "apple-touch-icon.png" : `icon-${size}.png`;
-  await Bun.$`bunx sharp-cli --input ${PUBLIC}favicon.svg --output ${PUBLIC}${name} --format png resize ${size} ${size}`.quiet();
-}
+await Promise.all(
+  [180, 192, 512].map(async (size) => {
+    const name = size === 180 ? "apple-touch-icon.png" : `icon-${size}.png`;
+    await Bun.$`bunx sharp-cli --input ${PUBLIC}favicon.svg --output ${PUBLIC}${name} --format png resize ${size} ${size}`.quiet();
+  })
+);
 
 /**
  * ICO, hand-assembled: a 6-byte directory header, a 16-byte entry per image,
@@ -149,24 +153,27 @@ const ico = new Uint8Array(
 );
 const view = new DataView(ico.buffer);
 
-view.setUint16(2, 1, true); // 1 = icon, not cursor
+// 1 = icon, not cursor
+view.setUint16(2, 1, true);
 view.setUint16(4, icoImages.length, true);
 
 let offset = HEADER + ENTRY * icoImages.length;
-icoImages.forEach((image, i) => {
+for (const [i, image] of icoImages.entries()) {
   const entry = HEADER + ENTRY * i;
   const size = ICO_SIZES[i] as number;
 
-  ico[entry] = size; // 256 would be written as 0; nothing here is that big
+  // 256 would be written as 0; nothing here is that big.
+  ico[entry] = size;
   ico[entry + 1] = size;
-  view.setUint16(entry + 4, 1, true); // colour planes
-  view.setUint16(entry + 6, 32, true); // bits per pixel
+  // Colour planes, then bits per pixel.
+  view.setUint16(entry + 4, 1, true);
+  view.setUint16(entry + 6, 32, true);
   view.setUint32(entry + 8, image.length, true);
   view.setUint32(entry + 12, offset, true);
 
   ico.set(image, offset);
   offset += image.length;
-});
+}
 
 await Bun.write(`${PUBLIC}favicon.ico`, ico);
 
