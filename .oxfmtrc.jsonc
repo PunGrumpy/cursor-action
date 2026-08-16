@@ -12,6 +12,9 @@
     "order": "asc",
   },
   "experimentalSortPackageJson": true,
+  // `dist/` is a committed build artifact. Formatting it would make the
+  // bundle differ from `bun run build` output and fail CI's freshness check.
+  "ignorePatterns": ["dist/**"],
   "jsxSingleQuote": false,
   "printWidth": 80,
   "quoteProps": "as-needed",
