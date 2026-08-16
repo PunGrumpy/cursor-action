@@ -38,12 +38,11 @@ const buttonBase = `inline-flex items-center justify-center gap-2 rounded-full p
 
 /**
  * cursor.com backs its hero stage with this wallpaper and dims it with
- * `filter: brightness(.9)` in the dark theme. Linked from their origin rather
- * than copied here: it is their asset, and the file is 1.4 MB served with
- * `cache-control: max-age=0`. Swap this one constant for an image of our own
- * when that trade stops being worth it.
+ * `filter: brightness(.9)` in the dark theme. Served from here rather than
+ * from their origin, and re-encoded to WebP: 1.4 MB to 95 kB. See
+ * docs/README.md for where the file came from.
  */
-const WALLPAPER = "https://cursor.com/marketing-static/demos/cursor-wallpaper.png";
+const WALLPAPER = "/hero-wallpaper.webp";
 
 const NAV_LINKS = [
   { href: "/quickstart", label: "Quickstart" },

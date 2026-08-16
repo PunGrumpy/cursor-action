@@ -25,6 +25,14 @@ plugin here that is not part of Fumapress's `recommended` preset. Prose about
 an action that changes underneath it goes stale quietly; a link to a page that
 no longer exists is the cheapest way to notice.
 
+## Third-party assets
+
+`public/hero-wallpaper.webp` is the wallpaper cursor.com uses behind its own
+hero, re-encoded from their
+[PNG](https://cursor.com/marketing-static/demos/cursor-wallpaper.png). It is
+Cursor's artwork, not ours, and the repository's MIT licence does not cover it.
+Replace it with an image of our own if that ever matters.
+
 ## Deployment
 
 Vercel, with the root directory set to `docs`. `vercel.json` pins the build
