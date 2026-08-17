@@ -35,6 +35,11 @@ jobs:
         run: bun install
       - name: Typecheck
         run: bun run typecheck
+      # Until now the formatter and the linter ran only in the pre-commit hook,
+      # so anyone whose install skipped husky could land unformatted code on a
+      # green build.
+      - name: Lint
+        run: bun run lint
       - name: Run tests
         run: bun run test
       - name: Build dist

@@ -102,7 +102,7 @@ env "INPUT_API-KEY=$CURSOR_API_KEY" \
 
 ## CI and release notes
 
-- `CI` runs `typecheck`, `test`, `build`, and a `dist/` freshness check on every push and pull request.
+- `CI` runs `typecheck`, `lint`, `test`, `build`, and a `dist/` freshness check on every push and pull request.
 - The `Integration` jobs install the action's runtime dependencies and run it with an invalid key on Ubuntu, Windows, and macOS. Being rejected at authentication is the pass condition: it proves the dependency tree resolves and the SDK reaches Cursor, without spending an agent run.
 - `Smoke Test` runs the action for real and needs a `CURSOR_API_KEY` on a paid plan, so it only runs from the Actions tab (`workflow_dispatch`).
 - `Release` runs Changesets on pushes to `main` to open a release PR or publish, then moves the `v1` tag to the published version.
