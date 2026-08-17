@@ -35,6 +35,11 @@ jobs:
         run: bun install
       - name: Typecheck
         run: bun run typecheck
+      # Until now the formatter and the linter ran only in the pre-commit hook,
+      # so anyone whose install skipped husky could land unformatted code on a
+      # green build.
+      - name: Lint
+        run: bun run lint
       - name: Run tests
         run: bun run test
       - name: Build dist
@@ -71,6 +76,10 @@ jobs:
             git diff -- README.md docs/content/reference.mdx
             exit 1
           fi
+      # The site has its own tsconfig and its own dependency tree, so the root
+      # typecheck never sees it and `waku build` does not typecheck either.
+      - name: Typecheck the documentation site
+        run: bun run docs:typecheck
       # Fails on broken internal links, which is the cheapest signal that a page
       # still describes something that no longer exists.
       - name: Build the documentation site
