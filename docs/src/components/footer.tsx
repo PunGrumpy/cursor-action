@@ -1,6 +1,5 @@
-import { ThemeSwitch } from "fumadocs-ui/layouts/shared/slots/theme-switch";
-
 import { MARKETPLACE, REPO } from "../lib/links";
+import { ThemeSwitch } from "./theme-switch";
 
 interface FooterColumn {
   heading: string;
@@ -182,7 +181,7 @@ export const SiteFooter = () => (
         </div>
         {/* Closing the gap opened by not using Fumapress's own nav: without
             this the home page had no way to change appearance. */}
-        <ThemeSwitch mode="light-dark-system" />
+        <ThemeSwitch />
       </div>
     </div>
   </footer>
