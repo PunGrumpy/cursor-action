@@ -103,7 +103,7 @@ export default defineConfig({
             <div className="flex items-center justify-between gap-2">
               <a
                 aria-label={`Release notes for v${version}`}
-                className="text-fd-muted-foreground hover:text-fd-foreground focus-visible:outline-fd-ring font-mono text-xs focus-visible:outline-2 focus-visible:outline-offset-2"
+                className="bg-fd-secondary/50 ring-fd-foreground/10 text-fd-muted-foreground hover:text-fd-foreground focus-visible:outline-fd-ring inline-flex h-8 items-center rounded-full px-3 font-mono text-xs ring-1 focus-visible:outline-2 focus-visible:outline-offset-2"
                 href={`${REPO}/releases/tag/v${version}`}
                 rel="noreferrer"
                 target="_blank"
