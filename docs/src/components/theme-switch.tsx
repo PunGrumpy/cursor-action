@@ -93,7 +93,7 @@ export const ThemeSwitch = ({
     <div
       className={cn(
         className,
-        "bg-fd-secondary/50 relative flex rounded-full p-0.5 text-center text-sm *:rounded-full"
+        "bg-fd-secondary/50 ring-fd-foreground/20 relative flex rounded-full p-0.5 ring-1 *:rounded-full"
       )}
       data-theme-toggle=""
       {...props}
@@ -101,7 +101,7 @@ export const ThemeSwitch = ({
       {thumb ? (
         <div
           aria-hidden="true"
-          className="bg-fd-foreground/10 pointer-events-none absolute top-0.5 bottom-0.5 rounded-full transition-[left,width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none"
+          className="bg-fd-background dark:bg-fd-accent ring-fd-foreground/50 pointer-events-none absolute top-0.5 bottom-0.5 rounded-full shadow-sm ring-1 transition-[left,width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none"
           style={{ left: thumb.left, width: thumb.width }}
         />
       ) : null}
