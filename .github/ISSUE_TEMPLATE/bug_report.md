@@ -8,20 +8,32 @@ assignees: ""
 
 **Describe the bug** A clear and concise description of what the bug is.
 
-**Logixlysia version** I'm using version ...
+**Action version** The tag or commit SHA you reference in `uses:`, e.g. `PunGrumpy/cursor-action@v1`.
+
+**Workflow snippet** The step that fails, with secrets redacted:
+
+```yaml
+- uses: PunGrumpy/cursor-action@v1
+  with:
+    api-key: ${{ secrets.CURSOR_API_KEY }}
+    prompt: "..."
+    model: default
+```
 
 **To Reproduce** Steps to reproduce the behavior:
 
-1. Go to '...'
-2. Click on '....'
-3. Scroll down to '....'
-4. See error
+1. Run the workflow above on '...'
+2. The step reaches '...'
+3. See error
 
 **Expected behavior** A clear and concise description of what you expected to happen.
 
-**Screenshots** If applicable, add screenshots to help explain your problem.
+**Logs** The relevant part of the failing job log, with secrets and tokens redacted. Enable [debug logging](https://docs.github.com/actions/monitoring-and-troubleshooting-workflows/enabling-debug-logging) when the failure is not obvious from the default output.
 
-**Desktop (please complete the following information):**
+**Environment (please complete the following information):**
 
-- OS: [e.g. MacOS]
-- Browser [e.g. chrome v130, safari]
+- Runner: [e.g. `ubuntu-latest`, self-hosted Linux, `macos-15`]
+- Model input: [e.g. `default`, `composer-2`]
+- Other inputs that differ from the defaults: [e.g. `working-directory`, `timeout`]
+
+**Additional context** Anything else that helps explain the problem, such as whether it worked on an earlier version.
