@@ -97,7 +97,7 @@ export const ThemeSwitch = ({
     <fieldset
       className={cn(
         className,
-        "bg-fd-secondary/50 ring-fd-foreground/20 relative m-0 flex rounded-full border-0 p-0.5 ring-1 *:rounded-full"
+        "bg-fd-secondary/50 ring-fd-foreground/10 relative m-0 flex rounded-full border-0 p-0.5 ring-1 *:rounded-full"
       )}
       data-theme-toggle=""
       {...props}
@@ -107,7 +107,7 @@ export const ThemeSwitch = ({
       {thumb ? (
         <div
           aria-hidden="true"
-          className="bg-fd-background dark:bg-fd-accent ring-fd-foreground/50 pointer-events-none absolute top-0.5 bottom-0.5 rounded-full shadow-sm ring-1 transition-[left,width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none"
+          className="bg-fd-background dark:bg-fd-accent ring-fd-foreground/15 pointer-events-none absolute top-0.5 bottom-0.5 rounded-full shadow-sm ring-1 transition-[left,width] duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none"
           style={{ left: thumb.left, width: thumb.width }}
         />
       ) : null}
@@ -117,7 +117,7 @@ export const ThemeSwitch = ({
           className={cn(
             "has-[:focus-visible]:outline-fd-ring relative inline-flex cursor-pointer items-center justify-center rounded-full px-2.5 py-1.5 leading-none transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2",
             active === option.value
-              ? "text-fd-foreground"
+              ? "text-fd-primary"
               : "text-fd-muted-foreground hover:text-fd-foreground"
           )}
           key={option.value}
