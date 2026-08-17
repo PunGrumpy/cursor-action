@@ -33,6 +33,8 @@ Per-page social cards are rendered at build time by Takumi, configured in `press
 
 ## Third-party assets
 
+`public/cursor-lockup-light.svg` and `public/cursor-lockup-dark.svg` are Cursor's horizontal lockup, taken unmodified from [their brand page](https://cursor.com/brand) in the two inks they publish. They are the only files in `public/` that `bun run brand` does not draw, because the mark in them is not ours to compute. Cursor asks to be called Cursor, not Cursor AI or Cursor Code.
+
 `public/hero-wallpaper.webp` is Albert Bierstadt's _Alaskan Coastal Range_ (before 1889), re-encoded to WebP from [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Bierstadt-Alaskan_Coastal_Range.jpg). Bierstadt died in 1902, so the painting is in the public domain worldwide and carries no licence obligation.
 
 ## Deployment

@@ -143,6 +143,28 @@ export const SiteFooter = () => (
 
       <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
         <div className="text-fd-muted-foreground flex flex-wrap items-center gap-x-6 gap-y-1">
+          {/* Cursor's own lockup, unmodified, in the two inks they publish on
+              cursor.com/brand. It sits next to the disclaimer on purpose: the
+              mark says the SDK underneath is theirs, the sentence beside it
+              says the action is not. */}
+          <a
+            className="hover:text-fd-foreground focus-visible:outline-fd-ring inline-flex items-center gap-2 text-sm focus-visible:outline-2 focus-visible:outline-offset-2"
+            href="https://cursor.com"
+            rel="noreferrer"
+            target="_blank"
+          >
+            Built on
+            <img
+              alt="Cursor"
+              className="h-4 w-auto dark:hidden"
+              src="/cursor-lockup-light.svg"
+            />
+            <img
+              alt="Cursor"
+              className="hidden h-4 w-auto dark:block"
+              src="/cursor-lockup-dark.svg"
+            />
+          </a>
           <small className="text-sm">
             © 2026{" "}
             <a
