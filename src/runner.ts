@@ -35,7 +35,6 @@ export const runAgent = async (inputs: ActionInputs): Promise<AgentResult> => {
     if (timeoutMs > 0 && Number.isFinite(timeoutMs)) {
       cancelTimer = setTimeout(() => {
         // Fire-and-forget: timeout handler must not block the timer callback.
-        // eslint-disable-next-line no-void -- intentional detached async work
         void (async () => {
           if (run.supports("cancel")) {
             try {
