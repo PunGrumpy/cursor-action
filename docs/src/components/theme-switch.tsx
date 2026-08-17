@@ -3,10 +3,10 @@
 import { cn } from "cnfast";
 import { useTheme } from "fumadocs-ui/provider/base";
 import type { ComponentProps } from "react";
-import { useCallback, useState, useSyncExternalStore } from "react";
+import { useCallback, useId, useState, useSyncExternalStore } from "react";
 import { flushSync } from "react-dom";
 
-type ThemeSwitchProps = ComponentProps<"div"> & {
+type ThemeSwitchProps = ComponentProps<"fieldset"> & {
   mode?: "light-dark" | "light-dark-system";
 };
 
@@ -58,8 +58,9 @@ export const ThemeSwitch = ({
   const { resolvedTheme, setTheme, theme } = useTheme();
   const hydrated = useSyncExternalStore(subscribe, onClient, onServer);
   const [thumb, setThumb] = useState<Thumb | null>(null);
+  const name = useId();
 
-  const measure = useCallback((cell: HTMLButtonElement | null) => {
+  const measure = useCallback((cell: HTMLLabelElement | null) => {
     if (!cell) {
       return;
     }
@@ -70,6 +71,9 @@ export const ThemeSwitch = ({
     place();
     const observer = new ResizeObserver(place);
     observer.observe(cell);
+    if (cell.parentElement) {
+      observer.observe(cell.parentElement);
+    }
 
     return () => observer.disconnect();
   }, []);
@@ -90,14 +94,16 @@ export const ThemeSwitch = ({
   };
 
   return (
-    <div
+    <fieldset
       className={cn(
         className,
-        "bg-fd-secondary/50 ring-fd-foreground/20 relative flex rounded-full p-0.5 ring-1 *:rounded-full"
+        "bg-fd-secondary/50 ring-fd-foreground/20 relative m-0 flex rounded-full border-0 p-0.5 ring-1 *:rounded-full"
       )}
       data-theme-toggle=""
       {...props}
     >
+      <legend className="sr-only">Theme</legend>
+
       {thumb ? (
         <div
           aria-hidden="true"
@@ -107,20 +113,25 @@ export const ThemeSwitch = ({
       ) : null}
 
       {themes.map((option) => (
-        <button
-          aria-label={option.label}
-          aria-pressed={active === option.value}
+        <label
           className={cn(
-            "focus-visible:outline-fd-ring relative inline-flex cursor-pointer items-center justify-center rounded-full px-2.5 py-1.5 leading-none transition-colors focus-visible:outline-2",
+            "has-[:focus-visible]:outline-fd-ring relative inline-flex cursor-pointer items-center justify-center rounded-full px-2.5 py-1.5 leading-none transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2",
             active === option.value
               ? "text-fd-foreground"
               : "text-fd-muted-foreground hover:text-fd-foreground"
           )}
           key={option.value}
-          onClick={() => change(option.value)}
           ref={active === option.value ? measure : null}
-          type="button"
         >
+          <input
+            checked={active === option.value}
+            className="sr-only"
+            name={name}
+            onChange={() => change(option.value)}
+            type="radio"
+            value={option.value}
+          />
+          <span className="sr-only">{option.label}</span>
           <svg aria-hidden="true" className="size-4" viewBox="0 0 16 16">
             <path
               clipRule={option.icon.rule}
@@ -129,8 +140,8 @@ export const ThemeSwitch = ({
               fillRule={option.icon.rule}
             />
           </svg>
-        </button>
+        </label>
       ))}
-    </div>
+    </fieldset>
   );
 };
