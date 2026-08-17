@@ -99,11 +99,8 @@ export default defineConfig({
         ...props,
         sidebar: {
           ...props.sidebar,
-          // The rule bleeds past the block's own gutter to the sidebar edges,
-          // which is where a rule that separates two zones belongs. The drawer
-          // draws one of its own, so this one stands down inside it.
           footer: (
-            <div className="border-fd-border -mx-4 flex items-center justify-between gap-2 border-t px-4 pt-4 [#nd-sidebar-mobile_&]:border-t-0 [#nd-sidebar-mobile_&]:pt-0">
+            <div className="flex items-center justify-between gap-2">
               <a
                 aria-label={`Release notes for v${version}`}
                 className="text-fd-muted-foreground hover:text-fd-foreground focus-visible:outline-fd-ring font-mono text-xs focus-visible:outline-2 focus-visible:outline-offset-2"
