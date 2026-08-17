@@ -16,9 +16,30 @@ interface Thumb {
 }
 
 const THEMES = [
-  { glyph: "🖥", label: "System theme", value: "system" },
-  { glyph: "☉", label: "Light theme", value: "light" },
-  { glyph: "☾", label: "Dark theme", value: "dark" },
+  {
+    icon: {
+      d: "M2.5 5.25C2.5 3.45 3.96 2 5.75 2h4.5c1.8 0 3.25 1.46 3.25 3.25V14h-11V5.25M5.75 3.5C4.78 3.5 4 4.28 4 5.25v7.25h8V5.25c0-.97-.78-1.75-1.75-1.75zM5 5.5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1V9H5zm3.5 6H11V10H8.5z",
+      rule: "evenodd",
+    },
+    label: "System theme",
+    value: "system",
+  },
+  {
+    icon: {
+      d: "M8.75 2v-.75h-1.5V3h1.5V2M8 10a2 2 0 1 0 0-4 2 2 0 0 0 0 4m0 1.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m.75 1.5v1.75h-1.5V13zM13 7.25h1.75v1.5H13zm-11 0h-.75v1.5H3v-1.5H2m9-3.32.54-.53.17-.17.53-.53 1.06 1.06-.53.53-.17.17-.53.53zm-7.77 7.78-.53.53 1.06 1.06.53-.53.17-.17.53-.53L3.93 11l-.53.53zM3.93 5l-.53-.53-.17-.17-.53-.53L3.76 2.7l.53.53.17.17.53.53zm7.78 7.78.53.53 1.06-1.06-.53-.53-.17-.17-.53-.53L11 12.07l.53.53z",
+      rule: "evenodd",
+    },
+    label: "Light theme",
+    value: "light",
+  },
+  {
+    icon: {
+      d: "m6.3 3.3.7.25A4.25 4.25 0 0 0 12.45 9l.96.96-.08.2A5.75 5.75 0 1 1 6.04 2.6zM5.25 4.76a4.24 4.24 0 1 0 6 5.99H11a5.75 5.75 0 0 1-5.75-6M12.5 3.5h1.25V5H12.5v1.25H11V5H9.75V3.5H11V2.25h1.5zM7 3.55l-.7-.25-.26-.7z",
+      rule: "nonzero",
+    },
+    label: "Dark theme",
+    value: "dark",
+  },
 ] as const;
 
 const listeners = new Set<() => void>();
@@ -100,7 +121,14 @@ export const ThemeSwitch = ({
           ref={active === option.value ? measure : null}
           type="button"
         >
-          <span aria-hidden="true">{option.glyph}</span>
+          <svg aria-hidden="true" className="size-4" viewBox="0 0 16 16">
+            <path
+              clipRule={option.icon.rule}
+              d={option.icon.d}
+              fill="currentColor"
+              fillRule={option.icon.rule}
+            />
+          </svg>
         </button>
       ))}
     </div>
