@@ -34,6 +34,7 @@
     "docs:build": "bun --cwd=docs run build",
     "docs:dev": "bun --cwd=docs run dev",
     "docs:reference": "bun run scripts/generate-reference.ts",
+    "docs:typecheck": "bun --cwd=docs run types:check",
     "format": "ultracite fix",
     "lint": "ultracite check",
     "test": "bun test",
