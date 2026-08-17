@@ -6,6 +6,7 @@ import { linkValidationPlugin } from "fumapress/plugins/link-validation";
 import { sitemapPlugin } from "fumapress/plugins/sitemap";
 import { takumiPlugin } from "fumapress/plugins/takumi";
 
+import { ThemeSwitch } from "./src/components/theme-switch";
 import { MARKETPLACE, REPO } from "./src/lib/links";
 import { MARK_VIEW_BOX, markPath } from "./src/lib/mark";
 import { url } from "./src/lib/url";
@@ -42,6 +43,7 @@ export default defineConfig({
       { text: "Marketplace", url: MARKETPLACE },
     ],
     nav: { title: SITE_NAME },
+    slots: { themeSwitch: ThemeSwitch },
   },
   meta: {
     root() {
