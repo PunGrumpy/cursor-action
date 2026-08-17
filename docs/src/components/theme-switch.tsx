@@ -8,7 +8,6 @@ import { flushSync } from "react-dom";
 
 type ThemeSwitchProps = ComponentProps<"div"> & {
   mode?: "light-dark" | "light-dark-system";
-  variant?: "pill" | "plain";
 };
 
 interface Thumb {
@@ -54,7 +53,6 @@ const onServer = () => false;
 export const ThemeSwitch = ({
   className,
   mode = "light-dark-system",
-  variant = "pill",
   ...props
 }: ThemeSwitchProps) => {
   const { resolvedTheme, setTheme, theme } = useTheme();
@@ -95,8 +93,7 @@ export const ThemeSwitch = ({
     <div
       className={cn(
         className,
-        "relative flex rounded-full p-0.5 *:rounded-full",
-        variant === "pill" && "bg-fd-secondary/50 ring-fd-foreground/20 ring-1"
+        "bg-fd-secondary/50 ring-fd-foreground/20 relative flex rounded-full p-0.5 ring-1 *:rounded-full"
       )}
       data-theme-toggle=""
       {...props}
@@ -137,7 +134,3 @@ export const ThemeSwitch = ({
     </div>
   );
 };
-
-export const PlainThemeSwitch = (props: ThemeSwitchProps) => (
-  <ThemeSwitch {...props} variant="plain" />
-);

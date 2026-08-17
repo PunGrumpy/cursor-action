@@ -2,11 +2,12 @@ import { defineDocs } from "fumadocs-mdx/macro";
 import { defineConfig } from "fumapress";
 import { fumadocsMdx } from "fumapress/adapters/mdx";
 import { metaSchema, pageSchema } from "fumapress/adapters/mdx/schema";
+import { createDocsLayoutPage } from "fumapress/layouts/docs";
 import { linkValidationPlugin } from "fumapress/plugins/link-validation";
 import { sitemapPlugin } from "fumapress/plugins/sitemap";
 import { takumiPlugin } from "fumapress/plugins/takumi";
 
-import { PlainThemeSwitch } from "./src/components/theme-switch";
+import { ThemeSwitch } from "./src/components/theme-switch";
 import { MARKETPLACE, REPO } from "./src/lib/links";
 import { MARK_VIEW_BOX, markPath } from "./src/lib/mark";
 import { url } from "./src/lib/url";
@@ -38,12 +39,17 @@ const OG = {
 export default defineConfig({
   content: docs.toFumadocsSource(),
   defaultLayoutProps: {
+    // The sidebar's bottom strip is a bordered box holding whatever icon links
+    // and the theme switch it is given. With one icon link duplicating a nav
+    // link it was a full-width border around a lone button, so both go and the
+    // switch is rendered as the sidebar's own footer below.
+    githubUrl: "",
     links: [
       { text: "GitHub", url: REPO },
       { text: "Marketplace", url: MARKETPLACE },
     ],
     nav: { title: SITE_NAME },
-    slots: { themeSwitch: PlainThemeSwitch },
+    themeSwitch: { enabled: false },
   },
   meta: {
     root() {
@@ -86,6 +92,17 @@ export default defineConfig({
   },
   // Deployed to a CDN as a static site, so no route may depend on a server.
   mode: "static",
+  renderPage: createDocsLayoutPage({
+    renderLayout({ next, props }) {
+      return next({
+        ...props,
+        sidebar: {
+          ...props.sidebar,
+          footer: <ThemeSwitch className="self-start" />,
+        },
+      });
+    },
+  }),
   site: {
     baseUrl: url,
     git: {
