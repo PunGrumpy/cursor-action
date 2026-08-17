@@ -2,10 +2,13 @@ import { defineDocs } from "fumadocs-mdx/macro";
 import { defineConfig } from "fumapress";
 import { fumadocsMdx } from "fumapress/adapters/mdx";
 import { metaSchema, pageSchema } from "fumapress/adapters/mdx/schema";
+import { createDocsLayoutPage } from "fumapress/layouts/docs";
 import { linkValidationPlugin } from "fumapress/plugins/link-validation";
 import { sitemapPlugin } from "fumapress/plugins/sitemap";
 import { takumiPlugin } from "fumapress/plugins/takumi";
 
+import { version } from "../package.json";
+import { ThemeSwitch } from "./src/components/theme-switch";
 import { MARKETPLACE, REPO } from "./src/lib/links";
 import { MARK_VIEW_BOX, markPath } from "./src/lib/mark";
 import { url } from "./src/lib/url";
@@ -37,11 +40,17 @@ const OG = {
 export default defineConfig({
   content: docs.toFumadocsSource(),
   defaultLayoutProps: {
+    // The sidebar's bottom strip is a bordered box holding whatever icon links
+    // and the theme switch it is given. With one icon link duplicating a nav
+    // link it was a full-width border around a lone button, so both go and the
+    // switch is rendered as the sidebar's own footer below.
+    githubUrl: "",
     links: [
       { text: "GitHub", url: REPO },
       { text: "Marketplace", url: MARKETPLACE },
     ],
     nav: { title: SITE_NAME },
+    themeSwitch: { enabled: false },
   },
   meta: {
     root() {
@@ -84,6 +93,30 @@ export default defineConfig({
   },
   // Deployed to a CDN as a static site, so no route may depend on a server.
   mode: "static",
+  renderPage: createDocsLayoutPage({
+    renderLayout({ next, props }) {
+      return next({
+        ...props,
+        sidebar: {
+          ...props.sidebar,
+          footer: (
+            <div className="flex items-center justify-between gap-2">
+              <a
+                aria-label={`Release notes for v${version}`}
+                className="bg-fd-secondary/50 ring-fd-foreground/10 text-fd-muted-foreground hover:text-fd-foreground focus-visible:outline-fd-ring inline-flex h-8 items-center rounded-full px-3 font-mono text-xs ring-1 focus-visible:outline-2 focus-visible:outline-offset-2"
+                href={`${REPO}/releases/tag/v${version}`}
+                rel="noreferrer"
+                target="_blank"
+              >
+                v{version}
+              </a>
+              <ThemeSwitch />
+            </div>
+          ),
+        },
+      });
+    },
+  }),
   site: {
     baseUrl: url,
     git: {
