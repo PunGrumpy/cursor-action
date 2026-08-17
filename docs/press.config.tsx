@@ -7,6 +7,7 @@ import { linkValidationPlugin } from "fumapress/plugins/link-validation";
 import { sitemapPlugin } from "fumapress/plugins/sitemap";
 import { takumiPlugin } from "fumapress/plugins/takumi";
 
+import { version } from "../package.json";
 import { ThemeSwitch } from "./src/components/theme-switch";
 import { MARKETPLACE, REPO } from "./src/lib/links";
 import { MARK_VIEW_BOX, markPath } from "./src/lib/mark";
@@ -98,7 +99,23 @@ export default defineConfig({
         ...props,
         sidebar: {
           ...props.sidebar,
-          footer: <ThemeSwitch className="self-start" />,
+          // The rule bleeds past the block's own gutter to the sidebar edges,
+          // which is where a rule that separates two zones belongs. The drawer
+          // draws one of its own, so this one stands down inside it.
+          footer: (
+            <div className="border-fd-border -mx-4 flex items-center justify-between gap-2 border-t px-4 pt-4 [#nd-sidebar-mobile_&]:border-t-0 [#nd-sidebar-mobile_&]:pt-0">
+              <a
+                aria-label={`Release notes for v${version}`}
+                className="text-fd-muted-foreground hover:text-fd-foreground focus-visible:outline-fd-ring font-mono text-xs focus-visible:outline-2 focus-visible:outline-offset-2"
+                href={`${REPO}/releases/tag/v${version}`}
+                rel="noreferrer"
+                target="_blank"
+              >
+                v{version}
+              </a>
+              <ThemeSwitch />
+            </div>
+          ),
         },
       });
     },
