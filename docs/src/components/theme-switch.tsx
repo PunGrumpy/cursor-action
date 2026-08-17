@@ -117,7 +117,7 @@ export const ThemeSwitch = ({
           className={cn(
             "has-[:focus-visible]:outline-fd-ring relative inline-flex cursor-pointer items-center justify-center rounded-full px-2.5 py-1.5 leading-none transition-colors has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-2",
             active === option.value
-              ? "text-fd-primary"
+              ? "text-fd-foreground"
               : "text-fd-muted-foreground hover:text-fd-foreground"
           )}
           key={option.value}
