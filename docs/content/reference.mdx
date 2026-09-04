@@ -21,10 +21,11 @@ The tables below are generated from `action.yml` by `bun run docs:reference`, an
 
 ### Outputs
 
-| Output      | Description                               |
-| ----------- | ----------------------------------------- |
-| `summary`   | Text summary returned by the cursor-agent |
-| `exit-code` | Exit code from the cursor-agent process   |
+| Output | Description |
+| --- | --- |
+| `summary` | Text summary returned by the cursor-agent |
+| `exit-code` | Exit code from the cursor-agent process |
+| `status` | Run status returned by the cursor-agent (finished, error, or cancelled) |
 
 {/* reference:end */}
 
@@ -42,6 +43,8 @@ Ignored since v1.0.0. The SDK resolves the agent version itself, and pinning a C
 
 ## Outputs
 
-`summary` is model output. Pass it through `env:` rather than interpolating `${{ steps.<id>.outputs.summary }}` into a `run:` script or a `github-script` body — interpolation splices the text into the script before it executes. Every example on [Examples](/examples) does this.
+`summary` is model output. Pass it through `env:` instead of interpolating `${{ steps.<id>.outputs.summary }}` into a `run:` script or a `github-script` body, because interpolation splices text before execution. Every example on [Examples](/examples) follows this pattern.
 
-`exit-code` is `0` when the SDK call succeeded and `1` when it threw. It does not yet distinguish a timeout from a failure; see [Behaviour](/behaviour).
+`exit-code` is `0` when the agent run finishes successfully. It is `1` when the run times out, cancels, or encounters an error.
+
+`status` reports the terminal state of the agent run: `finished`, `error`, or `cancelled`.

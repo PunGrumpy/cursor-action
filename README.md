@@ -44,10 +44,11 @@ The action runs on `ubuntu-latest`, `windows-latest`, and `macos-latest`.
 
 ### Outputs
 
-| Output      | Description                               |
-| ----------- | ----------------------------------------- |
-| `summary`   | Text summary returned by the cursor-agent |
-| `exit-code` | Exit code from the cursor-agent process   |
+| Output | Description |
+| --- | --- |
+| `summary` | Text summary returned by the cursor-agent |
+| `exit-code` | Exit code from the cursor-agent process |
+| `status` | Run status returned by the cursor-agent (finished, error, or cancelled) |
 
 <!-- reference:end -->
 
