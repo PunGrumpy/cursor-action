@@ -1,6 +1,6 @@
 {
   "name": "@pungrumpy/cursor-action",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Run cursor-agent in CI pipelines using the official @cursor/sdk",
   "keywords": [
     "ai",
