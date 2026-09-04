@@ -20,7 +20,7 @@ const getInputs = () => {
 	if (!VALID_PERMISSIONS.includes(permissionsRaw)) throw new Error(`Invalid 'permissions' value: '${permissionsRaw}'. Must be one of: ${VALID_PERMISSIONS.join(", ")}`);
 	const timeout = Math.trunc(Number(timeoutRaw));
 	if (Number.isNaN(timeout) || timeout <= 0) throw new Error(`Invalid 'timeout' value: '${timeoutRaw}'. Must be a positive integer (seconds).`);
-	if (timeout > 3600) warning(`Timeout is set to ${timeout}s (${Math.round(timeout / 60)}min). This is unusually long — consider if your prompt can be shortened.`);
+	if (timeout > 3600) warning(`Timeout is set to ${timeout}s (${Math.round(timeout / 60)}min). This is unusually long. Consider if your prompt can be shortened.`);
 	if (!prompt.trim()) throw new Error("The 'prompt' input cannot be empty.");
 	return {
 		apiKey,
@@ -49,11 +49,19 @@ const parseSummary = (stdout) => {
 	} catch {}
 	return trimmed.replaceAll(/\u001B\[[0-9;]*[mGKHF]/gu, "");
 };
+const buildSummaryTableRows = (result) => {
+	const rows = [["Status", result.exitCode === 0 ? "✅ Success" : `❌ Failed (exit ${result.exitCode})`], ["Exit Code", String(result.exitCode)]];
+	if (result.status) rows.push(["Agent Status", result.status]);
+	if (result.durationMs !== void 0) rows.push(["Duration", `${(result.durationMs / 1e3).toFixed(1)}s`]);
+	const { usage } = result;
+	if (usage?.inputTokens !== void 0) rows.push(["Input Tokens", String(usage.inputTokens)]);
+	if (usage?.outputTokens !== void 0) rows.push(["Output Tokens", String(usage.outputTokens)]);
+	if (usage?.cacheReadTokens !== void 0 && usage.cacheReadTokens > 0) rows.push(["Cache Read Tokens", String(usage.cacheReadTokens)]);
+	if (usage?.totalTokens !== void 0) rows.push(["Total Tokens", String(usage.totalTokens)]);
+	return rows;
+};
 const writeJobSummary = async (text, result) => {
-	const tableRows = [["Status", result.exitCode === 0 ? "✅ Success" : `❌ Failed (exit ${result.exitCode})`], ["Exit Code", String(result.exitCode)]];
-	if (result.status) tableRows.push(["Agent Status", result.status]);
-	if (result.durationMs !== void 0) tableRows.push(["Duration", `${(result.durationMs / 1e3).toFixed(1)}s`]);
-	if (result.usage?.totalTokens !== void 0) tableRows.push(["Total Tokens", String(result.usage.totalTokens)]);
+	const tableRows = buildSummaryTableRows(result);
 	await summary.addHeading("Cursor Agent Run", 2).addTable([[{
 		data: "Field",
 		header: true
@@ -67,17 +75,30 @@ const writeJobSummary = async (text, result) => {
 	if (diag && diag !== errText) await summary.addHeading("Diagnostics", 3).addRaw(`\n\`\`\`\n${diag.slice(0, 2e4)}${diag.length > 2e4 ? "\n… (truncated)" : ""}\n\`\`\`\n`);
 	await summary.write();
 };
+const setMetricOutputs = (result) => {
+	if (result.durationMs !== void 0) setOutput("duration-ms", String(result.durationMs));
+	const { usage } = result;
+	if (usage?.totalTokens !== void 0) setOutput("total-tokens", String(usage.totalTokens));
+	if (usage?.inputTokens !== void 0) setOutput("input-tokens", String(usage.inputTokens));
+	if (usage?.outputTokens !== void 0) setOutput("output-tokens", String(usage.outputTokens));
+};
 const setOutputs = async (result) => {
 	const text = parseSummary(result.stdout);
 	const status = result.status ?? (result.exitCode === 0 ? "finished" : "error");
 	setOutput("summary", text);
 	setOutput("exit-code", String(result.exitCode));
 	setOutput("status", status);
+	setMetricOutputs(result);
 	await writeJobSummary(text, result);
+	const { usage } = result;
 	return {
+		durationMs: result.durationMs,
 		exitCode: result.exitCode,
+		inputTokens: usage?.inputTokens,
+		outputTokens: usage?.outputTokens,
 		status,
-		summary: text
+		summary: text,
+		totalTokens: usage?.totalTokens
 	};
 };
 const maskSecret = (apiKey) => setSecret(apiKey);
