@@ -1,6 +1,6 @@
 ---
 title: Behaviour
-description: What the action actually does at runtime, including what it gets wrong.
+description: What the action does at runtime and how it reports results.
 ---
 
 ## The run
@@ -9,13 +9,13 @@ description: What the action actually does at runtime, including what it gets wr
 2. The API key is registered with `::add-mask::`.
 3. A local SDK agent is created against the resolved `working-directory` (`Agent.create({ local: { cwd } })`) and the prompt is sent.
 4. Streamed text is collected, then replaced by the final run result when the SDK provides one.
-5. A job summary is written with the status, exit code, agent response, and any stderr or diagnostics.
+5. A job summary is written with the status, exit code, agent response, duration, token usage, and any stderr or diagnostics.
 
-## Timeouts report success
+## Timeouts and failures
 
-When `timeout` elapses the action asks the SDK to cancel the run, and a cancelled run still exits `0`. The same is true when the run itself ends in an error state: `run.wait()` returns a result carrying `status` and `error`, and the action currently ignores both.
+When `timeout` elapses, the action requests a run cancellation. Cancelled runs exit with code `1`. The step fails and reports the cancellation in the job summary.
 
-Until v2 maps those onto real exit codes, a green step does not prove the agent finished.
+The same applies when a run ends with an error. The action reads `status` and `error` from `run.wait()`, sets exit code `1`, and writes the error details to stderr.
 
 ## Why it installs instead of shipping one file
 
@@ -27,7 +27,7 @@ The action is a composite action: it sets up Node.js 24, runs `npm ci --omit=dev
 
 ## Treat the summary as untrusted
 
-`summary` is model output. Interpolating it into a `run:` script or a `github-script` body splices the text into the script before it executes. Pass it through `env:` instead — every example on [Examples](/examples) does.
+`summary` is model output. Interpolating it into a `run:` script or a `github-script` body splices the text into the script before it executes. Pass it through `env:` instead. Every example on [Examples](/examples) does.
 
 ## Isolation
 

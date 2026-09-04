@@ -27,9 +27,6 @@ The action runs on `ubuntu-latest`, `windows-latest`, and `macos-latest`.
 
 ## What it does not do yet
 
-Two inputs are accepted but have no effect. They are documented on [Reference](/reference), and both are addressed in v2:
-
-- `permissions` does **not** restrict the agent. `read-only` will not stop it from editing files or running shell commands.
-- A run that times out or fails inside the agent still reports success.
+The `permissions` input does not restrict the agent today. Passing `read-only` will not stop it from editing files or running shell commands. Tool restrictions connect to the SDK in v2.
 
 Read [Behaviour](/behaviour) before wiring this into anything that gates a merge.

@@ -15,9 +15,9 @@ The key is valid but the account cannot run agents. This is billing, not configu
 
 Start from `default`. The SDK rejects `auto`, and the error lists the ids your account can actually use. `model` is passed through untouched.
 
-## The step succeeded but nothing happened
+## The step timed out or failed
 
-Check the job summary. A cancelled or errored run currently still exits `0`, so an empty `summary` with a green step usually means the run hit `timeout`. See [Behaviour](/behaviour).
+Check the job summary. When a run reports `cancelled` (including timeout-triggered cancellation) or `error`, the action exits with code `1`. If an agent does not support cancellation, it may finish with exit code `0`. You can increase `timeout` if the agent needs more time to complete.
 
 ## `Cannot find module`
 

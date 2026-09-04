@@ -49,6 +49,10 @@ outputs:
     description: "Exit code from the cursor-agent process"
     value: ${{ steps.agent.outputs.exit-code }}
 
+  status:
+    description: "Run status returned by the cursor-agent (finished, error, or cancelled)"
+    value: ${{ steps.agent.outputs.status }}
+
 # @cursor/sdk cannot be bundled: it dynamically imports its own webpack chunks
 # at runtime and resolves a native @cursor/sdk-<platform> package. It has to be
 # installed as a real dependency tree, which a `node24` action cannot do.

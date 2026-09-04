@@ -49,6 +49,23 @@ const writeJobSummary = async (
       ? "✅ Success"
       : `❌ Failed (exit ${result.exitCode})`;
 
+  const tableRows: string[][] = [
+    ["Status", status],
+    ["Exit Code", String(result.exitCode)],
+  ];
+
+  if (result.status) {
+    tableRows.push(["Agent Status", result.status]);
+  }
+
+  if (result.durationMs !== undefined) {
+    tableRows.push(["Duration", `${(result.durationMs / 1000).toFixed(1)}s`]);
+  }
+
+  if (result.usage?.totalTokens !== undefined) {
+    tableRows.push(["Total Tokens", String(result.usage.totalTokens)]);
+  }
+
   await summary
     .addHeading("Cursor Agent Run", 2)
     .addTable([
@@ -56,8 +73,7 @@ const writeJobSummary = async (
         { data: "Field", header: true },
         { data: "Value", header: true },
       ],
-      ["Status", status],
-      ["Exit Code", String(result.exitCode)],
+      ...tableRows,
     ])
     .addHeading("Agent Response", 3)
     .addRaw(text ? `\n\`\`\`\n${text}\n\`\`\`\n` : "_No output was produced._");
@@ -87,14 +103,18 @@ export const setOutputs = async (
   result: AgentResult
 ): Promise<ActionOutputs> => {
   const text = parseSummary(result.stdout);
+  const status =
+    result.status ?? (result.exitCode === 0 ? "finished" : "error");
 
   setOutput("summary", text);
   setOutput("exit-code", String(result.exitCode));
+  setOutput("status", status);
 
   await writeJobSummary(text, result);
 
   return {
     exitCode: result.exitCode,
+    status,
     summary: text,
   };
 };

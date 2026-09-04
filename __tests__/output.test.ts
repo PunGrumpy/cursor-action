@@ -43,8 +43,10 @@ describe("setOutputs", () => {
       "Here is my analysis."
     );
     expect(mockSetOutput).toHaveBeenCalledWith("exit-code", "0");
+    expect(mockSetOutput).toHaveBeenCalledWith("status", "finished");
     expect(outputs.summary).toBe("Here is my analysis.");
     expect(outputs.exitCode).toBe(0);
+    expect(outputs.status).toBe("finished");
     expect(mockSummaryChain.write).toHaveBeenCalled();
   });
 
@@ -123,6 +125,31 @@ describe("setOutputs", () => {
     const outputs = await setOutputs(result);
     expect(outputs.exitCode).toBe(1);
     expect(mockSetOutput).toHaveBeenCalledWith("exit-code", "1");
+    expect(mockSetOutput).toHaveBeenCalledWith("status", "error");
+    expect(outputs.status).toBe("error");
+  });
+
+  it("includes custom status, duration, and token usage in job summary", async () => {
+    const result = {
+      durationMs: 3500,
+      exitCode: 1,
+      status: "cancelled",
+      stderr: "",
+      stdout: "Done",
+      usage: {
+        totalTokens: 250,
+      },
+    };
+    const outputs = await setOutputs(result);
+    expect(outputs.status).toBe("cancelled");
+    expect(mockSetOutput).toHaveBeenCalledWith("status", "cancelled");
+    expect(mockSummaryChain.addTable).toHaveBeenCalledWith(
+      expect.arrayContaining([
+        ["Agent Status", "cancelled"],
+        ["Duration", "3.5s"],
+        ["Total Tokens", "250"],
+      ])
+    );
   });
 });
 

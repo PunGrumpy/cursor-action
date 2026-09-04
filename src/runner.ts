@@ -2,8 +2,38 @@ import path from "node:path";
 
 import { info, warning } from "@actions/core";
 import { Agent } from "@cursor/sdk";
+import type { RunResult } from "@cursor/sdk";
 
-import type { ActionInputs, AgentResult } from "./types";
+import type { ActionInputs, AgentResult, TokenUsageStats } from "./types";
+
+const extractErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) {
+    return error.cause
+      ? `${error.message}\nCause: ${error.cause}`
+      : error.message;
+  }
+  return String(error);
+};
+
+const mapUsage = (usage: RunResult["usage"]): TokenUsageStats | undefined => {
+  if (!usage) {
+    return undefined;
+  }
+  const {
+    cacheReadTokens,
+    cacheWriteTokens,
+    inputTokens,
+    outputTokens,
+    totalTokens,
+  } = usage;
+  return {
+    cacheReadTokens,
+    cacheWriteTokens,
+    inputTokens,
+    outputTokens,
+    totalTokens,
+  };
+};
 
 export const runAgent = async (inputs: ActionInputs): Promise<AgentResult> => {
   const cwd = path.resolve(inputs.workingDirectory);
@@ -20,6 +50,9 @@ export const runAgent = async (inputs: ActionInputs): Promise<AgentResult> => {
   let stdout = "";
   let stderr = "";
   let exitCode = 0;
+  let status = "finished";
+  let durationMs: number | undefined;
+  let usage: TokenUsageStats | undefined;
 
   try {
     const agent = await Agent.create({
@@ -32,8 +65,11 @@ export const runAgent = async (inputs: ActionInputs): Promise<AgentResult> => {
 
     const timeoutMs = inputs.timeout * 1000;
     let cancelTimer: ReturnType<typeof setTimeout> | undefined;
+    let timedOut = false;
+
     if (timeoutMs > 0 && Number.isFinite(timeoutMs)) {
       cancelTimer = setTimeout(() => {
+        timedOut = true;
         // Fire-and-forget: timeout handler must not block the timer callback.
         void (async () => {
           if (run.supports("cancel")) {
@@ -54,10 +90,27 @@ export const runAgent = async (inputs: ActionInputs): Promise<AgentResult> => {
         }
       }
 
-      await run.wait();
-      const finalResult = run.result;
-      if (finalResult && typeof finalResult === "string") {
-        stdout = finalResult;
+      const runResult = await run.wait();
+      ({ durationMs } = runResult);
+      usage = mapUsage(runResult.usage);
+
+      if (runResult.result && typeof runResult.result === "string") {
+        stdout = runResult.result;
+      }
+
+      ({ status } = runResult);
+      if (status === "error") {
+        exitCode = 1;
+        const msg = runResult.error?.message ?? "Agent run failed with error.";
+        stderr += stderr ? `\n${msg}` : msg;
+        warning(`Agent execution failed: ${msg}`);
+      } else if (status === "cancelled") {
+        exitCode = 1;
+        const msg = timedOut
+          ? `Agent run timed out after ${inputs.timeout}s and was cancelled.`
+          : "Agent run was cancelled.";
+        stderr += stderr ? `\n${msg}` : msg;
+        warning(msg);
       }
     } finally {
       if (cancelTimer !== undefined) {
@@ -66,21 +119,18 @@ export const runAgent = async (inputs: ActionInputs): Promise<AgentResult> => {
     }
   } catch (error) {
     exitCode = 1;
-    if (error instanceof Error) {
-      stderr += error.message;
-      if (error.cause) {
-        stderr += `\nCause: ${error.cause}`;
-      }
-    } else {
-      stderr += String(error);
-    }
+    status = "error";
+    stderr += extractErrorMessage(error);
     warning(`Agent execution failed: ${stderr}`);
   }
 
   return {
     diagnostics: exitCode === 0 ? undefined : stderr,
+    durationMs,
     exitCode,
+    status,
     stderr,
     stdout,
+    usage,
   };
 };
