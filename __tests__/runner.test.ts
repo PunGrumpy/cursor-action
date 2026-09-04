@@ -96,6 +96,7 @@ describe("runAgent", () => {
     expect(mockAgentSend).toHaveBeenCalledWith("Analyze this code");
     expect(mockRunCancel).not.toHaveBeenCalled();
     expect(result.exitCode).toBe(0);
+    expect(result.status).toBe("finished");
     expect(result.stdout).toBe("Hello from stream chunk 1. And chunk 2.");
     expect(result.stderr).toBe("");
   });
@@ -114,6 +115,7 @@ describe("runAgent", () => {
     const result = await runAgent(baseInputs);
 
     expect(result.exitCode).toBe(1);
+    expect(result.status).toBe("error");
     expect(result.stderr).toContain("Invalid API key");
     expect(mockWarning).toHaveBeenCalledWith(
       expect.stringContaining("Invalid API key")
@@ -126,12 +128,20 @@ describe("runAgent", () => {
       cancel: mockRunCancel,
       stream: streamAfter1100ms,
       supports: (op: string) => op === "cancel",
-      wait: finishedWait(""),
+      wait: () =>
+        Promise.resolve({
+          id: "run-test",
+          result: "",
+          status: "cancelled" as const,
+        }),
     });
 
-    await runAgent({ ...baseInputs, timeout: 1 });
+    const result = await runAgent({ ...baseInputs, timeout: 1 });
 
     expect(mockRunCancel).toHaveBeenCalled();
+    expect(result.exitCode).toBe(1);
+    expect(result.status).toBe("cancelled");
+    expect(result.stderr).toContain("timed out");
   }, 5000);
 
   it("does not call run.cancel when cancel is unsupported", async () => {
@@ -147,6 +157,7 @@ describe("runAgent", () => {
 
     expect(mockRunCancel).not.toHaveBeenCalled();
     expect(result.exitCode).toBe(0);
+    expect(result.status).toBe("finished");
   }, 5000);
 
   it("returns exitCode 1 when stream throws an error", async () => {
@@ -160,9 +171,62 @@ describe("runAgent", () => {
     const result = await runAgent(baseInputs);
 
     expect(result.exitCode).toBe(1);
+    expect(result.status).toBe("error");
     expect(result.stderr).toContain("Stream aborted");
     expect(mockWarning).toHaveBeenCalledWith(
       expect.stringContaining("Stream aborted")
     );
+  });
+
+  it("returns exitCode 1 and surfaces error message when run.wait() finishes with error status", async () => {
+    mockAgentSend.mockResolvedValue({
+      cancel: mockRunCancel,
+      stream: mockStreamSuccess,
+      supports: (op: string) => op === "cancel",
+      wait: () =>
+        Promise.resolve({
+          error: { message: "Internal server error during turn" },
+          id: "run-test",
+          result: "",
+          status: "error" as const,
+        }),
+    });
+
+    const result = await runAgent(baseInputs);
+
+    expect(result.exitCode).toBe(1);
+    expect(result.status).toBe("error");
+    expect(result.stderr).toContain("Internal server error during turn");
+    expect(mockWarning).toHaveBeenCalledWith(
+      expect.stringContaining("Internal server error during turn")
+    );
+  });
+
+  it("captures usage and duration from run.wait()", async () => {
+    mockAgentSend.mockResolvedValue({
+      cancel: mockRunCancel,
+      stream: mockStreamSuccess,
+      supports: (op: string) => op === "cancel",
+      wait: () =>
+        Promise.resolve({
+          durationMs: 4200,
+          id: "run-test",
+          result: "Done analysis",
+          status: "finished" as const,
+          usage: {
+            cacheReadTokens: 10,
+            cacheWriteTokens: 5,
+            inputTokens: 100,
+            outputTokens: 50,
+            totalTokens: 150,
+          },
+        }),
+    });
+
+    const result = await runAgent(baseInputs);
+
+    expect(result.exitCode).toBe(0);
+    expect(result.durationMs).toBe(4200);
+    expect(result.usage?.totalTokens).toBe(150);
   });
 });
