@@ -17,7 +17,7 @@ Start from `default`. The SDK rejects `auto`, and the error lists the ids your a
 
 ## The step timed out or failed
 
-Check the job summary. A cancelled or timed-out run exits with code `1` and marks the step as failed. You can increase `timeout` if the agent needs more time to complete.
+Check the job summary. When a run reports `cancelled` (including timeout-triggered cancellation) or `error`, the action exits with code `1`. If an agent does not support cancellation, it may finish with exit code `0`. You can increase `timeout` if the agent needs more time to complete.
 
 ## `Cannot find module`
 

@@ -132,8 +132,8 @@ describe("setOutputs", () => {
   it("includes custom status, duration, and token usage in job summary", async () => {
     const result = {
       durationMs: 3500,
-      exitCode: 0,
-      status: "finished",
+      exitCode: 1,
+      status: "cancelled",
       stderr: "",
       stdout: "Done",
       usage: {
@@ -141,11 +141,11 @@ describe("setOutputs", () => {
       },
     };
     const outputs = await setOutputs(result);
-    expect(outputs.status).toBe("finished");
-    expect(mockSetOutput).toHaveBeenCalledWith("status", "finished");
+    expect(outputs.status).toBe("cancelled");
+    expect(mockSetOutput).toHaveBeenCalledWith("status", "cancelled");
     expect(mockSummaryChain.addTable).toHaveBeenCalledWith(
       expect.arrayContaining([
-        ["Agent Status", "finished"],
+        ["Agent Status", "cancelled"],
         ["Duration", "3.5s"],
         ["Total Tokens", "250"],
       ])
