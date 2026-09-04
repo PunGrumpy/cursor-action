@@ -137,16 +137,32 @@ describe("setOutputs", () => {
       stderr: "",
       stdout: "Done",
       usage: {
+        cacheReadTokens: 50,
+        inputTokens: 100,
+        outputTokens: 150,
         totalTokens: 250,
       },
     };
     const outputs = await setOutputs(result);
     expect(outputs.status).toBe("cancelled");
+    expect(outputs.durationMs).toBe(3500);
+    expect(outputs.inputTokens).toBe(100);
+    expect(outputs.outputTokens).toBe(150);
+    expect(outputs.totalTokens).toBe(250);
+
     expect(mockSetOutput).toHaveBeenCalledWith("status", "cancelled");
+    expect(mockSetOutput).toHaveBeenCalledWith("duration-ms", "3500");
+    expect(mockSetOutput).toHaveBeenCalledWith("input-tokens", "100");
+    expect(mockSetOutput).toHaveBeenCalledWith("output-tokens", "150");
+    expect(mockSetOutput).toHaveBeenCalledWith("total-tokens", "250");
+
     expect(mockSummaryChain.addTable).toHaveBeenCalledWith(
       expect.arrayContaining([
         ["Agent Status", "cancelled"],
         ["Duration", "3.5s"],
+        ["Input Tokens", "100"],
+        ["Output Tokens", "150"],
+        ["Cache Read Tokens", "50"],
         ["Total Tokens", "250"],
       ])
     );

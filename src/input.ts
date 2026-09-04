@@ -41,7 +41,7 @@ export const getInputs = (): ActionInputs => {
   if (timeout > 3600) {
     warning(
       `Timeout is set to ${timeout}s (${Math.round(timeout / 60)}min). ` +
-        `This is unusually long — consider if your prompt can be shortened.`
+        "This is unusually long. Consider if your prompt can be shortened."
     );
   }
 

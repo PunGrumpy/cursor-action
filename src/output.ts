@@ -40,31 +40,50 @@ const parseSummary = (stdout: string): string => {
   return clean;
 };
 
-const writeJobSummary = async (
-  text: string,
-  result: AgentResult
-): Promise<void> => {
+const buildSummaryTableRows = (result: AgentResult): string[][] => {
   const status =
     result.exitCode === 0
       ? "✅ Success"
       : `❌ Failed (exit ${result.exitCode})`;
 
-  const tableRows: string[][] = [
+  const rows: string[][] = [
     ["Status", status],
     ["Exit Code", String(result.exitCode)],
   ];
 
   if (result.status) {
-    tableRows.push(["Agent Status", result.status]);
+    rows.push(["Agent Status", result.status]);
   }
 
   if (result.durationMs !== undefined) {
-    tableRows.push(["Duration", `${(result.durationMs / 1000).toFixed(1)}s`]);
+    rows.push(["Duration", `${(result.durationMs / 1000).toFixed(1)}s`]);
   }
 
-  if (result.usage?.totalTokens !== undefined) {
-    tableRows.push(["Total Tokens", String(result.usage.totalTokens)]);
+  const { usage } = result;
+  if (usage?.inputTokens !== undefined) {
+    rows.push(["Input Tokens", String(usage.inputTokens)]);
   }
+
+  if (usage?.outputTokens !== undefined) {
+    rows.push(["Output Tokens", String(usage.outputTokens)]);
+  }
+
+  if (usage?.cacheReadTokens !== undefined && usage.cacheReadTokens > 0) {
+    rows.push(["Cache Read Tokens", String(usage.cacheReadTokens)]);
+  }
+
+  if (usage?.totalTokens !== undefined) {
+    rows.push(["Total Tokens", String(usage.totalTokens)]);
+  }
+
+  return rows;
+};
+
+const writeJobSummary = async (
+  text: string,
+  result: AgentResult
+): Promise<void> => {
+  const tableRows = buildSummaryTableRows(result);
 
   await summary
     .addHeading("Cursor Agent Run", 2)
@@ -99,6 +118,22 @@ const writeJobSummary = async (
   await summary.write();
 };
 
+const setMetricOutputs = (result: AgentResult): void => {
+  if (result.durationMs !== undefined) {
+    setOutput("duration-ms", String(result.durationMs));
+  }
+  const { usage } = result;
+  if (usage?.totalTokens !== undefined) {
+    setOutput("total-tokens", String(usage.totalTokens));
+  }
+  if (usage?.inputTokens !== undefined) {
+    setOutput("input-tokens", String(usage.inputTokens));
+  }
+  if (usage?.outputTokens !== undefined) {
+    setOutput("output-tokens", String(usage.outputTokens));
+  }
+};
+
 export const setOutputs = async (
   result: AgentResult
 ): Promise<ActionOutputs> => {
@@ -109,13 +144,19 @@ export const setOutputs = async (
   setOutput("summary", text);
   setOutput("exit-code", String(result.exitCode));
   setOutput("status", status);
+  setMetricOutputs(result);
 
   await writeJobSummary(text, result);
 
+  const { usage } = result;
   return {
+    durationMs: result.durationMs,
     exitCode: result.exitCode,
+    inputTokens: usage?.inputTokens,
+    outputTokens: usage?.outputTokens,
     status,
     summary: text,
+    totalTokens: usage?.totalTokens,
   };
 };
 

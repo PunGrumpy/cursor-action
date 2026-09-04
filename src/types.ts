@@ -14,6 +14,10 @@ export interface ActionOutputs {
   summary: string;
   exitCode: number;
   status: string;
+  durationMs?: number;
+  totalTokens?: number;
+  inputTokens?: number;
+  outputTokens?: number;
 }
 
 export interface TokenUsageStats {
