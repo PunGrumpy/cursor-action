@@ -1,5 +1,6 @@
 import { endGroup, getInput, info, setFailed, setOutput, setSecret, startGroup, summary, warning } from "@actions/core";
 import path from "node:path";
+import { setTimeout } from "node:timers/promises";
 import { Agent } from "@cursor/sdk";
 //#region src/input.ts
 const VALID_PERMISSIONS = [
@@ -95,9 +96,39 @@ const setOutputs = async (result) => {
 const maskSecret = (apiKey) => setSecret(apiKey);
 //#endregion
 //#region src/runner.ts
+/** Longest delay Node's timers accept; larger values would fire immediately. */
+const MAX_TIMER_MS = 2147483647;
+/** How long to wait for the SDK to settle after a cancel request. */
+const DEFAULT_CANCEL_GRACE_MS = 1e4;
+/** How long to wait for the agent to release its local executor. */
+const DEFAULT_DISPOSE_TIMEOUT_MS = 15e3;
 const extractErrorMessage = (error) => {
 	if (error instanceof Error) return error.cause ? `${error.message}\nCause: ${error.cause}` : error.message;
 	return String(error);
+};
+/** Resolves to `undefined` when `promise` has not settled within `ms`. */
+const withTimeout = async (promise, ms) => {
+	const controller = new AbortController();
+	try {
+		return await Promise.race([promise, setTimeout(ms, void 0, { signal: controller.signal })]);
+	} finally {
+		controller.abort();
+	}
+};
+/** Resolves to `undefined` instead of rejecting. */
+const quietly = async (promise) => {
+	try {
+		return await promise;
+	} catch {
+		return;
+	}
+};
+const disposeAgent = async (agent, timeoutMs) => {
+	try {
+		if (await withTimeout(agent[Symbol.asyncDispose]().then(() => true), timeoutMs) === void 0) warning(`The agent did not release its resources within ${timeoutMs}ms.`);
+	} catch (error) {
+		warning(`Failed to release the agent: ${extractErrorMessage(error)}`);
+	}
 };
 /**
 * The SDK streams the answer as `assistant` events, one text delta per event.
@@ -121,8 +152,30 @@ const mapUsage = (usage) => {
 		totalTokens
 	};
 };
-const runAgent = async (inputs) => {
+/**
+* Waits for `consume` until the `timeoutSeconds` deadline, then asks the SDK to
+* cancel and waits at most `cancelGraceMs` for the run to stop.
+*/
+const settleRun = async (run, consume, timeoutSeconds, cancelGraceMs) => {
+	const settled = quietly(consume);
+	const timeoutMs = timeoutSeconds * 1e3;
+	const result = timeoutMs > 0 && timeoutMs <= MAX_TIMER_MS ? await withTimeout(consume, timeoutMs) : await consume;
+	if (result !== void 0) return {
+		result,
+		timedOut: false
+	};
+	if (run.supports("cancel")) try {
+		await withTimeout(run.cancel(), cancelGraceMs);
+	} catch {}
+	return {
+		result: await withTimeout(settled, cancelGraceMs),
+		timedOut: true
+	};
+};
+const runAgent = async (inputs, options = {}) => {
 	const cwd = path.resolve(inputs.workingDirectory);
+	const cancelGraceMs = options.cancelGraceMs ?? DEFAULT_CANCEL_GRACE_MS;
+	const disposeTimeoutMs = options.disposeTimeoutMs ?? DEFAULT_DISPOSE_TIMEOUT_MS;
 	info(`Running Cursor Agent in: ${cwd}`);
 	info(`Model: ${inputs.model}`);
 	if (inputs.permissions !== "read-only") warning("The `permissions` input is not passed to Cursor SDK Agent.create; tool access follows your API key / account, not this field.");
@@ -132,30 +185,28 @@ const runAgent = async (inputs) => {
 	let status = "finished";
 	let durationMs;
 	let usage;
+	let agent;
 	try {
-		const run = await (await Agent.create({
+		agent = await Agent.create({
 			apiKey: inputs.apiKey,
 			local: { cwd },
 			model: { id: inputs.model }
-		})).send(inputs.prompt);
-		const timeoutMs = inputs.timeout * 1e3;
-		let cancelTimer;
-		let timedOut = false;
-		if (timeoutMs > 0 && Number.isFinite(timeoutMs)) cancelTimer = setTimeout(() => {
-			timedOut = true;
-			(async () => {
-				if (run.supports("cancel")) try {
-					await run.cancel();
-				} catch {}
-			})();
-		}, timeoutMs);
-		try {
+		});
+		const run = await agent.send(inputs.prompt);
+		const { result: runResult, timedOut } = await settleRun(run, (async () => {
 			for await (const event of run.stream()) stdout += assistantText(event);
-			const runResult = await run.wait();
-			({durationMs} = runResult);
+			return await run.wait();
+		})(), inputs.timeout, cancelGraceMs);
+		if (runResult === void 0) {
+			exitCode = 1;
+			status = "cancelled";
+			const msg = `Agent run timed out after ${inputs.timeout}s and did not stop within ${cancelGraceMs}ms of the cancel request.`;
+			stderr += stderr ? `\n${msg}` : msg;
+			warning(msg);
+		} else {
+			({durationMs, status} = runResult);
 			usage = mapUsage(runResult.usage);
 			if (runResult.result && typeof runResult.result === "string") stdout = runResult.result;
-			({status} = runResult);
 			if (status === "error") {
 				exitCode = 1;
 				const msg = runResult.error?.message ?? "Agent run failed with error.";
@@ -166,15 +217,15 @@ const runAgent = async (inputs) => {
 				const msg = timedOut ? `Agent run timed out after ${inputs.timeout}s and was cancelled.` : "Agent run was cancelled.";
 				stderr += stderr ? `\n${msg}` : msg;
 				warning(msg);
-			}
-		} finally {
-			if (cancelTimer !== void 0) clearTimeout(cancelTimer);
+			} else if (timedOut) warning(`Agent run exceeded the ${inputs.timeout}s timeout but finished while the cancel request was pending.`);
 		}
 	} catch (error) {
 		exitCode = 1;
 		status = "error";
 		stderr += extractErrorMessage(error);
 		warning(`Agent execution failed: ${stderr}`);
+	} finally {
+		if (agent !== void 0) await disposeAgent(agent, disposeTimeoutMs);
 	}
 	return {
 		diagnostics: exitCode === 0 ? void 0 : stderr,
