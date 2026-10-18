@@ -33,32 +33,49 @@ const baseInputs: ActionInputs = {
   workingDirectory: ".",
 };
 
+const assistantEvent = (text: string) => ({
+  agent_id: "agent-test",
+  message: {
+    content: [{ text, type: "text" as const }],
+    role: "assistant" as const,
+  },
+  run_id: "run-test",
+  type: "assistant" as const,
+});
+
+const thinkingEvent = (text: string) => ({
+  agent_id: "agent-test",
+  run_id: "run-test",
+  text,
+  type: "thinking" as const,
+});
+
 const mockStreamSuccess = async function* mockStreamSuccess() {
-  yield { text: "Hello from stream chunk 1. " };
-  yield { text: "And chunk 2." };
+  yield assistantEvent("Hello from stream chunk 1. ");
+  yield assistantEvent("And chunk 2.");
 };
 
 const mockStreamError = async function* mockStreamError() {
-  yield { text: "Starting..." };
+  yield assistantEvent("Starting...");
   throw new Error("Stream aborted");
 };
 
 /**
  * Yields only after 1.1s so a 1s action timeout can fire first.
- * @yields {{ text: string }} The chunk that arrives too late.
+ * @yields {ReturnType<typeof assistantEvent>} The assistant event that arrives too late.
  */
 const streamAfter1100ms = async function* streamAfter1100ms() {
   await Bun.sleep(1100);
-  yield { text: "too late" };
+  yield assistantEvent("too late");
 };
 
 /**
  * Completes only after 1.2s when cancel is unsupported (timeout still scheduled).
- * @yields {{ text: string }} The chunk that arrives after the timeout.
+ * @yields {ReturnType<typeof assistantEvent>} The assistant event that arrives after the timeout.
  */
 const streamAfter1200ms = async function* streamAfter1200ms() {
   await Bun.sleep(1200);
-  yield { text: "ok" };
+  yield assistantEvent("ok");
 };
 
 const finishedWait = (result: string) => () =>
@@ -228,5 +245,49 @@ describe("runAgent", () => {
     expect(result.exitCode).toBe(0);
     expect(result.durationMs).toBe(4200);
     expect(result.usage?.totalTokens).toBe(150);
+  });
+
+  it("collects only assistant text when the run is cancelled before a result exists", async () => {
+    const mixedStream = async function* mixedStream() {
+      yield thinkingEvent("Let me think about this.");
+      yield assistantEvent("Partial ");
+      yield {
+        agent_id: "agent-test",
+        run_id: "run-test",
+        text: "subagent chatter",
+        type: "task" as const,
+      };
+      yield assistantEvent("answer");
+    };
+    mockAgentSend.mockResolvedValue({
+      cancel: mockRunCancel,
+      stream: mixedStream,
+      supports: (op: string) => op === "cancel",
+      wait: () =>
+        Promise.resolve({ id: "run-test", status: "cancelled" as const }),
+    });
+
+    const result = await runAgent(baseInputs);
+
+    expect(result.stdout).toBe("Partial answer");
+    expect(result.status).toBe("cancelled");
+    expect(result.exitCode).toBe(1);
+  });
+
+  it("prefers the final result text over the streamed text when the run finishes", async () => {
+    const partialStream = async function* partialStream() {
+      yield assistantEvent("streamed draft");
+    };
+    mockAgentSend.mockResolvedValue({
+      cancel: mockRunCancel,
+      stream: partialStream,
+      supports: (op: string) => op === "cancel",
+      wait: finishedWait("final answer"),
+    });
+
+    const result = await runAgent(baseInputs);
+
+    expect(result.stdout).toBe("final answer");
+    expect(result.exitCode).toBe(0);
   });
 });
