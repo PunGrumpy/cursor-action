@@ -15,6 +15,7 @@ mock.module("@actions/core", () => ({
 const mockAgentCreate = mock();
 const mockAgentSend = mock();
 const mockRunCancel = mock(() => Promise.resolve());
+const mockDispose = mock(() => Promise.resolve());
 
 mock.module("@cursor/sdk", () => ({
   Agent: {
@@ -85,11 +86,22 @@ const finishedWait = (result: string) => () =>
     status: "finished" as const,
   });
 
+/** A promise that never settles, for runs that ignore cancellation. */
+const pending = <T = never>(): Promise<T> => Promise.withResolvers<T>().promise;
+
+const neverEndingStream = () => ({
+  [Symbol.asyncIterator]: () => ({
+    next: () => pending<IteratorResult<unknown>>(),
+  }),
+});
+
 describe("runAgent", () => {
   beforeEach(() => {
     mock.clearAllMocks();
+    mockDispose.mockImplementation(() => Promise.resolve());
 
     mockAgentCreate.mockResolvedValue({
+      [Symbol.asyncDispose]: mockDispose,
       send: mockAgentSend,
     });
 
@@ -289,5 +301,53 @@ describe("runAgent", () => {
 
     expect(result.stdout).toBe("final answer");
     expect(result.exitCode).toBe(0);
+  });
+
+  it("stops waiting when the run ignores the cancel request", async () => {
+    mockAgentSend.mockResolvedValue({
+      cancel: mockRunCancel,
+      stream: neverEndingStream,
+      supports: (op: string) => op === "cancel",
+      wait: () => pending(),
+    });
+
+    const startedAt = Date.now();
+    const result = await runAgent(
+      { ...baseInputs, timeout: 1 },
+      { cancelGraceMs: 200, disposeTimeoutMs: 200 }
+    );
+
+    expect(Date.now() - startedAt).toBeLessThan(3000);
+    expect(mockRunCancel).toHaveBeenCalled();
+    expect(result.exitCode).toBe(1);
+    expect(result.status).toBe("cancelled");
+    expect(result.stderr).toContain("timed out");
+    expect(mockDispose).toHaveBeenCalledTimes(1);
+  }, 5000);
+
+  it("releases the agent after a successful run", async () => {
+    await runAgent(baseInputs);
+    expect(mockDispose).toHaveBeenCalledTimes(1);
+  });
+
+  it("releases the agent when send throws", async () => {
+    mockAgentSend.mockRejectedValue(new Error("send exploded"));
+
+    const result = await runAgent(baseInputs);
+
+    expect(result.exitCode).toBe(1);
+    expect(result.stderr).toContain("send exploded");
+    expect(mockDispose).toHaveBeenCalledTimes(1);
+  });
+
+  it("returns even when releasing the agent hangs", async () => {
+    mockDispose.mockImplementation(() => pending());
+
+    const result = await runAgent(baseInputs, { disposeTimeoutMs: 100 });
+
+    expect(result.exitCode).toBe(0);
+    expect(mockWarning).toHaveBeenCalledWith(
+      expect.stringContaining("did not release")
+    );
   });
 });
