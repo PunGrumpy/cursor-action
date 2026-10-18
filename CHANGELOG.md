@@ -1,5 +1,18 @@
 # @pungrumpy/cursor-action
 
+## 2.0.0
+
+### Major Changes
+
+- eb34fe0: Enforce the `permissions` input through the Cursor SDK's tool restrictions. `read-only` (the default) now offers the agent read, search, and web tools only; `read-write` removes `shell` and `task` from the default toolset; `full` leaves the SDK default. Workflows that relied on `read-only` not restricting anything must set `permissions: full`. Pin `uses: PunGrumpy/cursor-action@v2` to pick this up; `@v1` keeps the previous behaviour.
+
+### Patch Changes
+
+- 18f70f7: Collect the agent's answer from `assistant` stream events instead of `thinking` events. A cancelled or errored run's `summary` now holds the model's partial answer rather than its reasoning.
+- b13383c: Treat `timeout` as a hard deadline: after requesting cancellation the action waits at most ten seconds for the run to stop, then fails the step as `cancelled` instead of waiting indefinitely. The agent is now released (`Symbol.asyncDispose`) when the run ends on every path, bounded by its own fifteen-second limit.
+- 5bbf814: Publish the agent's answer verbatim in `summary`. An answer that happened to be a JSON object was previously reduced to its `response`, `summary`, `result`, `output`, or `text` field, a leftover from the CLI's `--output-format json` era; workflows that ask for structured output now receive the whole object.
+- abf9133: Update `@cursor/sdk` to 1.0.38 and refresh the transitive `undici` pin. The SDK release drops `@connectrpc/connect-node`, and the newer `undici` clears the remaining advisory `npm audit` reported for the action's runtime dependency tree.
+
 ## 1.0.3
 
 ### Patch Changes
