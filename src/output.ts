@@ -2,43 +2,17 @@ import { setOutput, setSecret, summary } from "@actions/core";
 
 import type { ActionOutputs, AgentResult } from "./types";
 
-const parseSummary = (stdout: string): string => {
-  const trimmed = stdout.trim();
-  if (!trimmed) {
-    return "";
-  }
-
-  try {
-    const parsed = JSON.parse(trimmed);
-    if (typeof parsed === "object" && parsed !== null) {
-      if (typeof parsed.response === "string") {
-        return parsed.response.trim();
-      }
-      if (typeof parsed.summary === "string") {
-        return parsed.summary.trim();
-      }
-      if (typeof parsed.result === "string") {
-        return parsed.result.trim();
-      }
-      if (typeof parsed.output === "string") {
-        return parsed.output.trim();
-      }
-      if (typeof parsed.text === "string") {
-        return parsed.text.trim();
-      }
-    }
-  } catch {
-    // Not JSON
-  }
-
-  const clean = trimmed.replaceAll(
+/**
+ * The SDK returns the final assistant message as plain text. Only whitespace
+ * and stray terminal colour codes are removed; a JSON-shaped answer is
+ * published as-is so callers can parse the whole object.
+ */
+const parseSummary = (stdout: string): string =>
+  stdout.trim().replaceAll(
     // eslint-disable-next-line no-control-regex
     /\u001B\[[0-9;]*[mGKHF]/gu,
     ""
   );
-
-  return clean;
-};
 
 const buildSummaryTableRows = (result: AgentResult): string[][] => {
   const status =
