@@ -16,7 +16,7 @@ The tables below are generated from `action.yml` by `bun run docs:reference`, an
 | `prompt` | ✅ | — | Prompt to pass to cursor-agent |
 | `model` | ❌ | `default` | Model id for the agent (e.g. default, composer-2). The Cursor SDK does not accept auto. |
 | `working-directory` | ❌ | `.` | Working directory for the agent to operate in |
-| `permissions` | ❌ | `read-only` | Validated but NOT enforced: 'read-only' does not stop the agent from editing files or running shell commands. Wired to the SDK in v2. |
+| `permissions` | ❌ | `read-only` | Built-in tools the agent may use: read-only (read, search, and web tools), read-write (adds file edits; no shell or subagents), or full (the SDK's default toolset). |
 | `timeout` | ❌ | `300` | Timeout in seconds for the agent run |
 
 ### Outputs
@@ -33,17 +33,15 @@ The tables below are generated from `action.yml` by `bun run docs:reference`, an
 
 {/* reference:end */}
 
-## Inputs that do nothing
+## Notes on inputs
 
 ### `permissions`
 
-Validated against `read-only`, `read-write` and `full`, then discarded. It is never passed to the SDK, so tool access follows whatever your API key and account allow. `read-only` is not a sandbox and does not prevent file edits or shell commands.
-
-v2 wires it to the SDK's `disallowedTools`, renamed to `agent-permissions` to stop it colliding with the workflow-level `permissions:` key.
+Mapped to the SDK's tool allow and deny lists: `read-only` offers the read, search, and web tools only; `read-write` removes `shell` and `task` from the default toolset; `full` leaves the SDK default. It restricts the main agent loop and is not a sandbox. The full table is on [Behaviour](/behaviour).
 
 ### `cursor-version`
 
-Ignored since v1.0.0. The SDK resolves the agent version itself, and pinning a Cursor build is no longer possible from this action. Passing anything other than `latest` emits a warning. It is removed in v2.
+Ignored since v1.0.0. The SDK resolves the agent version itself, and pinning a Cursor build is no longer possible from this action. Passing anything other than `latest` emits a warning. The input is kept so existing workflows keep validating.
 
 ## Outputs
 

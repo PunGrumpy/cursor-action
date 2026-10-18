@@ -26,6 +26,16 @@ The action is a composite action: it sets up Node.js 24, runs `npm ci --omit=dev
 
 `dist/` is committed and holds only this repository's own code, a few kB.
 
+## Permissions
+
+The `permissions` input is passed to the SDK as a tool allow or deny list. It restricts the main agent loop; it is not a sandbox.
+
+| `permissions` | Tools offered |
+| --- | --- |
+| `read-only` | `read`, `grep`, `glob`, `ls`, `semSearch`, `readLints`, `webSearch`, `webFetch`, `readTodos`, `updateTodos` |
+| `read-write` | The default toolset without `shell` and `task` (no commands, no subagents) |
+| `full` | The SDK's default toolset |
+
 ## Treat the summary as untrusted
 
 `summary` is model output. Interpolating it into a `run:` script or a `github-script` body splices the text into the script before it executes. Pass it through `env:` instead. Every example on [Examples](/examples) does.

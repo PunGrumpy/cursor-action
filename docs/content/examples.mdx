@@ -22,7 +22,7 @@ jobs:
 
       - name: Run Cursor Agent
         id: review
-        uses: PunGrumpy/cursor-action@v1
+        uses: PunGrumpy/cursor-action@v2
         with:
           api-key: ${{ secrets.CURSOR_API_KEY }}
           prompt: |
@@ -49,7 +49,7 @@ Pull requests from forks get a read-only `GITHUB_TOKEN`, so the comment step fai
 ## Pick a model and a working directory
 
 ```yaml
-- uses: PunGrumpy/cursor-action@v1
+- uses: PunGrumpy/cursor-action@v2
   with:
     api-key: ${{ secrets.CURSOR_API_KEY }}
     prompt: "Summarize the TypeScript errors you can find."
@@ -65,7 +65,7 @@ Pull requests from forks get a read-only `GITHUB_TOKEN`, so the comment step fai
 ```yaml
 - name: Run Cursor Agent
   id: audit
-  uses: PunGrumpy/cursor-action@v1
+  uses: PunGrumpy/cursor-action@v2
   with:
     api-key: ${{ secrets.CURSOR_API_KEY }}
     prompt: |
