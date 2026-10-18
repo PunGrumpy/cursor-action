@@ -10,10 +10,11 @@ description: What the action does at runtime and how it reports results.
 3. A local SDK agent is created against the resolved `working-directory` (`Agent.create({ local: { cwd } })`) and the prompt is sent.
 4. Streamed text is collected, then replaced by the final run result when the SDK provides one. `summary` is that text verbatim, with surrounding whitespace trimmed; a JSON-shaped answer is not unwrapped.
 5. A job summary is written with the status, exit code, agent response, duration, token usage, and any stderr or diagnostics.
+6. The agent is released (`Symbol.asyncDispose`), which shuts down the local executor the SDK started for the run.
 
 ## Timeouts and failures
 
-When `timeout` elapses, the action requests a run cancellation. Cancelled runs exit with code `1`. The step fails and reports the cancellation in the job summary.
+When `timeout` elapses, the action requests a run cancellation and waits at most ten seconds for the run to stop. A run that stops, or never answers, is reported as `cancelled`, the step exits with code `1`, and the job summary records the cancellation. A run that finishes during those ten seconds keeps its result and exit code `0`, with a warning that it overran the timeout.
 
 The same applies when a run ends with an error. The action reads `status` and `error` from `run.wait()`, sets exit code `1`, and writes the error details to stderr.
 
