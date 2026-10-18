@@ -99,6 +99,17 @@ const extractErrorMessage = (error) => {
 	if (error instanceof Error) return error.cause ? `${error.message}\nCause: ${error.cause}` : error.message;
 	return String(error);
 };
+/**
+* The SDK streams the answer as `assistant` events, one text delta per event.
+* `thinking` and `task` events also carry a `text` field, but that is the
+* model's reasoning and subagent chatter, not the answer.
+*/
+const assistantText = (event) => {
+	if (event.type !== "assistant") return "";
+	let text = "";
+	for (const block of event.message.content) if (block.type === "text") text += block.text;
+	return text;
+};
 const mapUsage = (usage) => {
 	if (!usage) return;
 	const { cacheReadTokens, cacheWriteTokens, inputTokens, outputTokens, totalTokens } = usage;
@@ -139,7 +150,7 @@ const runAgent = async (inputs) => {
 			})();
 		}, timeoutMs);
 		try {
-			for await (const event of run.stream()) if ("text" in event && typeof event.text === "string") stdout += event.text;
+			for await (const event of run.stream()) stdout += assistantText(event);
 			const runResult = await run.wait();
 			({durationMs} = runResult);
 			usage = mapUsage(runResult.usage);

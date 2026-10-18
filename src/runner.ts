@@ -2,7 +2,7 @@ import path from "node:path";
 
 import { info, warning } from "@actions/core";
 import { Agent } from "@cursor/sdk";
-import type { RunResult } from "@cursor/sdk";
+import type { RunResult, SDKMessage } from "@cursor/sdk";
 
 import type { ActionInputs, AgentResult, TokenUsageStats } from "./types";
 
@@ -13,6 +13,24 @@ const extractErrorMessage = (error: unknown): string => {
       : error.message;
   }
   return String(error);
+};
+
+/**
+ * The SDK streams the answer as `assistant` events, one text delta per event.
+ * `thinking` and `task` events also carry a `text` field, but that is the
+ * model's reasoning and subagent chatter, not the answer.
+ */
+const assistantText = (event: SDKMessage): string => {
+  if (event.type !== "assistant") {
+    return "";
+  }
+  let text = "";
+  for (const block of event.message.content) {
+    if (block.type === "text") {
+      text += block.text;
+    }
+  }
+  return text;
 };
 
 const mapUsage = (usage: RunResult["usage"]): TokenUsageStats | undefined => {
@@ -85,9 +103,7 @@ export const runAgent = async (inputs: ActionInputs): Promise<AgentResult> => {
 
     try {
       for await (const event of run.stream()) {
-        if ("text" in event && typeof event.text === "string") {
-          stdout += event.text;
-        }
+        stdout += assistantText(event);
       }
 
       const runResult = await run.wait();
