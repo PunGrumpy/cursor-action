@@ -120,6 +120,7 @@ describe("runAgent", () => {
       apiKey: "test-key",
       local: { cwd: expect.any(String) },
       model: { id: "default" },
+      tools: expect.arrayContaining(["read", "grep"]),
     });
 
     expect(mockAgentSend).toHaveBeenCalledWith("Analyze this code");
@@ -130,10 +131,17 @@ describe("runAgent", () => {
     expect(result.stderr).toBe("");
   });
 
-  it("warns when permissions is not read-only that the SDK does not use this input", async () => {
+  it("passes the permission level to Agent.create as tool restrictions", async () => {
     await runAgent({ ...baseInputs, permissions: "read-write" });
+    expect(mockAgentCreate).toHaveBeenLastCalledWith(
+      expect.objectContaining({ disallowedTools: ["shell", "task"] })
+    );
 
-    expect(mockWarning).toHaveBeenCalledWith(
+    await runAgent({ ...baseInputs, permissions: "full" });
+    const fullCall = mockAgentCreate.mock.calls.at(-1)?.[0];
+    expect(fullCall).not.toHaveProperty("tools");
+    expect(fullCall).not.toHaveProperty("disallowedTools");
+    expect(mockWarning).not.toHaveBeenCalledWith(
       expect.stringContaining("permissions")
     );
   });

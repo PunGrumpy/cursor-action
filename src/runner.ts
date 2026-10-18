@@ -5,6 +5,7 @@ import { info, warning } from "@actions/core";
 import { Agent } from "@cursor/sdk";
 import type { Run, RunResult, SDKAgent, SDKMessage } from "@cursor/sdk";
 
+import { toolRestrictionsFor } from "./permissions";
 import type { ActionInputs, AgentResult, TokenUsageStats } from "./types";
 
 /** Longest delay Node's timers accept; larger values would fire immediately. */
@@ -159,12 +160,7 @@ export const runAgent = async (
 
   info(`Running Cursor Agent in: ${cwd}`);
   info(`Model: ${inputs.model}`);
-  if (inputs.permissions !== "read-only") {
-    warning(
-      "The `permissions` input is not passed to Cursor SDK Agent.create; " +
-        "tool access follows your API key / account, not this field."
-    );
-  }
+  info(`Permissions: ${inputs.permissions}`);
 
   let stdout = "";
   let stderr = "";
@@ -179,6 +175,7 @@ export const runAgent = async (
       apiKey: inputs.apiKey,
       local: { cwd },
       model: { id: inputs.model },
+      ...toolRestrictionsFor(inputs.permissions),
     });
 
     const run = await agent.send(inputs.prompt);
