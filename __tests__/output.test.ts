@@ -50,54 +50,15 @@ describe("setOutputs", () => {
     expect(mockSummaryChain.write).toHaveBeenCalled();
   });
 
-  it("extracts summary from JSON response field", async () => {
-    const result = {
-      exitCode: 0,
-      stderr: "",
-      stdout: JSON.stringify({ response: "JSON response text" }),
-    };
-    const outputs = await setOutputs(result);
-    expect(outputs.summary).toBe("JSON response text");
-  });
+  it("passes a JSON-shaped answer through unchanged", async () => {
+    const stdout = JSON.stringify({
+      findings: ["hardcoded token in config.ts"],
+      summary: "only this field used to survive",
+    });
+    const outputs = await setOutputs({ exitCode: 0, stderr: "", stdout });
 
-  it("extracts summary from JSON summary field", async () => {
-    const result = {
-      exitCode: 0,
-      stderr: "",
-      stdout: JSON.stringify({ summary: "Summary field text" }),
-    };
-    const outputs = await setOutputs(result);
-    expect(outputs.summary).toBe("Summary field text");
-  });
-
-  it("extracts summary from JSON result field", async () => {
-    const result = {
-      exitCode: 0,
-      stderr: "",
-      stdout: JSON.stringify({ result: "Result field text" }),
-    };
-    const outputs = await setOutputs(result);
-    expect(outputs.summary).toBe("Result field text");
-  });
-
-  it("extracts summary from JSON output field", async () => {
-    const result = {
-      exitCode: 0,
-      stderr: "",
-      stdout: JSON.stringify({ output: "Output field text" }),
-    };
-    const outputs = await setOutputs(result);
-    expect(outputs.summary).toBe("Output field text");
-  });
-
-  it("extracts summary from JSON text field", async () => {
-    const result = {
-      exitCode: 0,
-      stderr: "",
-      stdout: JSON.stringify({ text: "Text field value" }),
-    };
-    const outputs = await setOutputs(result);
-    expect(outputs.summary).toBe("Text field value");
+    expect(outputs.summary).toBe(stdout);
+    expect(mockSetOutput).toHaveBeenCalledWith("summary", stdout);
   });
 
   it("handles empty stdout gracefully", async () => {

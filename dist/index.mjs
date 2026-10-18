@@ -34,21 +34,12 @@ const getInputs = () => {
 };
 //#endregion
 //#region src/output.ts
-const parseSummary = (stdout) => {
-	const trimmed = stdout.trim();
-	if (!trimmed) return "";
-	try {
-		const parsed = JSON.parse(trimmed);
-		if (typeof parsed === "object" && parsed !== null) {
-			if (typeof parsed.response === "string") return parsed.response.trim();
-			if (typeof parsed.summary === "string") return parsed.summary.trim();
-			if (typeof parsed.result === "string") return parsed.result.trim();
-			if (typeof parsed.output === "string") return parsed.output.trim();
-			if (typeof parsed.text === "string") return parsed.text.trim();
-		}
-	} catch {}
-	return trimmed.replaceAll(/\u001B\[[0-9;]*[mGKHF]/gu, "");
-};
+/**
+* The SDK returns the final assistant message as plain text. Only whitespace
+* and stray terminal colour codes are removed; a JSON-shaped answer is
+* published as-is so callers can parse the whole object.
+*/
+const parseSummary = (stdout) => stdout.trim().replaceAll(/\u001B\[[0-9;]*[mGKHF]/gu, "");
 const buildSummaryTableRows = (result) => {
 	const rows = [["Status", result.exitCode === 0 ? "✅ Success" : `❌ Failed (exit ${result.exitCode})`], ["Exit Code", String(result.exitCode)]];
 	if (result.status) rows.push(["Agent Status", result.status]);
