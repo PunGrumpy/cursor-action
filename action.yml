@@ -31,7 +31,7 @@ inputs:
     default: "."
 
   permissions:
-    description: "Validated but NOT enforced: 'read-only' does not stop the agent from editing files or running shell commands. Wired to the SDK in v2."
+    description: "Built-in tools the agent may use: read-only (read, search, and web tools), read-write (adds file edits; no shell or subagents), or full (the SDK's default toolset)."
     required: false
     default: "read-only"
 
