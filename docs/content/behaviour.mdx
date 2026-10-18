@@ -8,7 +8,7 @@ description: What the action does at runtime and how it reports results.
 1. Inputs are validated. An empty `prompt`, an unknown `permissions` value, or a non-positive `timeout` fails the step before anything is sent.
 2. The API key is registered with `::add-mask::`.
 3. A local SDK agent is created against the resolved `working-directory` (`Agent.create({ local: { cwd } })`) and the prompt is sent.
-4. Streamed text is collected, then replaced by the final run result when the SDK provides one.
+4. Streamed text is collected, then replaced by the final run result when the SDK provides one. `summary` is that text verbatim, with surrounding whitespace trimmed; a JSON-shaped answer is not unwrapped.
 5. A job summary is written with the status, exit code, agent response, duration, token usage, and any stderr or diagnostics.
 
 ## Timeouts and failures
