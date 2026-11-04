@@ -14,7 +14,7 @@ The tables below are generated from `action.yml` by `bun run docs:reference`, an
 | `cursor-version` | ❌ | `latest` | (Deprecated) The SDK automatically manages the agent version. |
 | `api-key` | ✅ | — | Cursor API key for authentication |
 | `prompt` | ✅ | — | Prompt to pass to cursor-agent |
-| `model` | ❌ | `default` | Model id for the agent (e.g. default, composer-2). The Cursor SDK does not accept auto. |
+| `model` | ❌ | `default` | Model id for the agent (e.g. default, composer-2.5). Passed through to the SDK, which accepts or rejects it from the account catalog. |
 | `working-directory` | ❌ | `.` | Working directory for the agent to operate in |
 | `permissions` | ❌ | `read-only` | Built-in tools the agent may use: read-only (read, search, and web tools), read-write (adds file edits; no shell or subagents), or full (the SDK's default toolset). |
 | `timeout` | ❌ | `300` | Timeout in seconds for the agent run |
