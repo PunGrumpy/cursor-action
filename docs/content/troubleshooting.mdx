@@ -13,7 +13,7 @@ The key is valid but the account cannot run agents. This is billing, not configu
 
 ## A model id is rejected
 
-Start from `default`. The SDK rejects `auto`, and the error lists the ids your account can actually use. `model` is passed through untouched.
+Start from `default`. The id is passed through untouched. The SDK checks it against the account catalog and the error lists the ids that account can use. `composer-2` still runs, because Cursor reroutes it to Composer 2.5. `auto` is a catalog id on plans that include Auto. Plus does not include Auto, so that id is rejected there.
 
 ## The step timed out or failed
 

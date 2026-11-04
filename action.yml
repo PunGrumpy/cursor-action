@@ -21,7 +21,7 @@ inputs:
     required: true
 
   model:
-    description: "Model id for the agent (e.g. default, composer-2). The Cursor SDK does not accept auto."
+    description: "Model id for the agent (e.g. default, composer-2.5). Passed through to the SDK, which accepts or rejects it from the account catalog."
     required: false
     default: "default"
 
