@@ -153,7 +153,8 @@ const buildSummaryTableRows = (result) => {
 const BACKTICK_RUN = /`+/gu;
 /** Wraps text in a fence longer than any backtick run inside it, so the text cannot close it. */
 const fenced = (text) => {
-	const longest = Math.max(0, ...Array.from(text.matchAll(BACKTICK_RUN), ([run]) => run.length));
+	let longest = 0;
+	for (const [run] of text.matchAll(BACKTICK_RUN)) longest = Math.max(longest, run.length);
 	const fence = "`".repeat(Math.max(3, longest + 1));
 	return `\n${fence}\n${text}\n${fence}\n`;
 };
