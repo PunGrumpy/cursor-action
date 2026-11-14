@@ -13,6 +13,7 @@ import type {
 
 import { formatCatalog, formatModel, withDefaultSettings } from "./model";
 import { toolRestrictionsFor } from "./permissions";
+import { toolCallLine } from "./progress";
 import type { ActionInputs, AgentResult, TokenUsageStats } from "./types";
 
 /** Longest delay Node's timers accept; larger values would fire immediately. */
@@ -208,6 +209,7 @@ export const runAgent = async (
   let durationMs: number | undefined;
   let usage: TokenUsageStats | undefined;
   let agent: SDKAgent | undefined;
+  const seenToolCalls = new Set<string>();
 
   try {
     agent = await Agent.create({
@@ -222,6 +224,10 @@ export const runAgent = async (
     const consume = (async (): Promise<RunResult> => {
       for await (const event of run.stream()) {
         stdout += assistantText(event);
+        const line = toolCallLine(event, seenToolCalls);
+        if (line !== undefined) {
+          info(line);
+        }
       }
       return await run.wait();
     })();

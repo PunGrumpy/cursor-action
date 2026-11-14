@@ -234,6 +234,50 @@ const toolRestrictionsFor = (permission) => {
 	}
 };
 //#endregion
+//#region src/progress.ts
+/** The argument that names what each tool acts on. */
+const TARGET_FIELD = {
+	delete: "path",
+	edit: "path",
+	glob: "globPattern",
+	grep: "pattern",
+	ls: "path",
+	mcp: "toolName",
+	read: "path",
+	readLints: "paths",
+	semSearch: "query",
+	shell: "command",
+	task: "description",
+	write: "path"
+};
+const MAX_TARGET_LENGTH = 160;
+const WHITESPACE = /\s+/gu;
+const isStringArray = (value) => Array.isArray(value) && value.every((item) => typeof item === "string");
+const rawTarget = (name, args) => {
+	const field = TARGET_FIELD[name];
+	if (field === void 0 || typeof args !== "object" || args === null) return "";
+	const value = Reflect.get(args, field);
+	if (typeof value === "string") return value;
+	return isStringArray(value) ? value.join(", ") : "";
+};
+const targetOf = (name, args) => {
+	const target = rawTarget(name, args).replace(WHITESPACE, " ").trim();
+	return target.length > MAX_TARGET_LENGTH ? `${target.slice(0, MAX_TARGET_LENGTH)}…` : target;
+};
+/** One log line for the first event of each tool call, and one more if it fails. */
+const toolCallLine = (event, seen) => {
+	if (event.type !== "tool_call") return;
+	const failed = event.status === "error";
+	if (!failed && seen.has(event.call_id)) return;
+	seen.add(event.call_id);
+	const target = targetOf(event.name, event.args);
+	return [
+		event.name,
+		target,
+		failed ? "failed" : ""
+	].filter((part) => part !== "").join(" ");
+};
+//#endregion
 //#region src/runner.ts
 /** Longest delay Node's timers accept; larger values would fire immediately. */
 const MAX_TIMER_MS = 2147483647;
@@ -338,6 +382,7 @@ const runAgent = async (inputs, options = {}) => {
 	let durationMs;
 	let usage;
 	let agent;
+	const seenToolCalls = /* @__PURE__ */ new Set();
 	try {
 		agent = await Agent.create({
 			apiKey: inputs.apiKey,
@@ -347,7 +392,11 @@ const runAgent = async (inputs, options = {}) => {
 		});
 		const run = await agent.send(inputs.prompt);
 		const { result: runResult, timedOut } = await settleRun(run, (async () => {
-			for await (const event of run.stream()) stdout += assistantText(event);
+			for await (const event of run.stream()) {
+				stdout += assistantText(event);
+				const line = toolCallLine(event, seenToolCalls);
+				if (line !== void 0) info(line);
+			}
 			return await run.wait();
 		})(), inputs.timeout, cancelGraceMs);
 		if (runResult === void 0) {
