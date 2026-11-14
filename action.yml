@@ -21,9 +21,9 @@ inputs:
     required: true
 
   model:
-    description: "Model id for the agent (e.g. default, composer-2.5). Passed through to the SDK, which accepts or rejects it from the account catalog."
+    description: "Model id. A bare id runs with the account's default settings and [param=value,...] overrides them, e.g. grok-4.7 or grok-4.7[fast=true]."
     required: false
-    default: "default"
+    default: "composer-2.5"
 
   working-directory:
     description: "Working directory for the agent to operate in"

@@ -1,7 +1,9 @@
 import { getInput, warning } from "@actions/core";
 
+import { parseModel } from "./model";
 import type { ActionInputs, Permission } from "./types";
 
+const DEFAULT_MODEL = "composer-2.5";
 const VALID_PERMISSIONS: Permission[] = ["read-only", "read-write", "full"];
 
 export const getInputs = (): ActionInputs => {
@@ -10,7 +12,9 @@ export const getInputs = (): ActionInputs => {
     cursorVersionRaw.trim().length > 0 ? cursorVersionRaw.trim() : undefined;
   const apiKey = getInput("api-key", { required: true });
   const prompt = getInput("prompt", { required: true });
-  const model = getInput("model", { required: false }) || "default";
+  const model = parseModel(
+    getInput("model", { required: false }) || DEFAULT_MODEL
+  );
   const workingDirectory =
     getInput("working-directory", { required: false }) || ".";
   const permissionsRaw =

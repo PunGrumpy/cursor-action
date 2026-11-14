@@ -1,9 +1,11 @@
+import type { ModelSelection } from "@cursor/sdk";
+
 export type Permission = "read-only" | "read-write" | "full";
 
 export interface ActionInputs {
   apiKey: string;
   prompt: string;
-  model: string;
+  model: ModelSelection;
   workingDirectory: string;
   permissions: Permission;
   timeout: number;
@@ -35,5 +37,5 @@ export interface AgentResult {
   status?: string;
   durationMs?: number;
   usage?: TokenUsageStats;
-  diagnostics?: string;
+  availableModels?: string;
 }

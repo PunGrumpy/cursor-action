@@ -1,8 +1,106 @@
 import { endGroup, getInput, info, setFailed, setOutput, setSecret, startGroup, summary, warning } from "@actions/core";
 import path from "node:path";
 import { setTimeout } from "node:timers/promises";
-import { Agent } from "@cursor/sdk";
+import { Agent, Cursor } from "@cursor/sdk";
+//#region src/model.ts
+const USAGE = "Use <id> or <id>[<param>=<value>,...], for example grok-4.7[reasoning_effort=medium].";
+const invalid = (raw, reason) => /* @__PURE__ */ new Error(`Invalid 'model' value: '${raw}'. ${reason}. ${USAGE}`);
+const fail = (raw, reason) => {
+	throw invalid(raw, reason);
+};
+const parseParam = (raw, entry) => {
+	if (entry.trim() === "") return fail(raw, "Found an empty entry between commas");
+	const parts = entry.split("=");
+	if (parts.length === 1) return fail(raw, `Entry '${entry.trim()}' has no '='`);
+	if (parts.length > 2) return fail(raw, `Entry '${entry.trim()}' has more than one '='`);
+	const name = parts[0]?.trim() ?? "";
+	const value = parts[1]?.trim() ?? "";
+	if (name === "") return fail(raw, "A parameter has an empty name");
+	if (value === "") return fail(raw, `Parameter '${name}' has an empty value`);
+	if (name.includes("[") || value.includes("[")) return fail(raw, `Unexpected '[' in entry '${entry.trim()}'`);
+	return {
+		id: name,
+		value
+	};
+};
+/** Parses `<id>` or `<id>[<param>=<value>,...]`, the official CLI's --model syntax. */
+const parseModel = (raw) => {
+	const text = raw.trim();
+	const open = text.indexOf("[");
+	if (open === -1) {
+		if (text.includes("]")) return fail(raw, "Found ']' without a matching '['");
+		if (text === "") return fail(raw, "The model id is empty");
+		return { id: text };
+	}
+	const id = text.slice(0, open).trim();
+	if (id === "") return fail(raw, "The model id before '[' is empty");
+	if (id.includes("]")) return fail(raw, "Found ']' before '['");
+	const close = text.indexOf("]", open);
+	if (close === -1) return fail(raw, "Missing closing ']'");
+	if (close !== text.length - 1) return fail(raw, "Unexpected text after ']'");
+	const body = text.slice(open + 1, close);
+	if (body.trim() === "") return fail(raw, "The brackets are empty");
+	const params = [];
+	const seen = /* @__PURE__ */ new Set();
+	for (const entry of body.split(",")) {
+		const param = parseParam(raw, entry);
+		if (seen.has(param.id)) return fail(raw, `Parameter '${param.id}' appears more than once`);
+		seen.add(param.id);
+		params.push(param);
+	}
+	return {
+		id,
+		params
+	};
+};
+/** Inverse of parseModel, for the log line. `grok-4.7[reasoning_effort=medium,fast=false]`. */
+const formatModel = (model) => {
+	if (!model.params || model.params.length === 0) return model.id;
+	const entries = model.params.map(({ id, value }) => `${id}=${value}`);
+	return `${model.id}[${entries.join(",")}]`;
+};
+const formatVariant = (id, variant) => {
+	const selection = formatModel({
+		id,
+		params: variant.params
+	});
+	const flags = `${variant.isDefault ? " [default]" : ""}${variant.isMaxMode ? " [max mode]" : ""}`;
+	return `  - ${selection} (${variant.displayName})${flags}`;
+};
+/** Lists each model and its variants in the exact form the `model` input accepts. */
+const formatCatalog = (models) => {
+	const lines = ["Models this API key can use:"];
+	for (const model of models) {
+		lines.push(`- ${model.id} (${model.displayName})`);
+		for (const variant of model.variants ?? []) lines.push(formatVariant(model.id, variant));
+	}
+	return lines.join("\n");
+};
+/**
+* Fills in the catalog's default settings for a model the author gave fewer
+* settings than it has. Cursor does not apply them itself, and rejects a
+* parameterized model that arrives without them on plans with fixed settings.
+* The author's values win and keep the default variant's order.
+*/
+const withDefaultSettings = (selection, catalog) => {
+	const defaults = catalog.find(({ aliases, id }) => id === selection.id || aliases?.includes(selection.id))?.variants?.find((variant) => variant.isDefault)?.params;
+	if (!defaults || defaults.length === 0) return selection;
+	const authored = selection.params ?? [];
+	const authoredValues = new Map(authored.map(({ id, value }) => [id, value]));
+	const params = defaults.map(({ id, value }) => ({
+		id,
+		value: authoredValues.get(id) ?? value
+	}));
+	const defaultIds = new Set(defaults.map(({ id }) => id));
+	for (const param of authored) if (!defaultIds.has(param.id)) params.push({ ...param });
+	return {
+		id: selection.id,
+		params
+	};
+};
+//#endregion
 //#region src/input.ts
+const DEFAULT_MODEL = "composer-2.5";
 const VALID_PERMISSIONS = [
 	"read-only",
 	"read-write",
@@ -13,7 +111,7 @@ const getInputs = () => {
 	const cursorVersion = cursorVersionRaw.trim().length > 0 ? cursorVersionRaw.trim() : void 0;
 	const apiKey = getInput("api-key", { required: true });
 	const prompt = getInput("prompt", { required: true });
-	const model = getInput("model", { required: false }) || "default";
+	const model = parseModel(getInput("model", { required: false }) || DEFAULT_MODEL);
 	const workingDirectory = getInput("working-directory", { required: false }) || ".";
 	const permissionsRaw = getInput("permissions", { required: false }) || "read-only";
 	const timeoutRaw = getInput("timeout", { required: false }) || "300";
@@ -63,8 +161,8 @@ const writeJobSummary = async (text, result) => {
 	}], ...tableRows]).addHeading("Agent Response", 3).addRaw(text ? `\n\`\`\`\n${text}\n\`\`\`\n` : "_No output was produced._");
 	const errText = result.stderr.trim();
 	if (errText) await summary.addHeading("Agent Error (stderr)", 3).addRaw(`\n\`\`\`\n${errText.slice(0, 2e4)}${errText.length > 2e4 ? "\n… (truncated)" : ""}\n\`\`\`\n`);
-	const diag = result.diagnostics?.trim();
-	if (diag && diag !== errText) await summary.addHeading("Diagnostics", 3).addRaw(`\n\`\`\`\n${diag.slice(0, 2e4)}${diag.length > 2e4 ? "\n… (truncated)" : ""}\n\`\`\`\n`);
+	const models = result.availableModels?.trim();
+	if (models) await summary.addHeading("Available models", 3).addRaw(`\n\`\`\`\n${models.slice(0, 2e4)}${models.length > 2e4 ? "\n… (truncated)" : ""}\n\`\`\`\n`);
 	await summary.write();
 };
 const setMetricOutputs = (result) => {
@@ -132,6 +230,9 @@ const MAX_TIMER_MS = 2147483647;
 const DEFAULT_CANCEL_GRACE_MS = 1e4;
 /** How long to wait for the agent to release its local executor. */
 const DEFAULT_DISPOSE_TIMEOUT_MS = 15e3;
+/** How long to wait for the model catalog before the run starts. */
+const CATALOG_TIMEOUT_MS = 1e4;
+const MODEL_ERROR = /model/iu;
 const extractErrorMessage = (error) => {
 	if (error instanceof Error) return error.cause ? `${error.message}\nCause: ${error.cause}` : error.message;
 	return String(error);
@@ -202,12 +303,22 @@ const settleRun = async (run, consume, timeoutSeconds, cancelGraceMs) => {
 		timedOut: true
 	};
 };
+/** Best-effort: `undefined` when the catalog cannot be fetched in time. */
+const fetchCatalog = (apiKey, timeoutMs) => withTimeout(quietly(Cursor.models.list({ apiKey })), timeoutMs);
+const describeAvailableModels = (catalog, status, stderr) => {
+	if (!catalog || status !== "error" || !MODEL_ERROR.test(stderr)) return;
+	const listing = formatCatalog(catalog);
+	info(listing);
+	return listing;
+};
 const runAgent = async (inputs, options = {}) => {
 	const cwd = path.resolve(inputs.workingDirectory);
 	const cancelGraceMs = options.cancelGraceMs ?? DEFAULT_CANCEL_GRACE_MS;
 	const disposeTimeoutMs = options.disposeTimeoutMs ?? DEFAULT_DISPOSE_TIMEOUT_MS;
 	info(`Running Cursor Agent in: ${cwd}`);
-	info(`Model: ${inputs.model}`);
+	const catalog = await fetchCatalog(inputs.apiKey, options.catalogTimeoutMs ?? CATALOG_TIMEOUT_MS);
+	const model = catalog ? withDefaultSettings(inputs.model, catalog) : inputs.model;
+	info(`Model: ${formatModel(model)}`);
 	info(`Permissions: ${inputs.permissions}`);
 	let stdout = "";
 	let stderr = "";
@@ -220,7 +331,7 @@ const runAgent = async (inputs, options = {}) => {
 		agent = await Agent.create({
 			apiKey: inputs.apiKey,
 			local: { cwd },
-			model: { id: inputs.model },
+			model,
 			...toolRestrictionsFor(inputs.permissions)
 		});
 		const run = await agent.send(inputs.prompt);
@@ -259,7 +370,7 @@ const runAgent = async (inputs, options = {}) => {
 		if (agent !== void 0) await disposeAgent(agent, disposeTimeoutMs);
 	}
 	return {
-		diagnostics: exitCode === 0 ? void 0 : stderr,
+		availableModels: describeAvailableModels(catalog, status, stderr),
 		durationMs,
 		exitCode,
 		status,

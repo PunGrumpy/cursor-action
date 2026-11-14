@@ -16,10 +16,14 @@ const mockAgentCreate = mock();
 const mockAgentSend = mock();
 const mockRunCancel = mock(() => Promise.resolve());
 const mockDispose = mock(() => Promise.resolve());
+const mockModelsList = mock();
 
 mock.module("@cursor/sdk", () => ({
   Agent: {
     create: mockAgentCreate,
+  },
+  Cursor: {
+    models: { list: mockModelsList },
   },
 }));
 
@@ -27,7 +31,7 @@ const { runAgent } = await import("../src/runner");
 
 const baseInputs: ActionInputs = {
   apiKey: "test-key",
-  model: "default",
+  model: { id: "composer-2.5" },
   permissions: "read-only",
   prompt: "Analyze this code",
   timeout: 300,
@@ -95,10 +99,38 @@ const neverEndingStream = () => ({
   }),
 });
 
+const catalog = [
+  {
+    displayName: "Grok 4.7",
+    id: "grok-4.7",
+    variants: [
+      {
+        displayName: "Medium",
+        isDefault: true,
+        params: [{ id: "reasoning_effort", value: "medium" }],
+      },
+    ],
+  },
+];
+
+const erroredRun = (message: string) => ({
+  cancel: mockRunCancel,
+  stream: mockStreamSuccess,
+  supports: (op: string) => op === "cancel",
+  wait: () =>
+    Promise.resolve({
+      error: { message },
+      id: "run-test",
+      result: "",
+      status: "error" as const,
+    }),
+});
+
 describe("runAgent", () => {
   beforeEach(() => {
     mock.clearAllMocks();
     mockDispose.mockImplementation(() => Promise.resolve());
+    mockModelsList.mockResolvedValue(catalog);
 
     mockAgentCreate.mockResolvedValue({
       [Symbol.asyncDispose]: mockDispose,
@@ -119,7 +151,7 @@ describe("runAgent", () => {
     expect(mockAgentCreate).toHaveBeenCalledWith({
       apiKey: "test-key",
       local: { cwd: expect.any(String) },
-      model: { id: "default" },
+      model: { id: "composer-2.5" },
       tools: expect.arrayContaining(["read", "grep"]),
     });
 
@@ -129,6 +161,57 @@ describe("runAgent", () => {
     expect(result.status).toBe("finished");
     expect(result.stdout).toBe("Hello from stream chunk 1. And chunk 2.");
     expect(result.stderr).toBe("");
+  });
+
+  it("passes the author's model params to Agent.create", async () => {
+    const model = {
+      id: "grok-4.7",
+      params: [{ id: "reasoning_effort", value: "medium" }],
+    };
+    await runAgent({ ...baseInputs, model });
+    expect(mockAgentCreate).toHaveBeenLastCalledWith(
+      expect.objectContaining({ model })
+    );
+  });
+
+  it("runs a bare id with the catalog's default settings", async () => {
+    await runAgent({ ...baseInputs, model: { id: "grok-4.7" } });
+
+    expect(mockModelsList).toHaveBeenCalledTimes(1);
+    expect(mockModelsList).toHaveBeenCalledWith({ apiKey: "test-key" });
+    expect(mockAgentCreate).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        model: {
+          id: "grok-4.7",
+          params: [{ id: "reasoning_effort", value: "medium" }],
+        },
+      })
+    );
+  });
+
+  it("sends the author's model unchanged when the catalog request fails", async () => {
+    mockModelsList.mockRejectedValue(new Error("catalog down"));
+
+    const result = await runAgent({ ...baseInputs, model: { id: "grok-4.7" } });
+
+    expect(mockAgentCreate).toHaveBeenLastCalledWith(
+      expect.objectContaining({ model: { id: "grok-4.7" } })
+    );
+    expect(result.exitCode).toBe(0);
+  });
+
+  it("sends the author's model unchanged when the catalog is too slow", async () => {
+    mockModelsList.mockReturnValue(pending());
+
+    const result = await runAgent(
+      { ...baseInputs, model: { id: "grok-4.7" } },
+      { catalogTimeoutMs: 50 }
+    );
+
+    expect(mockAgentCreate).toHaveBeenLastCalledWith(
+      expect.objectContaining({ model: { id: "grok-4.7" } })
+    );
+    expect(result.exitCode).toBe(0);
   });
 
   it("passes the permission level to Agent.create as tool restrictions", async () => {
@@ -357,5 +440,61 @@ describe("runAgent", () => {
     expect(mockWarning).toHaveBeenCalledWith(
       expect.stringContaining("did not release")
     );
+  });
+
+  it("lists the key's models when Agent.create rejects the model", async () => {
+    mockAgentCreate.mockRejectedValue(
+      new Error("Cannot use this model: nope. Available models: grok-4.7")
+    );
+
+    const result = await runAgent(baseInputs);
+
+    expect(mockModelsList).toHaveBeenCalledTimes(1);
+    expect(result.exitCode).toBe(1);
+    expect(result.availableModels).toBe(
+      [
+        "Models this API key can use:",
+        "- grok-4.7 (Grok 4.7)",
+        "  - grok-4.7[reasoning_effort=medium] (Medium) [default]",
+      ].join("\n")
+    );
+  });
+
+  it("lists the key's models when the run result is a model error", async () => {
+    mockAgentSend.mockResolvedValue(
+      erroredRun("Model unavailable on Plus. Switch to an included model.")
+    );
+
+    const result = await runAgent(baseInputs);
+
+    expect(mockModelsList).toHaveBeenCalledTimes(1);
+    expect(result.exitCode).toBe(1);
+    expect(result.availableModels).toContain("- grok-4.7 (Grok 4.7)");
+  });
+
+  it("lists no models for an error that is not about a model", async () => {
+    mockAgentSend.mockResolvedValue(erroredRun("Internal server error"));
+
+    const result = await runAgent(baseInputs);
+
+    expect(result.availableModels).toBeUndefined();
+  });
+
+  it("lists no models after a successful run", async () => {
+    const result = await runAgent(baseInputs);
+
+    expect(result.availableModels).toBeUndefined();
+  });
+
+  it("keeps the run's outcome when the model lookup fails", async () => {
+    mockModelsList.mockRejectedValue(new Error("catalog down"));
+    mockAgentCreate.mockRejectedValue(new Error("Cannot use this model: nope"));
+
+    const result = await runAgent(baseInputs);
+
+    expect(result.exitCode).toBe(1);
+    expect(result.status).toBe("error");
+    expect(result.stderr).toBe("Cannot use this model: nope");
+    expect(result.availableModels).toBeUndefined();
   });
 });
