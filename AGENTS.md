@@ -2,7 +2,8 @@
 
 ## Checks
 
-- Run the CI checks in this order before you push: `bun run typecheck`, `bun run lint`, `bun run test`, `bun run build`.
+- Before you push, run what the `Build & Test` job runs: `bun run typecheck`, `bun run lint`, `bun run test`, `bun run build`.
+- After a change under `docs/`, also run `bun run docs:typecheck` and `bun run docs:build`, which the `Docs` job runs.
 - Run `bun run format` to fix style. The Cursor and Claude Code edit hooks call it, and the pre-commit hook runs `bun test` and `ultracite fix`.
 
 ## Generated files
@@ -14,7 +15,7 @@
 ## Dependencies
 
 - Keep `@actions/core` and `@cursor/sdk` external in `tsdown.config.ts`. The SDK loads its own chunks and a native `@cursor/sdk-<platform>` package at runtime, so bundling it breaks `Agent.create`.
-- `action.yml` runs `npm ci --omit=dev` at runtime. Keep `package-lock.json` in sync with `package.json`, and keep `bun.lock` in sync too.
+- `action.yml` and the `Integration` job run `npm ci`, so `package-lock.json` must match `package.json`. `bun add` does not update it. Run `npm install --package-lock-only` after changing dependencies.
 
 ## Releases
 
@@ -23,7 +24,7 @@
 ## Tests
 
 - Tests use `bun:test` under `__tests__/`.
-- For a module that imports `@actions/core` or `@cursor/sdk`, call `mock.module(...)` first. Then load the module under test with `await import(...)`. See `__tests__/runner.test.ts`.
+- For a module that imports values (not only types) from `@actions/core` or `@cursor/sdk`, call `mock.module(...)` first. Then load the module under test with `await import(...)`. See `__tests__/runner.test.ts`.
 
 # Ultracite Code Standards
 
