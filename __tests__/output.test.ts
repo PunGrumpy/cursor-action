@@ -21,6 +21,9 @@ mock.module("@actions/core", () => ({
 
 const { setOutputs, maskSecret } = await import("../src/output");
 
+const rawSummaryWrites = (): unknown[] =>
+  (mockSummaryChain.addRaw.mock.calls as unknown[][]).map(([raw]) => raw);
+
 describe("setOutputs", () => {
   beforeEach(() => {
     mock.clearAllMocks();
@@ -59,6 +62,28 @@ describe("setOutputs", () => {
 
     expect(outputs.summary).toBe(stdout);
     expect(mockSetOutput).toHaveBeenCalledWith("summary", stdout);
+  });
+
+  it("wraps a plain answer in a three-backtick fence", async () => {
+    await setOutputs({ exitCode: 0, stderr: "", stdout: "plain" });
+
+    expect(rawSummaryWrites()).toContain("\n```\nplain\n```\n");
+  });
+
+  it("fences an answer containing a code block with a longer fence", async () => {
+    const stdout = "Fix:\n```ts\nconst a = 1;\n```\nDone.";
+    await setOutputs({ exitCode: 0, stderr: "", stdout });
+
+    expect(rawSummaryWrites()).toContain(`\n\`\`\`\`\n${stdout}\n\`\`\`\`\n`);
+  });
+
+  it("fences stderr longer than its longest backtick run", async () => {
+    const stderr = "oops `````  here";
+    await setOutputs({ exitCode: 1, stderr, stdout: "answer" });
+
+    expect(rawSummaryWrites()).toContain(
+      `\n\`\`\`\`\`\`\n${stderr}\n\`\`\`\`\`\`\n`
+    );
   });
 
   it("handles empty stdout gracefully", async () => {

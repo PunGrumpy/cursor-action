@@ -150,6 +150,13 @@ const buildSummaryTableRows = (result) => {
 	if (usage?.totalTokens !== void 0) rows.push(["Total Tokens", String(usage.totalTokens)]);
 	return rows;
 };
+const BACKTICK_RUN = /`+/gu;
+/** Wraps text in a fence longer than any backtick run inside it, so the text cannot close it. */
+const fenced = (text) => {
+	const longest = Math.max(0, ...Array.from(text.matchAll(BACKTICK_RUN), ([run]) => run.length));
+	const fence = "`".repeat(Math.max(3, longest + 1));
+	return `\n${fence}\n${text}\n${fence}\n`;
+};
 const writeJobSummary = async (text, result) => {
 	const tableRows = buildSummaryTableRows(result);
 	await summary.addHeading("Cursor Agent Run", 2).addTable([[{
@@ -158,11 +165,11 @@ const writeJobSummary = async (text, result) => {
 	}, {
 		data: "Value",
 		header: true
-	}], ...tableRows]).addHeading("Agent Response", 3).addRaw(text ? `\n\`\`\`\n${text}\n\`\`\`\n` : "_No output was produced._");
+	}], ...tableRows]).addHeading("Agent Response", 3).addRaw(text ? fenced(text) : "_No output was produced._");
 	const errText = result.stderr.trim();
-	if (errText) await summary.addHeading("Agent Error (stderr)", 3).addRaw(`\n\`\`\`\n${errText.slice(0, 2e4)}${errText.length > 2e4 ? "\n… (truncated)" : ""}\n\`\`\`\n`);
+	if (errText) await summary.addHeading("Agent Error (stderr)", 3).addRaw(fenced(`${errText.slice(0, 2e4)}${errText.length > 2e4 ? "\n… (truncated)" : ""}`));
 	const models = result.availableModels?.trim();
-	if (models) await summary.addHeading("Available models", 3).addRaw(`\n\`\`\`\n${models.slice(0, 2e4)}${models.length > 2e4 ? "\n… (truncated)" : ""}\n\`\`\`\n`);
+	if (models) await summary.addHeading("Available models", 3).addRaw(fenced(`${models.slice(0, 2e4)}${models.length > 2e4 ? "\n… (truncated)" : ""}`));
 	await summary.write();
 };
 const setMetricOutputs = (result) => {

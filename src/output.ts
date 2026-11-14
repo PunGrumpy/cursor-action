@@ -53,6 +53,18 @@ const buildSummaryTableRows = (result: AgentResult): string[][] => {
   return rows;
 };
 
+const BACKTICK_RUN = /`+/gu;
+
+/** Wraps text in a fence longer than any backtick run inside it, so the text cannot close it. */
+const fenced = (text: string): string => {
+  const longest = Math.max(
+    0,
+    ...Array.from(text.matchAll(BACKTICK_RUN), ([run]) => run.length)
+  );
+  const fence = "`".repeat(Math.max(3, longest + 1));
+  return `\n${fence}\n${text}\n${fence}\n`;
+};
+
 const writeJobSummary = async (
   text: string,
   result: AgentResult
@@ -69,14 +81,16 @@ const writeJobSummary = async (
       ...tableRows,
     ])
     .addHeading("Agent Response", 3)
-    .addRaw(text ? `\n\`\`\`\n${text}\n\`\`\`\n` : "_No output was produced._");
+    .addRaw(text ? fenced(text) : "_No output was produced._");
 
   const errText = result.stderr.trim();
   if (errText) {
     await summary
       .addHeading("Agent Error (stderr)", 3)
       .addRaw(
-        `\n\`\`\`\n${errText.slice(0, 20_000)}${errText.length > 20_000 ? "\n… (truncated)" : ""}\n\`\`\`\n`
+        fenced(
+          `${errText.slice(0, 20_000)}${errText.length > 20_000 ? "\n… (truncated)" : ""}`
+        )
       );
   }
 
@@ -85,7 +99,9 @@ const writeJobSummary = async (
     await summary
       .addHeading("Available models", 3)
       .addRaw(
-        `\n\`\`\`\n${models.slice(0, 20_000)}${models.length > 20_000 ? "\n… (truncated)" : ""}\n\`\`\`\n`
+        fenced(
+          `${models.slice(0, 20_000)}${models.length > 20_000 ? "\n… (truncated)" : ""}`
+        )
       );
   }
 
