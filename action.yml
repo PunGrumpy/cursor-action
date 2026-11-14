@@ -21,7 +21,7 @@ inputs:
     required: true
 
   model:
-    description: "Model id for the agent (e.g. composer-2.5, grok-4.7). Passed through to the SDK, which accepts or rejects it from the account catalog."
+    description: "Model id, optionally with settings in the CLI's bracket form, e.g. composer-2.5 or grok-4.7[reasoning_effort=medium]. Cursor checks ids and values against the account's catalog."
     required: false
     default: "composer-2.5"
 

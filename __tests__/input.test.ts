@@ -38,14 +38,27 @@ describe("getInputs", () => {
     expect(inputs.cursorVersion).toBe("latest");
     expect(inputs.apiKey).toBe("test-api-key");
     expect(inputs.prompt).toBe("Review this code");
-    expect(inputs.model).toBe("composer-2.5");
+    expect(inputs.model).toEqual({ id: "composer-2.5" });
     expect(inputs.permissions).toBe("read-only");
     expect(inputs.timeout).toBe(300);
   });
 
   it("falls back to composer-2.5 when model is empty", () => {
     setupInputs({ model: "" });
-    expect(getInputs().model).toBe("composer-2.5");
+    expect(getInputs().model).toEqual({ id: "composer-2.5" });
+  });
+
+  it("parses a bracketed model value into a selection with params", () => {
+    setupInputs({ model: "grok-4.7[reasoning_effort=medium]" });
+    expect(getInputs().model).toEqual({
+      id: "grok-4.7",
+      params: [{ id: "reasoning_effort", value: "medium" }],
+    });
+  });
+
+  it("throws on a malformed model value", () => {
+    setupInputs({ model: "grok-4.7[fast" });
+    expect(() => getInputs()).toThrow(/Invalid 'model'/u);
   });
 
   it("warns if cursor-version is provided and not latest", () => {

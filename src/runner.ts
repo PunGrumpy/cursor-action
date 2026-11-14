@@ -5,6 +5,7 @@ import { info, warning } from "@actions/core";
 import { Agent } from "@cursor/sdk";
 import type { Run, RunResult, SDKAgent, SDKMessage } from "@cursor/sdk";
 
+import { formatModel } from "./model";
 import { toolRestrictionsFor } from "./permissions";
 import type { ActionInputs, AgentResult, TokenUsageStats } from "./types";
 
@@ -159,7 +160,7 @@ export const runAgent = async (
     options.disposeTimeoutMs ?? DEFAULT_DISPOSE_TIMEOUT_MS;
 
   info(`Running Cursor Agent in: ${cwd}`);
-  info(`Model: ${inputs.model}`);
+  info(`Model: ${formatModel(inputs.model)}`);
   info(`Permissions: ${inputs.permissions}`);
 
   let stdout = "";
@@ -174,7 +175,7 @@ export const runAgent = async (
     agent = await Agent.create({
       apiKey: inputs.apiKey,
       local: { cwd },
-      model: { id: inputs.model },
+      model: inputs.model,
       ...toolRestrictionsFor(inputs.permissions),
     });
 

@@ -27,7 +27,7 @@ const { runAgent } = await import("../src/runner");
 
 const baseInputs: ActionInputs = {
   apiKey: "test-key",
-  model: "composer-2.5",
+  model: { id: "composer-2.5" },
   permissions: "read-only",
   prompt: "Analyze this code",
   timeout: 300,
@@ -129,6 +129,17 @@ describe("runAgent", () => {
     expect(result.status).toBe("finished");
     expect(result.stdout).toBe("Hello from stream chunk 1. And chunk 2.");
     expect(result.stderr).toBe("");
+  });
+
+  it("passes model params to Agent.create unchanged", async () => {
+    const model = {
+      id: "grok-4.7",
+      params: [{ id: "reasoning_effort", value: "medium" }],
+    };
+    await runAgent({ ...baseInputs, model });
+    expect(mockAgentCreate).toHaveBeenLastCalledWith(
+      expect.objectContaining({ model })
+    );
   });
 
   it("passes the permission level to Agent.create as tool restrictions", async () => {

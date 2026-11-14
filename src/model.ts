@@ -1,0 +1,96 @@
+import type { ModelSelection } from "@cursor/sdk";
+
+type ModelParam = NonNullable<ModelSelection["params"]>[number];
+
+const USAGE =
+  "Use <id> or <id>[<param>=<value>,...], for example grok-4.7[reasoning_effort=medium].";
+
+const invalid = (raw: string, reason: string): Error =>
+  new Error(`Invalid 'model' value: '${raw}'. ${reason}. ${USAGE}`);
+
+const fail = (raw: string, reason: string): never => {
+  throw invalid(raw, reason);
+};
+
+const parseParam = (raw: string, entry: string): ModelParam => {
+  if (entry.trim() === "") {
+    return fail(raw, "Found an empty entry between commas");
+  }
+  const parts = entry.split("=");
+  if (parts.length === 1) {
+    return fail(raw, `Entry '${entry.trim()}' has no '='`);
+  }
+  if (parts.length > 2) {
+    return fail(raw, `Entry '${entry.trim()}' has more than one '='`);
+  }
+  const name = parts[0]?.trim() ?? "";
+  const value = parts[1]?.trim() ?? "";
+  if (name === "") {
+    return fail(raw, "A parameter has an empty name");
+  }
+  if (value === "") {
+    return fail(raw, `Parameter '${name}' has an empty value`);
+  }
+  if (name.includes("[") || value.includes("[")) {
+    return fail(raw, `Unexpected '[' in entry '${entry.trim()}'`);
+  }
+  return { id: name, value };
+};
+
+/** Parses `<id>` or `<id>[<param>=<value>,...]`, the official CLI's --model syntax. */
+export const parseModel = (raw: string): ModelSelection => {
+  const text = raw.trim();
+  const open = text.indexOf("[");
+
+  if (open === -1) {
+    if (text.includes("]")) {
+      return fail(raw, "Found ']' without a matching '['");
+    }
+    if (text === "") {
+      return fail(raw, "The model id is empty");
+    }
+    return { id: text };
+  }
+
+  const id = text.slice(0, open).trim();
+  if (id === "") {
+    return fail(raw, "The model id before '[' is empty");
+  }
+  if (id.includes("]")) {
+    return fail(raw, "Found ']' before '['");
+  }
+
+  const close = text.indexOf("]", open);
+  if (close === -1) {
+    return fail(raw, "Missing closing ']'");
+  }
+  if (close !== text.length - 1) {
+    return fail(raw, "Unexpected text after ']'");
+  }
+
+  const body = text.slice(open + 1, close);
+  if (body.trim() === "") {
+    return fail(raw, "The brackets are empty");
+  }
+
+  const params: ModelParam[] = [];
+  const seen = new Set<string>();
+  for (const entry of body.split(",")) {
+    const param = parseParam(raw, entry);
+    if (seen.has(param.id)) {
+      return fail(raw, `Parameter '${param.id}' appears more than once`);
+    }
+    seen.add(param.id);
+    params.push(param);
+  }
+  return { id, params };
+};
+
+/** Inverse of parseModel, for the log line. `grok-4.7[reasoning_effort=medium,fast=false]`. */
+export const formatModel = (model: ModelSelection): string => {
+  if (!model.params || model.params.length === 0) {
+    return model.id;
+  }
+  const entries = model.params.map(({ id, value }) => `${id}=${value}`);
+  return `${model.id}[${entries.join(",")}]`;
+};
