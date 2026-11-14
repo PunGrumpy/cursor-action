@@ -106,10 +106,13 @@ const VALID_PERMISSIONS = [
 	"read-write",
 	"full"
 ];
+/** The variable `@actions/core` reads for the `api-key` input. */
+const API_KEY_ENV = "INPUT_API-KEY";
 const getInputs = () => {
 	const cursorVersionRaw = getInput("cursor-version", { required: false });
 	const cursorVersion = cursorVersionRaw.trim().length > 0 ? cursorVersionRaw.trim() : void 0;
 	const apiKey = getInput("api-key", { required: true });
+	Reflect.deleteProperty(process.env, API_KEY_ENV);
 	const prompt = getInput("prompt", { required: true });
 	const model = parseModel(getInput("model", { required: false }) || DEFAULT_MODEL);
 	const workingDirectory = getInput("working-directory", { required: false }) || ".";
