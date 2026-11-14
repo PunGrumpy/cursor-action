@@ -10,46 +10,48 @@ const toolCall = (
   name: string,
   args?: unknown,
   overrides: {
-    callId?: string;
+    result?: unknown;
     status?: "running" | "completed" | "error";
   } = {}
 ): SDKMessage => ({
   agent_id: "agent-test",
   args,
-  call_id: overrides.callId ?? "call-1",
+  call_id: "call-1",
   name,
+  result: overrides.result,
   run_id: "run-test",
-  status: overrides.status ?? "running",
+  status: overrides.status ?? "completed",
   type: "tool_call",
 });
 
 describe("toolCallLine", () => {
   it("names the tool and its path", () => {
+    expect(toolCallLine(toolCall("read", { path: "src/index.ts" }))).toBe(
+      "read src/index.ts"
+    );
+  });
+
+  it("skips running events, whose arguments may still be streaming", () => {
     expect(
-      toolCallLine(toolCall("read", { path: "src/index.ts" }), new Set())
-    ).toBe("read src/index.ts");
+      toolCallLine(toolCall("read", { path: "src/in" }, { status: "running" }))
+    ).toBeUndefined();
   });
 
   it("collapses whitespace and newlines in a shell command", () => {
     const command = "bun test\n  --bail\t\t&&   echo done\n";
-    expect(toolCallLine(toolCall("shell", { command }), new Set())).toBe(
+    expect(toolCallLine(toolCall("shell", { command }))).toBe(
       "shell bun test --bail && echo done"
     );
   });
 
   it("joins a list of paths", () => {
     expect(
-      toolCallLine(
-        toolCall("readLints", { paths: ["a.ts", "b.ts"] }),
-        new Set()
-      )
+      toolCallLine(toolCall("readLints", { paths: ["a.ts", "b.ts"] }))
     ).toBe("readLints a.ts, b.ts");
   });
 
   it("prints only the name of a tool with no known target field", () => {
-    expect(toolCallLine(toolCall("webFetch", { url: "x" }), new Set())).toBe(
-      "webFetch"
-    );
+    expect(toolCallLine(toolCall("unknown", { url: "x" }))).toBe("unknown");
   });
 
   it.each([
@@ -57,61 +59,36 @@ describe("toolCallLine", () => {
     ["null", null],
     ["a string", "src/index.ts"],
   ])("prints only the name when args is %s", (_label, args) => {
-    expect(toolCallLine(toolCall("read", args), new Set())).toBe("read");
+    expect(toolCallLine(toolCall("read", args))).toBe("read");
   });
 
   it("prints only the name when the target field is not a string", () => {
-    expect(toolCallLine(toolCall("read", { path: 7 }), new Set())).toBe("read");
+    expect(toolCallLine(toolCall("read", { path: 7 }))).toBe("read");
   });
 
   it("cuts a long command to 160 characters and marks the cut", () => {
-    const line = toolCallLine(
-      toolCall("shell", { command: "x".repeat(500) }),
-      new Set()
-    );
+    const line = toolCallLine(toolCall("shell", { command: "x".repeat(500) }));
     expect(line).toBe(`shell ${"x".repeat(MAX_TARGET_LENGTH)}…`);
   });
 
-  it("logs a call once when it reports running and then completed", () => {
-    const seen = new Set<string>();
-    const args = { path: "src/index.ts" };
-    expect(toolCallLine(toolCall("read", args), seen)).toBe(
-      "read src/index.ts"
-    );
+  it("marks a completed call whose result is an error as failed", () => {
+    const result = { error: { message: "ENOENT" }, status: "error" };
     expect(
-      toolCallLine(toolCall("read", args, { status: "completed" }), seen)
-    ).toBeUndefined();
-  });
-
-  it("logs each distinct call", () => {
-    const seen = new Set<string>();
-    expect(
-      toolCallLine(toolCall("grep", { pattern: "TODO" }, { callId: "a" }), seen)
-    ).toBe("grep TODO");
-    expect(
-      toolCallLine(
-        toolCall("grep", { pattern: "FIXME" }, { callId: "b" }),
-        seen
-      )
-    ).toBe("grep FIXME");
-  });
-
-  it("adds a failure line after the running line", () => {
-    const seen = new Set<string>();
-    const args = { path: "src/index.ts" };
-    toolCallLine(toolCall("read", args), seen);
-    expect(
-      toolCallLine(toolCall("read", args, { status: "error" }), seen)
+      toolCallLine(toolCall("read", { path: "src/index.ts" }, { result }))
     ).toBe("read src/index.ts failed");
   });
 
-  it("reports a failure without a target as the name and failed", () => {
+  it("does not mark a shell command that exited non-zero as failed", () => {
+    const result = { status: "success", value: { exitCode: 1 } };
     expect(
-      toolCallLine(
-        toolCall("webFetch", undefined, { status: "error" }),
-        new Set()
-      )
-    ).toBe("webFetch failed");
+      toolCallLine(toolCall("shell", { command: "bun test" }, { result }))
+    ).toBe("shell bun test");
+  });
+
+  it("marks an event with error status as failed", () => {
+    expect(toolCallLine(toolCall("grep", undefined, { status: "error" }))).toBe(
+      "grep failed"
+    );
   });
 
   it("ignores events that are not tool calls", () => {
@@ -121,6 +98,6 @@ describe("toolCallLine", () => {
       run_id: "run-test",
       type: "assistant",
     };
-    expect(toolCallLine(event, new Set())).toBeUndefined();
+    expect(toolCallLine(event)).toBeUndefined();
   });
 });

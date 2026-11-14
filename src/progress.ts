@@ -13,7 +13,6 @@ const TARGET_FIELD: Readonly<Record<string, string>> = {
   semSearch: "query",
   shell: "command",
   task: "description",
-  write: "path",
 };
 
 const MAX_TARGET_LENGTH = 160;
@@ -41,21 +40,21 @@ const targetOf = (name: string, args: unknown): string => {
     : target;
 };
 
-/** One log line for the first event of each tool call, and one more if it fails. */
-export const toolCallLine = (
-  event: SDKMessage,
-  seen: Set<string>
-): string | undefined => {
-  if (event.type !== "tool_call") {
+const reportsError = (result: unknown): boolean =>
+  typeof result === "object" &&
+  result !== null &&
+  Reflect.get(result, "status") === "error";
+
+/**
+ * One log line per finished tool call. Running events are skipped because the
+ * server can stream them while the model is still writing the arguments.
+ */
+export const toolCallLine = (event: SDKMessage): string | undefined => {
+  if (event.type !== "tool_call" || event.status === "running") {
     return undefined;
   }
-  const failed = event.status === "error";
-  if (!failed && seen.has(event.call_id)) {
-    return undefined;
-  }
-  seen.add(event.call_id);
-  const target = targetOf(event.name, event.args);
-  return [event.name, target, failed ? "failed" : ""]
+  const failed = event.status === "error" || reportsError(event.result);
+  return [event.name, targetOf(event.name, event.args), failed ? "failed" : ""]
     .filter((part) => part !== "")
     .join(" ");
 };

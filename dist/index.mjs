@@ -247,8 +247,7 @@ const TARGET_FIELD = {
 	readLints: "paths",
 	semSearch: "query",
 	shell: "command",
-	task: "description",
-	write: "path"
+	task: "description"
 };
 const MAX_TARGET_LENGTH = 160;
 const WHITESPACE = /\s+/gu;
@@ -264,16 +263,17 @@ const targetOf = (name, args) => {
 	const target = rawTarget(name, args).replace(WHITESPACE, " ").trim();
 	return target.length > MAX_TARGET_LENGTH ? `${target.slice(0, MAX_TARGET_LENGTH)}…` : target;
 };
-/** One log line for the first event of each tool call, and one more if it fails. */
-const toolCallLine = (event, seen) => {
-	if (event.type !== "tool_call") return;
-	const failed = event.status === "error";
-	if (!failed && seen.has(event.call_id)) return;
-	seen.add(event.call_id);
-	const target = targetOf(event.name, event.args);
+const reportsError = (result) => typeof result === "object" && result !== null && Reflect.get(result, "status") === "error";
+/**
+* One log line per finished tool call. Running events are skipped because the
+* server can stream them while the model is still writing the arguments.
+*/
+const toolCallLine = (event) => {
+	if (event.type !== "tool_call" || event.status === "running") return;
+	const failed = event.status === "error" || reportsError(event.result);
 	return [
 		event.name,
-		target,
+		targetOf(event.name, event.args),
 		failed ? "failed" : ""
 	].filter((part) => part !== "").join(" ");
 };
@@ -382,7 +382,6 @@ const runAgent = async (inputs, options = {}) => {
 	let durationMs;
 	let usage;
 	let agent;
-	const seenToolCalls = /* @__PURE__ */ new Set();
 	try {
 		agent = await Agent.create({
 			apiKey: inputs.apiKey,
@@ -394,7 +393,7 @@ const runAgent = async (inputs, options = {}) => {
 		const { result: runResult, timedOut } = await settleRun(run, (async () => {
 			for await (const event of run.stream()) {
 				stdout += assistantText(event);
-				const line = toolCallLine(event, seenToolCalls);
+				const line = toolCallLine(event);
 				if (line !== void 0) info(line);
 			}
 			return await run.wait();
