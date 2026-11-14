@@ -37,5 +37,5 @@ export interface AgentResult {
   status?: string;
   durationMs?: number;
   usage?: TokenUsageStats;
-  diagnostics?: string;
+  availableModels?: string;
 }

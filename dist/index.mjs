@@ -1,7 +1,7 @@
 import { endGroup, getInput, info, setFailed, setOutput, setSecret, startGroup, summary, warning } from "@actions/core";
 import path from "node:path";
 import { setTimeout } from "node:timers/promises";
-import { Agent } from "@cursor/sdk";
+import { Agent, Cursor } from "@cursor/sdk";
 //#region src/model.ts
 const USAGE = "Use <id> or <id>[<param>=<value>,...], for example grok-4.7[reasoning_effort=medium].";
 const invalid = (raw, reason) => /* @__PURE__ */ new Error(`Invalid 'model' value: '${raw}'. ${reason}. ${USAGE}`);
@@ -58,6 +58,23 @@ const formatModel = (model) => {
 	if (!model.params || model.params.length === 0) return model.id;
 	const entries = model.params.map(({ id, value }) => `${id}=${value}`);
 	return `${model.id}[${entries.join(",")}]`;
+};
+const formatVariant = (id, variant) => {
+	const selection = formatModel({
+		id,
+		params: variant.params
+	});
+	const flags = `${variant.isDefault ? " [default]" : ""}${variant.isMaxMode ? " [max mode]" : ""}`;
+	return `  - ${selection} (${variant.displayName})${flags}`;
+};
+/** Lists each model and its variants in the exact form the `model` input accepts. */
+const formatCatalog = (models) => {
+	const lines = ["Models this API key can use:"];
+	for (const model of models) {
+		lines.push(`- ${model.id} (${model.displayName})`);
+		for (const variant of model.variants ?? []) lines.push(formatVariant(model.id, variant));
+	}
+	return lines.join("\n");
 };
 //#endregion
 //#region src/input.ts
@@ -122,8 +139,8 @@ const writeJobSummary = async (text, result) => {
 	}], ...tableRows]).addHeading("Agent Response", 3).addRaw(text ? `\n\`\`\`\n${text}\n\`\`\`\n` : "_No output was produced._");
 	const errText = result.stderr.trim();
 	if (errText) await summary.addHeading("Agent Error (stderr)", 3).addRaw(`\n\`\`\`\n${errText.slice(0, 2e4)}${errText.length > 2e4 ? "\n… (truncated)" : ""}\n\`\`\`\n`);
-	const diag = result.diagnostics?.trim();
-	if (diag && diag !== errText) await summary.addHeading("Diagnostics", 3).addRaw(`\n\`\`\`\n${diag.slice(0, 2e4)}${diag.length > 2e4 ? "\n… (truncated)" : ""}\n\`\`\`\n`);
+	const models = result.availableModels?.trim();
+	if (models) await summary.addHeading("Available models", 3).addRaw(`\n\`\`\`\n${models.slice(0, 2e4)}${models.length > 2e4 ? "\n… (truncated)" : ""}\n\`\`\`\n`);
 	await summary.write();
 };
 const setMetricOutputs = (result) => {
@@ -191,6 +208,9 @@ const MAX_TIMER_MS = 2147483647;
 const DEFAULT_CANCEL_GRACE_MS = 1e4;
 /** How long to wait for the agent to release its local executor. */
 const DEFAULT_DISPOSE_TIMEOUT_MS = 15e3;
+/** How long to wait for the model catalog after a run fails on a model. */
+const CATALOG_TIMEOUT_MS = 1e4;
+const MODEL_ERROR = /model/iu;
 const extractErrorMessage = (error) => {
 	if (error instanceof Error) return error.cause ? `${error.message}\nCause: ${error.cause}` : error.message;
 	return String(error);
@@ -261,6 +281,15 @@ const settleRun = async (run, consume, timeoutSeconds, cancelGraceMs) => {
 		timedOut: true
 	};
 };
+/** Best-effort: `undefined` when the catalog cannot be fetched in time. */
+const describeAvailableModels = async (apiKey, status, stderr) => {
+	if (status !== "error" || !MODEL_ERROR.test(stderr)) return;
+	const models = await withTimeout(quietly(Cursor.models.list({ apiKey })), CATALOG_TIMEOUT_MS);
+	if (models === void 0) return;
+	const listing = formatCatalog(models);
+	info(listing);
+	return listing;
+};
 const runAgent = async (inputs, options = {}) => {
 	const cwd = path.resolve(inputs.workingDirectory);
 	const cancelGraceMs = options.cancelGraceMs ?? DEFAULT_CANCEL_GRACE_MS;
@@ -318,7 +347,7 @@ const runAgent = async (inputs, options = {}) => {
 		if (agent !== void 0) await disposeAgent(agent, disposeTimeoutMs);
 	}
 	return {
-		diagnostics: exitCode === 0 ? void 0 : stderr,
+		availableModels: await describeAvailableModels(inputs.apiKey, status, stderr),
 		durationMs,
 		exitCode,
 		status,

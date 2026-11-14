@@ -2,10 +2,10 @@ import path from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 
 import { info, warning } from "@actions/core";
-import { Agent } from "@cursor/sdk";
+import { Agent, Cursor } from "@cursor/sdk";
 import type { Run, RunResult, SDKAgent, SDKMessage } from "@cursor/sdk";
 
-import { formatModel } from "./model";
+import { formatCatalog, formatModel } from "./model";
 import { toolRestrictionsFor } from "./permissions";
 import type { ActionInputs, AgentResult, TokenUsageStats } from "./types";
 
@@ -15,6 +15,10 @@ const MAX_TIMER_MS = 2_147_483_647;
 const DEFAULT_CANCEL_GRACE_MS = 10_000;
 /** How long to wait for the agent to release its local executor. */
 const DEFAULT_DISPOSE_TIMEOUT_MS = 15_000;
+
+/** How long to wait for the model catalog after a run fails on a model. */
+const CATALOG_TIMEOUT_MS = 10_000;
+const MODEL_ERROR = /model/iu;
 
 export interface RunAgentOptions {
   cancelGraceMs?: number;
@@ -150,6 +154,27 @@ const settleRun = async (
   return { result: await withTimeout(settled, cancelGraceMs), timedOut: true };
 };
 
+/** Best-effort: `undefined` when the catalog cannot be fetched in time. */
+const describeAvailableModels = async (
+  apiKey: string,
+  status: string,
+  stderr: string
+): Promise<string | undefined> => {
+  if (status !== "error" || !MODEL_ERROR.test(stderr)) {
+    return undefined;
+  }
+  const models = await withTimeout(
+    quietly(Cursor.models.list({ apiKey })),
+    CATALOG_TIMEOUT_MS
+  );
+  if (models === undefined) {
+    return undefined;
+  }
+  const listing = formatCatalog(models);
+  info(listing);
+  return listing;
+};
+
 export const runAgent = async (
   inputs: ActionInputs,
   options: RunAgentOptions = {}
@@ -238,8 +263,14 @@ export const runAgent = async (
     }
   }
 
+  const availableModels = await describeAvailableModels(
+    inputs.apiKey,
+    status,
+    stderr
+  );
+
   return {
-    diagnostics: exitCode === 0 ? undefined : stderr,
+    availableModels,
     durationMs,
     exitCode,
     status,

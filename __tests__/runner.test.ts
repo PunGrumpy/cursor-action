@@ -16,10 +16,14 @@ const mockAgentCreate = mock();
 const mockAgentSend = mock();
 const mockRunCancel = mock(() => Promise.resolve());
 const mockDispose = mock(() => Promise.resolve());
+const mockModelsList = mock();
 
 mock.module("@cursor/sdk", () => ({
   Agent: {
     create: mockAgentCreate,
+  },
+  Cursor: {
+    models: { list: mockModelsList },
   },
 }));
 
@@ -95,10 +99,38 @@ const neverEndingStream = () => ({
   }),
 });
 
+const catalog = [
+  {
+    displayName: "Grok 4.7",
+    id: "grok-4.7",
+    variants: [
+      {
+        displayName: "Medium",
+        isDefault: true,
+        params: [{ id: "reasoning_effort", value: "medium" }],
+      },
+    ],
+  },
+];
+
+const erroredRun = (message: string) => ({
+  cancel: mockRunCancel,
+  stream: mockStreamSuccess,
+  supports: (op: string) => op === "cancel",
+  wait: () =>
+    Promise.resolve({
+      error: { message },
+      id: "run-test",
+      result: "",
+      status: "error" as const,
+    }),
+});
+
 describe("runAgent", () => {
   beforeEach(() => {
     mock.clearAllMocks();
     mockDispose.mockImplementation(() => Promise.resolve());
+    mockModelsList.mockResolvedValue(catalog);
 
     mockAgentCreate.mockResolvedValue({
       [Symbol.asyncDispose]: mockDispose,
@@ -368,5 +400,62 @@ describe("runAgent", () => {
     expect(mockWarning).toHaveBeenCalledWith(
       expect.stringContaining("did not release")
     );
+  });
+
+  it("lists the key's models when Agent.create rejects the model", async () => {
+    mockAgentCreate.mockRejectedValue(
+      new Error("Cannot use this model: nope. Available models: grok-4.7")
+    );
+
+    const result = await runAgent(baseInputs);
+
+    expect(mockModelsList).toHaveBeenCalledWith({ apiKey: "test-key" });
+    expect(result.exitCode).toBe(1);
+    expect(result.availableModels).toBe(
+      [
+        "Models this API key can use:",
+        "- grok-4.7 (Grok 4.7)",
+        "  - grok-4.7[reasoning_effort=medium] (Medium) [default]",
+      ].join("\n")
+    );
+  });
+
+  it("lists the key's models when the run result is a model error", async () => {
+    mockAgentSend.mockResolvedValue(
+      erroredRun("Model unavailable on Plus. Switch to an included model.")
+    );
+
+    const result = await runAgent(baseInputs);
+
+    expect(result.exitCode).toBe(1);
+    expect(result.availableModels).toContain("- grok-4.7 (Grok 4.7)");
+  });
+
+  it("does not look up models for an error that is not about a model", async () => {
+    mockAgentSend.mockResolvedValue(erroredRun("Internal server error"));
+
+    const result = await runAgent(baseInputs);
+
+    expect(mockModelsList).not.toHaveBeenCalled();
+    expect(result.availableModels).toBeUndefined();
+  });
+
+  it("does not look up models after a successful run", async () => {
+    const result = await runAgent(baseInputs);
+
+    expect(mockModelsList).not.toHaveBeenCalled();
+    expect(result.availableModels).toBeUndefined();
+  });
+
+  it("keeps the run's outcome when the model lookup fails", async () => {
+    mockModelsList.mockRejectedValue(new Error("catalog down"));
+    mockAgentCreate.mockRejectedValue(new Error("Cannot use this model: nope"));
+
+    const result = await runAgent(baseInputs);
+
+    expect(result.exitCode).toBe(1);
+    expect(result.status).toBe("error");
+    expect(result.stderr).toBe("Cannot use this model: nope");
+    expect(result.availableModels).toBeUndefined();
   });
 });

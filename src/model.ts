@@ -1,4 +1,4 @@
-import type { ModelSelection } from "@cursor/sdk";
+import type { ModelListItem, ModelSelection } from "@cursor/sdk";
 
 type ModelParam = NonNullable<ModelSelection["params"]>[number];
 
@@ -93,4 +93,25 @@ export const formatModel = (model: ModelSelection): string => {
   }
   const entries = model.params.map(({ id, value }) => `${id}=${value}`);
   return `${model.id}[${entries.join(",")}]`;
+};
+
+const formatVariant = (
+  id: string,
+  variant: NonNullable<ModelListItem["variants"]>[number]
+): string => {
+  const selection = formatModel({ id, params: variant.params });
+  const flags = `${variant.isDefault ? " [default]" : ""}${variant.isMaxMode ? " [max mode]" : ""}`;
+  return `  - ${selection} (${variant.displayName})${flags}`;
+};
+
+/** Lists each model and its variants in the exact form the `model` input accepts. */
+export const formatCatalog = (models: readonly ModelListItem[]): string => {
+  const lines = ["Models this API key can use:"];
+  for (const model of models) {
+    lines.push(`- ${model.id} (${model.displayName})`);
+    for (const variant of model.variants ?? []) {
+      lines.push(formatVariant(model.id, variant));
+    }
+  }
+  return lines.join("\n");
 };

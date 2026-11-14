@@ -1,6 +1,8 @@
 import { describe, expect, it } from "bun:test";
 
-import { formatModel, parseModel } from "../src/model";
+import type { ModelListItem } from "@cursor/sdk";
+
+import { formatCatalog, formatModel, parseModel } from "../src/model";
 
 describe("parseModel", () => {
   const valid: [string, string, unknown][] = [
@@ -109,6 +111,61 @@ describe("formatModel", () => {
     ]) {
       const model = parseModel(raw);
       expect(parseModel(formatModel(model))).toEqual(model);
+    }
+  });
+});
+
+describe("formatCatalog", () => {
+  const catalog: ModelListItem[] = [
+    {
+      displayName: "Grok 4.7",
+      id: "grok-4.7",
+      variants: [
+        {
+          displayName: "Medium",
+          isDefault: true,
+          params: [{ id: "reasoning_effort", value: "medium" }],
+        },
+        {
+          displayName: "High Max",
+          isMaxMode: true,
+          params: [
+            { id: "reasoning_effort", value: "high" },
+            { id: "fast", value: "false" },
+          ],
+        },
+        { displayName: "Plain", params: [] },
+      ],
+    },
+    { displayName: "Composer 2.5", id: "composer-2.5" },
+  ];
+
+  it("lists each model with its variants in catalog order", () => {
+    expect(formatCatalog(catalog)).toBe(
+      [
+        "Models this API key can use:",
+        "- grok-4.7 (Grok 4.7)",
+        "  - grok-4.7[reasoning_effort=medium] (Medium) [default]",
+        "  - grok-4.7[reasoning_effort=high,fast=false] (High Max) [max mode]",
+        "  - grok-4.7 (Plain)",
+        "- composer-2.5 (Composer 2.5)",
+      ].join("\n")
+    );
+  });
+
+  it("lists only the header for an empty catalog", () => {
+    expect(formatCatalog([])).toBe("Models this API key can use:");
+  });
+
+  it("prints selections that parseModel accepts", () => {
+    for (const model of catalog) {
+      for (const variant of model.variants ?? []) {
+        const selection = { id: model.id, params: variant.params };
+        const listed = formatModel(selection);
+        expect(parseModel(listed)).toEqual(
+          variant.params.length === 0 ? { id: model.id } : selection
+        );
+      }
     }
   });
 });

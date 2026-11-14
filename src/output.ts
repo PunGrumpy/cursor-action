@@ -80,12 +80,12 @@ const writeJobSummary = async (
       );
   }
 
-  const diag = result.diagnostics?.trim();
-  if (diag && diag !== errText) {
+  const models = result.availableModels?.trim();
+  if (models) {
     await summary
-      .addHeading("Diagnostics", 3)
+      .addHeading("Available models", 3)
       .addRaw(
-        `\n\`\`\`\n${diag.slice(0, 20_000)}${diag.length > 20_000 ? "\n… (truncated)" : ""}\n\`\`\`\n`
+        `\n\`\`\`\n${models.slice(0, 20_000)}${models.length > 20_000 ? "\n… (truncated)" : ""}\n\`\`\`\n`
       );
   }
 
