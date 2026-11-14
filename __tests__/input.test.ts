@@ -123,4 +123,27 @@ describe("getInputs", () => {
       expect(inputs.permissions).toBe(perm);
     }
   });
+
+  it("removes the API key from the environment once read", () => {
+    process.env["INPUT_API-KEY"] = "test-api-key";
+    try {
+      setupInputs();
+      const inputs = getInputs();
+      expect(process.env["INPUT_API-KEY"]).toBeUndefined();
+      expect(inputs.apiKey).toBe("test-api-key");
+    } finally {
+      Reflect.deleteProperty(process.env, "INPUT_API-KEY");
+    }
+  });
+
+  it("removes the API key even when another input is invalid", () => {
+    process.env["INPUT_API-KEY"] = "test-api-key";
+    try {
+      setupInputs({ permissions: "bogus" });
+      expect(() => getInputs()).toThrow(/Invalid 'permissions'/u);
+      expect(process.env["INPUT_API-KEY"]).toBeUndefined();
+    } finally {
+      Reflect.deleteProperty(process.env, "INPUT_API-KEY");
+    }
+  });
 });

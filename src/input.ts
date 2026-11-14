@@ -5,12 +5,16 @@ import type { ActionInputs, Permission } from "./types";
 
 const DEFAULT_MODEL = "composer-2.5";
 const VALID_PERMISSIONS: Permission[] = ["read-only", "read-write", "full"];
+/** The variable `@actions/core` reads for the `api-key` input. */
+const API_KEY_ENV = "INPUT_API-KEY";
 
 export const getInputs = (): ActionInputs => {
   const cursorVersionRaw = getInput("cursor-version", { required: false });
   const cursorVersion =
     cursorVersionRaw.trim().length > 0 ? cursorVersionRaw.trim() : undefined;
   const apiKey = getInput("api-key", { required: true });
+  // Shell commands and hooks the agent runs inherit process.env; the SDK gets the key directly.
+  Reflect.deleteProperty(process.env, API_KEY_ENV);
   const prompt = getInput("prompt", { required: true });
   const model = parseModel(
     getInput("model", { required: false }) || DEFAULT_MODEL
