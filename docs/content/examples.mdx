@@ -53,10 +53,20 @@ Pull requests from forks get a read-only `GITHUB_TOKEN`, so the comment step fai
   with:
     api-key: ${{ secrets.CURSOR_API_KEY }}
     prompt: "Summarize the TypeScript errors you can find."
-    model: composer-2.5
+    model: grok-4.7
     working-directory: ./src
     timeout: "600"
 ```
+
+A bare id runs with the default settings in your account's catalog, the same way the Cursor CLI does. The step log prints the settings it sent, for example `Model: grok-4.7[context=256k,reasoning_effort=medium,fast=false]`.
+
+To change a setting, name it in brackets. The settings you leave out keep their defaults:
+
+```yaml
+model: grok-4.7[reasoning_effort=high,fast=true]
+```
+
+Setting ids and values differ per model. Plans with fixed settings, such as Plus, accept only the defaults.
 
 ## Fail the job on the agent's verdict
 

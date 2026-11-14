@@ -99,7 +99,7 @@ export GITHUB_OUTPUT="$(mktemp)"
 
 env "INPUT_API-KEY=$CURSOR_API_KEY" \
     "INPUT_PROMPT=Say 'smoke test passed' and nothing else." \
-    "INPUT_MODEL=default" \
+    "INPUT_MODEL=composer-2.5" \
     "INPUT_PERMISSIONS=read-only" \
     "INPUT_TIMEOUT=60" \
     node dist/index.mjs
@@ -109,7 +109,7 @@ env "INPUT_API-KEY=$CURSOR_API_KEY" \
 
 - `CI` runs `typecheck`, `lint`, `test`, `build`, and a `dist/` freshness check on every push and pull request. The `Docs` job regenerates the reference from `action.yml`, typechecks the site, and builds it.
 - The `Integration` jobs install the action's runtime dependencies and run it with an invalid key on Ubuntu, Windows, and macOS. Being rejected at authentication is the pass condition: it proves the dependency tree resolves and the SDK reaches Cursor, without spending an agent run.
-- `Smoke Test` runs the action for real and needs a `CURSOR_API_KEY` on a paid plan, so it only runs from the Actions tab (`workflow_dispatch`).
+- `Smoke Test` runs the action for real and needs a `CURSOR_API_KEY` on a paid plan, so it only runs from the Actions tab (`workflow_dispatch`). Its `model` field takes any value the `model` input accepts, so you can try a model before a release.
 - `Release` runs Changesets on pushes to `main` to open a release PR or publish, then moves the major version tag (`v2`) to the published version.
 - `uses: PunGrumpy/cursor-action@v2` tracks the latest `v2.x.x`. Pin a full tag or a commit SHA if you want a frozen version.
 

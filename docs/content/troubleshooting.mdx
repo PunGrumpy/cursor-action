@@ -13,7 +13,12 @@ The key is valid but the account cannot run agents. This is billing, not configu
 
 ## A model id is rejected
 
-Start from `default`. The id is passed through untouched. The SDK checks it against the account catalog and the error lists the ids that account can use. `composer-2` still runs, because Cursor reroutes it to Composer 2.5. `auto` is a catalog id on plans that include Auto. Plus does not include Auto, so that id is rejected there.
+When Cursor rejects the model, the step log and the job summary list every model and setting the API key can use, written the way the `model` input takes them. Copy one of those lines.
+
+- `Cannot use this model: <id>` means the id is not in the account's catalog. The catalog no longer has `default`, so use `composer-2.5`, which is also the input's default. The Cursor CLI's names such as `grok-4.7-medium` are not catalog ids either. Write `grok-4.7` or `grok-4.7[reasoning_effort=medium]` instead.
+- `Model unavailable on Plus ... with fixed settings` means the plan does not allow a setting you overrode. Remove the brackets to run the catalog's defaults.
+- `Invalid parameters for registry model` means a setting id or value does not exist for that model. Check the spelling against the list.
+- `Invalid 'model' value` means the brackets are malformed. The action stops before it starts the agent.
 
 ## The step timed out or failed
 
