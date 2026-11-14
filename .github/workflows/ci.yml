@@ -8,9 +8,9 @@ on:
   workflow_dispatch:
     inputs:
       model:
-        description: "Model the smoke test runs, in any form the action's model input accepts"
+        description: "Model the smoke test runs, in any form the action's model input accepts. Empty runs the action's own default."
         required: false
-        default: "default"
+        default: ""
 
 jobs:
   build:

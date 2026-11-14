@@ -17,7 +17,7 @@ const setupInputs = (overrides: Record<string, string> = {}): void => {
   const defaults: Record<string, string> = {
     "api-key": "test-api-key",
     "cursor-version": "latest",
-    model: "default",
+    model: "composer-2.5",
     permissions: "read-only",
     prompt: "Review this code",
     timeout: "300",
@@ -38,9 +38,14 @@ describe("getInputs", () => {
     expect(inputs.cursorVersion).toBe("latest");
     expect(inputs.apiKey).toBe("test-api-key");
     expect(inputs.prompt).toBe("Review this code");
-    expect(inputs.model).toBe("default");
+    expect(inputs.model).toBe("composer-2.5");
     expect(inputs.permissions).toBe("read-only");
     expect(inputs.timeout).toBe(300);
+  });
+
+  it("falls back to composer-2.5 when model is empty", () => {
+    setupInputs({ model: "" });
+    expect(getInputs().model).toBe("composer-2.5");
   });
 
   it("warns if cursor-version is provided and not latest", () => {

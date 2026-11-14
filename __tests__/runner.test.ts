@@ -27,7 +27,7 @@ const { runAgent } = await import("../src/runner");
 
 const baseInputs: ActionInputs = {
   apiKey: "test-key",
-  model: "default",
+  model: "composer-2.5",
   permissions: "read-only",
   prompt: "Analyze this code",
   timeout: 300,
@@ -119,7 +119,7 @@ describe("runAgent", () => {
     expect(mockAgentCreate).toHaveBeenCalledWith({
       apiKey: "test-key",
       local: { cwd: expect.any(String) },
-      model: { id: "default" },
+      model: { id: "composer-2.5" },
       tools: expect.arrayContaining(["read", "grep"]),
     });
 

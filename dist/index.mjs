@@ -3,6 +3,7 @@ import path from "node:path";
 import { setTimeout } from "node:timers/promises";
 import { Agent } from "@cursor/sdk";
 //#region src/input.ts
+const DEFAULT_MODEL = "composer-2.5";
 const VALID_PERMISSIONS = [
 	"read-only",
 	"read-write",
@@ -13,7 +14,7 @@ const getInputs = () => {
 	const cursorVersion = cursorVersionRaw.trim().length > 0 ? cursorVersionRaw.trim() : void 0;
 	const apiKey = getInput("api-key", { required: true });
 	const prompt = getInput("prompt", { required: true });
-	const model = getInput("model", { required: false }) || "default";
+	const model = getInput("model", { required: false }) || DEFAULT_MODEL;
 	const workingDirectory = getInput("working-directory", { required: false }) || ".";
 	const permissionsRaw = getInput("permissions", { required: false }) || "read-only";
 	const timeoutRaw = getInput("timeout", { required: false }) || "300";
