@@ -1,3 +1,30 @@
+# Working in this repository
+
+## Checks
+
+- Run the CI checks in this order before you push: `bun run typecheck`, `bun run lint`, `bun run test`, `bun run build`.
+- Run `bun run format` to fix style. The Cursor and Claude Code edit hooks call it, and the pre-commit hook runs `bun test` and `ultracite fix`.
+
+## Generated files
+
+- Commit `dist/index.mjs` after any change under `src/`. The action runs it, and CI fails when `bun run build` changes `dist/`.
+- Run `bun run docs:reference` after any change to `action.yml`. It rewrites the tables between the `reference:start` and `reference:end` markers in `README.md` and `docs/content/reference.mdx`. CI fails when they drift.
+- `docs/` is a separate project with its own `bun.lock`. Install it with `bun install --cwd docs`.
+
+## Dependencies
+
+- Keep `@actions/core` and `@cursor/sdk` external in `tsdown.config.ts`. The SDK loads its own chunks and a native `@cursor/sdk-<platform>` package at runtime, so bundling it breaks `Agent.create`.
+- `action.yml` runs `npm ci --omit=dev` at runtime. Keep `package-lock.json` in sync with `package.json`, and keep `bun.lock` in sync too.
+
+## Releases
+
+- Add a changeset with `bun run changeset` for any change consumers can see. Docs-only, `.github/`, and tooling-only changes need none.
+
+## Tests
+
+- Tests use `bun:test` under `__tests__/`.
+- For a module that imports `@actions/core` or `@cursor/sdk`, call `mock.module(...)` first. Then load the module under test with `await import(...)`. See `__tests__/runner.test.ts`.
+
 # Ultracite Code Standards
 
 This project uses **Ultracite**, a zero-config preset that enforces strict code quality standards through automated formatting and linting.
