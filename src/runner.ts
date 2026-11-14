@@ -3,9 +3,15 @@ import { setTimeout as delay } from "node:timers/promises";
 
 import { info, warning } from "@actions/core";
 import { Agent, Cursor } from "@cursor/sdk";
-import type { Run, RunResult, SDKAgent, SDKMessage } from "@cursor/sdk";
+import type {
+  ModelListItem,
+  Run,
+  RunResult,
+  SDKAgent,
+  SDKMessage,
+} from "@cursor/sdk";
 
-import { formatCatalog, formatModel } from "./model";
+import { formatCatalog, formatModel, withDefaultSettings } from "./model";
 import { toolRestrictionsFor } from "./permissions";
 import type { ActionInputs, AgentResult, TokenUsageStats } from "./types";
 
@@ -16,12 +22,13 @@ const DEFAULT_CANCEL_GRACE_MS = 10_000;
 /** How long to wait for the agent to release its local executor. */
 const DEFAULT_DISPOSE_TIMEOUT_MS = 15_000;
 
-/** How long to wait for the model catalog after a run fails on a model. */
+/** How long to wait for the model catalog before the run starts. */
 const CATALOG_TIMEOUT_MS = 10_000;
 const MODEL_ERROR = /model/iu;
 
 export interface RunAgentOptions {
   cancelGraceMs?: number;
+  catalogTimeoutMs?: number;
   disposeTimeoutMs?: number;
 }
 
@@ -155,22 +162,21 @@ const settleRun = async (
 };
 
 /** Best-effort: `undefined` when the catalog cannot be fetched in time. */
-const describeAvailableModels = async (
+const fetchCatalog = (
   apiKey: string,
+  timeoutMs: number
+): Promise<ModelListItem[] | undefined> =>
+  withTimeout(quietly(Cursor.models.list({ apiKey })), timeoutMs);
+
+const describeAvailableModels = (
+  catalog: readonly ModelListItem[] | undefined,
   status: string,
   stderr: string
-): Promise<string | undefined> => {
-  if (status !== "error" || !MODEL_ERROR.test(stderr)) {
+): string | undefined => {
+  if (!catalog || status !== "error" || !MODEL_ERROR.test(stderr)) {
     return undefined;
   }
-  const models = await withTimeout(
-    quietly(Cursor.models.list({ apiKey })),
-    CATALOG_TIMEOUT_MS
-  );
-  if (models === undefined) {
-    return undefined;
-  }
-  const listing = formatCatalog(models);
+  const listing = formatCatalog(catalog);
   info(listing);
   return listing;
 };
@@ -185,7 +191,14 @@ export const runAgent = async (
     options.disposeTimeoutMs ?? DEFAULT_DISPOSE_TIMEOUT_MS;
 
   info(`Running Cursor Agent in: ${cwd}`);
-  info(`Model: ${formatModel(inputs.model)}`);
+  const catalog = await fetchCatalog(
+    inputs.apiKey,
+    options.catalogTimeoutMs ?? CATALOG_TIMEOUT_MS
+  );
+  const model = catalog
+    ? withDefaultSettings(inputs.model, catalog)
+    : inputs.model;
+  info(`Model: ${formatModel(model)}`);
   info(`Permissions: ${inputs.permissions}`);
 
   let stdout = "";
@@ -200,7 +213,7 @@ export const runAgent = async (
     agent = await Agent.create({
       apiKey: inputs.apiKey,
       local: { cwd },
-      model: inputs.model,
+      model,
       ...toolRestrictionsFor(inputs.permissions),
     });
 
@@ -263,11 +276,7 @@ export const runAgent = async (
     }
   }
 
-  const availableModels = await describeAvailableModels(
-    inputs.apiKey,
-    status,
-    stderr
-  );
+  const availableModels = describeAvailableModels(catalog, status, stderr);
 
   return {
     availableModels,

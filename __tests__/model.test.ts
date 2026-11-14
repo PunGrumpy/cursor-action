@@ -2,7 +2,12 @@ import { describe, expect, it } from "bun:test";
 
 import type { ModelListItem } from "@cursor/sdk";
 
-import { formatCatalog, formatModel, parseModel } from "../src/model";
+import {
+  formatCatalog,
+  formatModel,
+  parseModel,
+  withDefaultSettings,
+} from "../src/model";
 
 describe("parseModel", () => {
   const valid: [string, string, unknown][] = [
@@ -167,5 +172,103 @@ describe("formatCatalog", () => {
         );
       }
     }
+  });
+});
+
+describe("withDefaultSettings", () => {
+  const catalog: ModelListItem[] = [
+    {
+      displayName: "Grok 4.7",
+      id: "grok-4.7",
+      variants: [
+        {
+          displayName: "Grok 4.7 Medium",
+          isDefault: true,
+          params: [
+            { id: "context", value: "256k" },
+            { id: "reasoning_effort", value: "medium" },
+            { id: "fast", value: "false" },
+          ],
+        },
+        {
+          displayName: "Grok 4.7 High",
+          params: [{ id: "reasoning_effort", value: "high" }],
+        },
+      ],
+    },
+    {
+      aliases: ["composer"],
+      displayName: "Composer 2.5",
+      id: "composer-2.5",
+      variants: [
+        {
+          displayName: "Composer 2.5",
+          isDefault: true,
+          params: [{ id: "fast", value: "false" }],
+        },
+      ],
+    },
+    {
+      displayName: "No default",
+      id: "no-default",
+      variants: [{ displayName: "Only", params: [{ id: "a", value: "1" }] }],
+    },
+    {
+      displayName: "Plain",
+      id: "plain",
+      variants: [{ displayName: "Plain", isDefault: true, params: [] }],
+    },
+  ];
+
+  it("gives a bare id the default variant's settings in catalog order", () => {
+    expect(withDefaultSettings({ id: "grok-4.7" }, catalog)).toEqual({
+      id: "grok-4.7",
+      params: [
+        { id: "context", value: "256k" },
+        { id: "reasoning_effort", value: "medium" },
+        { id: "fast", value: "false" },
+      ],
+    });
+  });
+
+  it("replaces only the settings the author gave and keeps the order", () => {
+    const result = withDefaultSettings(
+      { id: "grok-4.7", params: [{ id: "fast", value: "true" }] },
+      catalog
+    );
+    expect(formatModel(result)).toBe(
+      "grok-4.7[context=256k,reasoning_effort=medium,fast=true]"
+    );
+  });
+
+  it("appends author settings the default variant does not have", () => {
+    const result = withDefaultSettings(
+      {
+        id: "composer-2.5",
+        params: [
+          { id: "extra", value: "x" },
+          { id: "fast", value: "true" },
+        ],
+      },
+      catalog
+    );
+    expect(formatModel(result)).toBe("composer-2.5[fast=true,extra=x]");
+  });
+
+  it("finds the model by alias and keeps the id as written", () => {
+    expect(withDefaultSettings({ id: "composer" }, catalog)).toEqual({
+      id: "composer",
+      params: [{ id: "fast", value: "false" }],
+    });
+  });
+
+  it("returns the selection unchanged when the catalog cannot help", () => {
+    for (const id of ["unknown", "no-default", "plain"]) {
+      const selection = { id, params: [{ id: "a", value: "b" }] };
+      expect(withDefaultSettings(selection, catalog)).toEqual(selection);
+    }
+    expect(withDefaultSettings({ id: "grok-4.7" }, [])).toEqual({
+      id: "grok-4.7",
+    });
   });
 });

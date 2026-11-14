@@ -115,3 +115,38 @@ export const formatCatalog = (models: readonly ModelListItem[]): string => {
   }
   return lines.join("\n");
 };
+
+/**
+ * Fills in the catalog's default settings for a model the author gave fewer
+ * settings than it has. Cursor does not apply them itself, and rejects a
+ * parameterized model that arrives without them on plans with fixed settings.
+ * The author's values win and keep the default variant's order.
+ */
+export const withDefaultSettings = (
+  selection: ModelSelection,
+  catalog: readonly ModelListItem[]
+): ModelSelection => {
+  const entry = catalog.find(
+    ({ aliases, id }) => id === selection.id || aliases?.includes(selection.id)
+  );
+  const defaults = entry?.variants?.find(
+    (variant) => variant.isDefault
+  )?.params;
+  if (!defaults || defaults.length === 0) {
+    return selection;
+  }
+
+  const authored = selection.params ?? [];
+  const authoredValues = new Map(authored.map(({ id, value }) => [id, value]));
+  const params = defaults.map(({ id, value }) => ({
+    id,
+    value: authoredValues.get(id) ?? value,
+  }));
+  const defaultIds = new Set(defaults.map(({ id }) => id));
+  for (const param of authored) {
+    if (!defaultIds.has(param.id)) {
+      params.push({ ...param });
+    }
+  }
+  return { id: selection.id, params };
+};

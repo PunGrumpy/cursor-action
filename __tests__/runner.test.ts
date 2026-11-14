@@ -163,7 +163,7 @@ describe("runAgent", () => {
     expect(result.stderr).toBe("");
   });
 
-  it("passes model params to Agent.create unchanged", async () => {
+  it("passes the author's model params to Agent.create", async () => {
     const model = {
       id: "grok-4.7",
       params: [{ id: "reasoning_effort", value: "medium" }],
@@ -172,6 +172,46 @@ describe("runAgent", () => {
     expect(mockAgentCreate).toHaveBeenLastCalledWith(
       expect.objectContaining({ model })
     );
+  });
+
+  it("runs a bare id with the catalog's default settings", async () => {
+    await runAgent({ ...baseInputs, model: { id: "grok-4.7" } });
+
+    expect(mockModelsList).toHaveBeenCalledTimes(1);
+    expect(mockModelsList).toHaveBeenCalledWith({ apiKey: "test-key" });
+    expect(mockAgentCreate).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        model: {
+          id: "grok-4.7",
+          params: [{ id: "reasoning_effort", value: "medium" }],
+        },
+      })
+    );
+  });
+
+  it("sends the author's model unchanged when the catalog request fails", async () => {
+    mockModelsList.mockRejectedValue(new Error("catalog down"));
+
+    const result = await runAgent({ ...baseInputs, model: { id: "grok-4.7" } });
+
+    expect(mockAgentCreate).toHaveBeenLastCalledWith(
+      expect.objectContaining({ model: { id: "grok-4.7" } })
+    );
+    expect(result.exitCode).toBe(0);
+  });
+
+  it("sends the author's model unchanged when the catalog is too slow", async () => {
+    mockModelsList.mockReturnValue(pending());
+
+    const result = await runAgent(
+      { ...baseInputs, model: { id: "grok-4.7" } },
+      { catalogTimeoutMs: 50 }
+    );
+
+    expect(mockAgentCreate).toHaveBeenLastCalledWith(
+      expect.objectContaining({ model: { id: "grok-4.7" } })
+    );
+    expect(result.exitCode).toBe(0);
   });
 
   it("passes the permission level to Agent.create as tool restrictions", async () => {
@@ -409,7 +449,7 @@ describe("runAgent", () => {
 
     const result = await runAgent(baseInputs);
 
-    expect(mockModelsList).toHaveBeenCalledWith({ apiKey: "test-key" });
+    expect(mockModelsList).toHaveBeenCalledTimes(1);
     expect(result.exitCode).toBe(1);
     expect(result.availableModels).toBe(
       [
@@ -427,23 +467,22 @@ describe("runAgent", () => {
 
     const result = await runAgent(baseInputs);
 
+    expect(mockModelsList).toHaveBeenCalledTimes(1);
     expect(result.exitCode).toBe(1);
     expect(result.availableModels).toContain("- grok-4.7 (Grok 4.7)");
   });
 
-  it("does not look up models for an error that is not about a model", async () => {
+  it("lists no models for an error that is not about a model", async () => {
     mockAgentSend.mockResolvedValue(erroredRun("Internal server error"));
 
     const result = await runAgent(baseInputs);
 
-    expect(mockModelsList).not.toHaveBeenCalled();
     expect(result.availableModels).toBeUndefined();
   });
 
-  it("does not look up models after a successful run", async () => {
+  it("lists no models after a successful run", async () => {
     const result = await runAgent(baseInputs);
 
-    expect(mockModelsList).not.toHaveBeenCalled();
     expect(result.availableModels).toBeUndefined();
   });
 

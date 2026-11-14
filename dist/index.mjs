@@ -76,6 +76,28 @@ const formatCatalog = (models) => {
 	}
 	return lines.join("\n");
 };
+/**
+* Fills in the catalog's default settings for a model the author gave fewer
+* settings than it has. Cursor does not apply them itself, and rejects a
+* parameterized model that arrives without them on plans with fixed settings.
+* The author's values win and keep the default variant's order.
+*/
+const withDefaultSettings = (selection, catalog) => {
+	const defaults = catalog.find(({ aliases, id }) => id === selection.id || aliases?.includes(selection.id))?.variants?.find((variant) => variant.isDefault)?.params;
+	if (!defaults || defaults.length === 0) return selection;
+	const authored = selection.params ?? [];
+	const authoredValues = new Map(authored.map(({ id, value }) => [id, value]));
+	const params = defaults.map(({ id, value }) => ({
+		id,
+		value: authoredValues.get(id) ?? value
+	}));
+	const defaultIds = new Set(defaults.map(({ id }) => id));
+	for (const param of authored) if (!defaultIds.has(param.id)) params.push({ ...param });
+	return {
+		id: selection.id,
+		params
+	};
+};
 //#endregion
 //#region src/input.ts
 const DEFAULT_MODEL = "composer-2.5";
@@ -208,7 +230,7 @@ const MAX_TIMER_MS = 2147483647;
 const DEFAULT_CANCEL_GRACE_MS = 1e4;
 /** How long to wait for the agent to release its local executor. */
 const DEFAULT_DISPOSE_TIMEOUT_MS = 15e3;
-/** How long to wait for the model catalog after a run fails on a model. */
+/** How long to wait for the model catalog before the run starts. */
 const CATALOG_TIMEOUT_MS = 1e4;
 const MODEL_ERROR = /model/iu;
 const extractErrorMessage = (error) => {
@@ -282,11 +304,10 @@ const settleRun = async (run, consume, timeoutSeconds, cancelGraceMs) => {
 	};
 };
 /** Best-effort: `undefined` when the catalog cannot be fetched in time. */
-const describeAvailableModels = async (apiKey, status, stderr) => {
-	if (status !== "error" || !MODEL_ERROR.test(stderr)) return;
-	const models = await withTimeout(quietly(Cursor.models.list({ apiKey })), CATALOG_TIMEOUT_MS);
-	if (models === void 0) return;
-	const listing = formatCatalog(models);
+const fetchCatalog = (apiKey, timeoutMs) => withTimeout(quietly(Cursor.models.list({ apiKey })), timeoutMs);
+const describeAvailableModels = (catalog, status, stderr) => {
+	if (!catalog || status !== "error" || !MODEL_ERROR.test(stderr)) return;
+	const listing = formatCatalog(catalog);
 	info(listing);
 	return listing;
 };
@@ -295,7 +316,9 @@ const runAgent = async (inputs, options = {}) => {
 	const cancelGraceMs = options.cancelGraceMs ?? DEFAULT_CANCEL_GRACE_MS;
 	const disposeTimeoutMs = options.disposeTimeoutMs ?? DEFAULT_DISPOSE_TIMEOUT_MS;
 	info(`Running Cursor Agent in: ${cwd}`);
-	info(`Model: ${formatModel(inputs.model)}`);
+	const catalog = await fetchCatalog(inputs.apiKey, options.catalogTimeoutMs ?? CATALOG_TIMEOUT_MS);
+	const model = catalog ? withDefaultSettings(inputs.model, catalog) : inputs.model;
+	info(`Model: ${formatModel(model)}`);
 	info(`Permissions: ${inputs.permissions}`);
 	let stdout = "";
 	let stderr = "";
@@ -308,7 +331,7 @@ const runAgent = async (inputs, options = {}) => {
 		agent = await Agent.create({
 			apiKey: inputs.apiKey,
 			local: { cwd },
-			model: inputs.model,
+			model,
 			...toolRestrictionsFor(inputs.permissions)
 		});
 		const run = await agent.send(inputs.prompt);
@@ -347,7 +370,7 @@ const runAgent = async (inputs, options = {}) => {
 		if (agent !== void 0) await disposeAgent(agent, disposeTimeoutMs);
 	}
 	return {
-		availableModels: await describeAvailableModels(inputs.apiKey, status, stderr),
+		availableModels: describeAvailableModels(catalog, status, stderr),
 		durationMs,
 		exitCode,
 		status,

@@ -21,7 +21,7 @@ inputs:
     required: true
 
   model:
-    description: "Model id, optionally with settings in the CLI's bracket form, e.g. composer-2.5 or grok-4.7[reasoning_effort=medium]. Cursor checks ids and values against the account's catalog."
+    description: "Model id. A bare id runs with the account's default settings and [param=value,...] overrides them, e.g. grok-4.7 or grok-4.7[fast=true]."
     required: false
     default: "composer-2.5"
 
