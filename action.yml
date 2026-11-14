@@ -75,7 +75,20 @@ outputs:
 runs:
   using: "composite"
   steps:
+    # The SDK needs Node.js 22.13 or newer. Reusing the runner's Node saves the
+    # setup time and leaves the job's PATH alone for the steps after this one.
+    - name: Check Node.js
+      id: node
+      shell: bash
+      run: |
+        if command -v node >/dev/null 2>&1 && node -e '
+          const [major, minor] = process.versions.node.split(".").map(Number);
+          process.exit(major > 22 || (major === 22 && minor >= 13) ? 0 : 1);
+        '; then
+          echo "satisfied=true" >> "$GITHUB_OUTPUT"
+        fi
     - name: Setup Node.js
+      if: steps.node.outputs.satisfied != 'true'
       uses: actions/setup-node@v6
       with:
         node-version: "24"

@@ -20,7 +20,7 @@ The same applies when a run ends with an error. The action reads `status` and `e
 
 ## Why it installs instead of shipping one file
 
-The action is a composite action: it sets up Node.js 24, runs `npm ci --omit=dev` inside its own action directory, and then executes `dist/index.mjs`. Expect a few seconds of install time per job.
+The action is a composite action: it uses the runner's Node.js when it is 22.13 or newer (the SDK's minimum) and sets up Node.js 24 otherwise, runs `npm ci --omit=dev` inside its own action directory, and then executes `dist/index.mjs`. Expect a few seconds of install time per job. When the action sets up Node.js 24, later steps in the job also run on it.
 
 `@cursor/sdk` cannot be bundled into a single file. It is a webpack build that dynamically imports its own chunks at runtime, resolved relative to its own package directory, and it resolves a native `@cursor/sdk-<platform>` package for the `rg` and `cursorsandbox` binaries. A bundle containing it imports cleanly and then fails inside `Agent.create`.
 
