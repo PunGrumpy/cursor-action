@@ -5,6 +5,8 @@ import type { ActionInputs, Permission } from "./types";
 
 const DEFAULT_MODEL = "composer-2.5";
 const VALID_PERMISSIONS: Permission[] = ["read-only", "read-write", "full"];
+/** Longest delay Node's timers accept; the runner skips the deadline beyond it. */
+const MAX_TIMER_MS = 2_147_483_647;
 /** The variable `@actions/core` reads for the `api-key` input. */
 const API_KEY_ENV = "INPUT_API-KEY";
 
@@ -40,9 +42,13 @@ export const getInputs = (): ActionInputs => {
   }
 
   const timeout = Math.trunc(Number(timeoutRaw));
-  if (Number.isNaN(timeout) || timeout <= 0) {
+  if (
+    !Number.isFinite(timeout) ||
+    timeout <= 0 ||
+    timeout * 1000 > MAX_TIMER_MS
+  ) {
     throw new Error(
-      `Invalid 'timeout' value: '${timeoutRaw}'. Must be a positive integer (seconds).`
+      `Invalid 'timeout' value: '${timeoutRaw}'. Must be a positive integer (seconds) of at most ${Math.floor(MAX_TIMER_MS / 1000)}.`
     );
   }
 
