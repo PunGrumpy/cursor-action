@@ -106,6 +106,8 @@ const VALID_PERMISSIONS = [
 	"read-write",
 	"full"
 ];
+/** Longest delay Node's timers accept; the runner skips the deadline beyond it. */
+const MAX_TIMER_MS$1 = 2147483647;
 /** The variable `@actions/core` reads for the `api-key` input. */
 const API_KEY_ENV = "INPUT_API-KEY";
 const getInputs = () => {
@@ -121,7 +123,7 @@ const getInputs = () => {
 	if (cursorVersion && cursorVersion !== "latest") warning("The 'cursor-version' input is deprecated. The Action now uses the official @cursor/sdk which automatically manages the agent version.");
 	if (!VALID_PERMISSIONS.includes(permissionsRaw)) throw new Error(`Invalid 'permissions' value: '${permissionsRaw}'. Must be one of: ${VALID_PERMISSIONS.join(", ")}`);
 	const timeout = Math.trunc(Number(timeoutRaw));
-	if (Number.isNaN(timeout) || timeout <= 0) throw new Error(`Invalid 'timeout' value: '${timeoutRaw}'. Must be a positive integer (seconds).`);
+	if (!Number.isFinite(timeout) || timeout <= 0 || timeout * 1e3 > MAX_TIMER_MS$1) throw new Error(`Invalid 'timeout' value: '${timeoutRaw}'. Must be a positive integer (seconds) of at most ${Math.floor(MAX_TIMER_MS$1 / 1e3)}.`);
 	if (timeout > 3600) warning(`Timeout is set to ${timeout}s (${Math.round(timeout / 60)}min). This is unusually long. Consider if your prompt can be shortened.`);
 	if (!prompt.trim()) throw new Error("The 'prompt' input cannot be empty.");
 	return {
