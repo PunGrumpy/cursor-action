@@ -1,5 +1,19 @@
 # @pungrumpy/cursor-action
 
+## 2.1.0
+
+### Minor Changes
+
+- b3f4806: A bare `model` id now runs with the catalog's default settings, so `grok-4.7` and `composer-2.5` work on plans with fixed settings. The CLI's bracket form, such as `grok-4.7[fast=true]`, overrides individual settings. A malformed value fails before the agent starts. When Cursor rejects the model, the job summary and log list the models and settings the key can use.
+- 37aa1e8: The step log now shows each tool call the agent makes while it runs, one line per call as it finishes, such as `read src/index.ts` or `shell bun test`, so a long run is no longer silent until it ends.
+
+### Patch Changes
+
+- b3f4806: The default `model` is now `composer-2.5`. Cursor's catalog no longer lists `default`, so workflows that omitted `model` failed with `Cannot use this model: default`. They now run Composer 2.5.
+- 9fd2ed4: The action now uses the runner's Node.js when it is 22.13 or newer instead of always setting up Node.js 24, so later steps in the job keep the Node.js version the workflow chose. It also saves up to about two seconds per run.
+- 5a6a403: The API key is removed from the process environment as soon as it is read, so shell commands and Cursor hooks the agent runs no longer inherit it.
+- d81d91e: The job summary no longer breaks when the agent's answer contains its own code blocks. The answer is wrapped in a fence longer than any backtick run inside it.
+
 ## 2.0.1
 
 ### Patch Changes
