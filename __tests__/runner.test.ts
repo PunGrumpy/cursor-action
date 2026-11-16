@@ -4,11 +4,12 @@ import * as actionsCore from "@actions/core";
 
 import type { ActionInputs } from "../src/types";
 
+const mockInfo = mock<typeof actionsCore.info>();
 const mockWarning = mock<typeof actionsCore.warning>();
 mock.module("@actions/core", () => ({
   ...actionsCore,
   debug: mock<typeof actionsCore.debug>(),
-  info: mock<typeof actionsCore.info>(),
+  info: mockInfo,
   warning: mockWarning,
 }));
 
@@ -53,6 +54,16 @@ const thinkingEvent = (text: string) => ({
   run_id: "run-test",
   text,
   type: "thinking" as const,
+});
+
+const readToolCall = (status: "running" | "completed") => ({
+  agent_id: "agent-test",
+  args: { path: "src/index.ts" },
+  call_id: "call-1",
+  name: "read",
+  run_id: "run-test",
+  status,
+  type: "tool_call" as const,
 });
 
 const mockStreamSuccess = async function* mockStreamSuccess() {
@@ -375,6 +386,28 @@ describe("runAgent", () => {
     expect(result.stdout).toBe("Partial answer");
     expect(result.status).toBe("cancelled");
     expect(result.exitCode).toBe(1);
+  });
+
+  it("logs each tool call once and keeps tool events out of the answer", async () => {
+    const toolStream = async function* toolStream() {
+      yield readToolCall("running");
+      yield readToolCall("completed");
+      yield assistantEvent("the answer");
+    };
+    mockAgentSend.mockResolvedValue({
+      cancel: mockRunCancel,
+      stream: toolStream,
+      supports: (op: string) => op === "cancel",
+      wait: finishedWait("the answer"),
+    });
+
+    const result = await runAgent(baseInputs);
+
+    const toolLines = mockInfo.mock.calls.filter(
+      ([line]) => line === "read src/index.ts"
+    );
+    expect(toolLines).toHaveLength(1);
+    expect(result.stdout).toBe("the answer");
   });
 
   it("prefers the final result text over the streamed text when the run finishes", async () => {

@@ -234,6 +234,50 @@ const toolRestrictionsFor = (permission) => {
 	}
 };
 //#endregion
+//#region src/progress.ts
+/** The argument that names what each tool acts on. */
+const TARGET_FIELD = {
+	delete: "path",
+	edit: "path",
+	glob: "globPattern",
+	grep: "pattern",
+	ls: "path",
+	mcp: "toolName",
+	read: "path",
+	readLints: "paths",
+	semSearch: "query",
+	shell: "command",
+	task: "description"
+};
+const MAX_TARGET_LENGTH = 160;
+const WHITESPACE = /\s+/gu;
+const isStringArray = (value) => Array.isArray(value) && value.every((item) => typeof item === "string");
+const rawTarget = (name, args) => {
+	const field = TARGET_FIELD[name];
+	if (field === void 0 || typeof args !== "object" || args === null) return "";
+	const value = Reflect.get(args, field);
+	if (typeof value === "string") return value;
+	return isStringArray(value) ? value.join(", ") : "";
+};
+const targetOf = (name, args) => {
+	const target = rawTarget(name, args).replace(WHITESPACE, " ").trim();
+	return target.length > MAX_TARGET_LENGTH ? `${target.slice(0, MAX_TARGET_LENGTH)}…` : target;
+};
+const reportsError = (result) => typeof result === "object" && result !== null && Reflect.get(result, "status") === "error";
+/**
+* One log line per finished tool call. Running events are skipped because the
+* server can stream them while the model is still writing the arguments.
+*/
+const toolCallLine = (event) => {
+	if (event.type !== "tool_call" || event.status === "running") return;
+	const failed = event.status === "error" || reportsError(event.result);
+	return [
+		event.name,
+		targetOf(event.name, event.args),
+		failed ? "failed" : ""
+	].filter((part) => part !== "").join(" ");
+};
+//#endregion
 //#region src/runner.ts
 /** Longest delay Node's timers accept; larger values would fire immediately. */
 const MAX_TIMER_MS = 2147483647;
@@ -347,7 +391,11 @@ const runAgent = async (inputs, options = {}) => {
 		});
 		const run = await agent.send(inputs.prompt);
 		const { result: runResult, timedOut } = await settleRun(run, (async () => {
-			for await (const event of run.stream()) stdout += assistantText(event);
+			for await (const event of run.stream()) {
+				stdout += assistantText(event);
+				const line = toolCallLine(event);
+				if (line !== void 0) info(line);
+			}
 			return await run.wait();
 		})(), inputs.timeout, cancelGraceMs);
 		if (runResult === void 0) {
