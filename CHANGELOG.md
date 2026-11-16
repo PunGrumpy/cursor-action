@@ -1,5 +1,11 @@
 # @pungrumpy/cursor-action
 
+## 2.1.1
+
+### Patch Changes
+
+- 59e7e65: A `timeout` of `Infinity` or any value above about 24 days is now rejected instead of silently running the agent with no deadline.
+
 ## 2.1.0
 
 ### Minor Changes
