@@ -449,6 +449,27 @@ describe("runAgent", () => {
     expect(mockDispose).toHaveBeenCalledTimes(1);
   }, 5000);
 
+  it("waits at most one grace period after the deadline when cancel hangs", async () => {
+    const hangingCancel = mock(() => pending());
+    mockAgentSend.mockResolvedValue({
+      cancel: hangingCancel,
+      stream: neverEndingStream,
+      supports: (op: string) => op === "cancel",
+      wait: () => pending(),
+    });
+
+    const startedAt = Date.now();
+    const result = await runAgent(
+      { ...baseInputs, timeout: 1 },
+      { cancelGraceMs: 1000, disposeTimeoutMs: 50 }
+    );
+    const afterDeadlineMs = Date.now() - startedAt - 1000;
+
+    expect(hangingCancel).toHaveBeenCalled();
+    expect(afterDeadlineMs).toBeLessThan(1500);
+    expect(result.status).toBe("cancelled");
+  }, 8000);
+
   it("releases the agent after a successful run", async () => {
     await runAgent(baseInputs);
     expect(mockDispose).toHaveBeenCalledTimes(1);

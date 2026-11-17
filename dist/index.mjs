@@ -352,9 +352,7 @@ const settleRun = async (run, consume, timeoutSeconds, cancelGraceMs) => {
 		result,
 		timedOut: false
 	};
-	if (run.supports("cancel")) try {
-		await withTimeout(run.cancel(), cancelGraceMs);
-	} catch {}
+	if (run.supports("cancel")) quietly(run.cancel());
 	return {
 		result: await withTimeout(settled, cancelGraceMs),
 		timedOut: true
