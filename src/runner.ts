@@ -153,11 +153,8 @@ const settleRun = async (
   }
 
   if (run.supports("cancel")) {
-    try {
-      await withTimeout(run.cancel(), cancelGraceMs);
-    } catch {
-      // Best-effort cancel on timeout; the grace period below bounds the wait.
-    }
+    // Not awaited: the one grace period below bounds the whole wait.
+    quietly(run.cancel());
   }
   return { result: await withTimeout(settled, cancelGraceMs), timedOut: true };
 };
