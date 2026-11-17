@@ -18,13 +18,14 @@ const { values } = parseArgs({
 });
 
 const repoRoot = path.resolve(import.meta.dirname, "../../../..");
-const evidenceDir =
+const evidenceDir = path.resolve(
   process.env.VERIFY_EVIDENCE_DIR ??
-  path.join(
-    tmpdir(),
-    "cursor-action-verify",
-    `${new Date().toISOString().replaceAll(":", "-")}-${values.scenario}`
-  );
+    path.join(
+      tmpdir(),
+      "cursor-action-verify",
+      `${new Date().toISOString().replaceAll(":", "-")}-${values.scenario}`
+    )
+);
 mkdirSync(evidenceDir, { recursive: true });
 
 const files = {
