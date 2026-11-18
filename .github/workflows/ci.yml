@@ -98,8 +98,6 @@ jobs:
   integration:
     name: Integration (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
-    needs:
-      - build
     strategy:
       fail-fast: false
       matrix:
