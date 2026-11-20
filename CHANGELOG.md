@@ -1,5 +1,11 @@
 # @pungrumpy/cursor-action
 
+## 2.1.2
+
+### Patch Changes
+
+- 1485a83: When a run times out and the cancel request hangs, the action now stops waiting after one cancel grace period instead of two.
+
 ## 2.1.1
 
 ### Patch Changes
